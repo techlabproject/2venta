@@ -13,8 +13,8 @@ test("la lista muestra los productos sembrados con precio en pesos", async ({ pa
   const cards = page.getByRole("main").getByRole("listitem");
   await expect(cards).toHaveCount(3);
   await expect(cards.filter({ hasText: "iPhone 13 128 GB" })).toContainText("$ 1.850.000");
-  await expect(cards.filter({ hasText: "Chaqueta de cuero talla M" })).toContainText("$ 145.000");
-  await expect(cards.filter({ hasText: "Mesa de comedor para cuatro" })).toContainText("$ 320.000");
+  await expect(cards.filter({ hasText: "Chaqueta de jean talla M" })).toContainText("$ 95.000");
+  await expect(cards.filter({ hasText: "Coche Chicco reclinable" })).toContainText("$ 260.000");
 });
 
 test("la ficha muestra el detalle y el alias del vendedor", async ({ page }) => {

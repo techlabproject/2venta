@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Listing } from "./queries";
-import { CATEGORY_LABEL, CONDITION_LABEL } from "./labels";
+import { CONDITION_LABEL } from "./labels";
 import { formatCop } from "@/lib/money";
 
 // Nota deliberada: el mockup muestra un distintivo "Verificado" en cada tarjeta.
@@ -23,7 +23,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
             {listing.title}
           </h3>
           <p className="mt-1 text-xs text-muted">
-            {CATEGORY_LABEL[listing.category]} · {CONDITION_LABEL[listing.condition]}
+            {listing.category_label} · {CONDITION_LABEL[listing.condition]}
           </p>
           <p className="text-xs text-muted">{listing.seller_zone}</p>
         </div>

@@ -169,3 +169,16 @@ autorización delegada, con lo cual la verificación de identidad la hace el pro
 **Consecuencia.** El proveedor de pagos del competidor más grande queda dentro de la
 operación. Es además la decisión técnica más cara de revertir, porque arrastra la
 verificación de todos los vendedores ya registrados.
+
+### D-05b — Categorías de la versión 1, corregidas
+Tecnología, ropa y niños. Reemplaza a D-05, que decía hogar en vez de niños.
+**Por qué.** Los mockups del proyecto de diseño son el artefacto más reciente y
+dicen "tecnología, ropa y cosas de niños". Coincide además con la oportunidad que
+la investigación había detectado explícitamente ("incluir segunda mano de juguetes
+de niños, y cosas de niño en general"), mientras que hogar es una categoría que los
+competidores ya cubren bien.
+**Estado.** Tomada de forma autónoma para no bloquear la construcción. Pendiente de
+confirmación. Es de las que conviene revisar.
+**Consecuencia.** Para que revertirla no cueste una migración, las categorías dejan
+de ser un tipo fijo de Postgres y pasan a una tabla `categories` sembrada. Cambiar
+el conjunto es editar filas.

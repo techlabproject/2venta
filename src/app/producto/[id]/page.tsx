@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getListing } from "@/features/catalog/queries";
-import { CATEGORY_LABEL, CONDITION_LABEL } from "@/features/catalog/labels";
+import { CONDITION_LABEL } from "@/features/catalog/labels";
 import { formatCop } from "@/lib/money";
 import { AppHeader } from "@/components/AppHeader";
 
@@ -39,7 +39,7 @@ export default async function ListingPage({
 
         <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
           <dt className="text-muted">Categoría</dt>
-          <dd>{CATEGORY_LABEL[listing.category]}</dd>
+          <dd>{listing.category_label}</dd>
           <dt className="text-muted">Estado</dt>
           <dd>{CONDITION_LABEL[listing.condition]}</dd>
           <dt className="text-muted">Vendedor</dt>

@@ -1,11 +1,15 @@
 import { query } from "@/lib/db";
+import type { Condition } from "./labels";
+
+export type Category = { slug: string; label: string };
 
 export type Listing = {
   id: string;
   title: string;
   description: string;
-  category: "tecnologia" | "ropa" | "hogar";
-  condition: "nuevo" | "usado_bueno" | "usado_regular";
+  category: string;
+  category_label: string;
+  condition: Condition;
   price_cop: number;
   seller_alias: string;
   seller_zone: string;
@@ -13,12 +17,25 @@ export type Listing = {
 
 const SELECT = `
   select l.id, l.title, l.description, l.category, l.condition, l.price_cop,
+         c.label as category_label,
          s.alias as seller_alias, s.zone as seller_zone
   from listings l
-  join sellers s on s.id = l.seller_id
+  join sellers s    on s.id   = l.seller_id
+  join categories c on c.slug = l.category
 `;
 
-export function listListings(): Promise<Listing[]> {
+export function listCategories(): Promise<Category[]> {
+  return query<Category>(
+    `select slug, label from categories where active order by position`
+  );
+}
+
+export function listListings(category?: string): Promise<Listing[]> {
+  if (category) {
+    return query<Listing>(`${SELECT} where l.category = $1 order by l.created_at desc`, [
+      category,
+    ]);
+  }
   return query<Listing>(`${SELECT} order by l.created_at desc`);
 }
 

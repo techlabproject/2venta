@@ -9,7 +9,16 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 async function main() {
   await pool.query(readFileSync("db/schema.sql", "utf8"));
-  await pool.query("truncate listings, sellers restart identity cascade");
+  await pool.query("truncate listings, sellers, categories restart identity cascade");
+
+  // D-05b: las tres categorías de la versión 1 salen de los mockups. Cambiar el
+  // conjunto es editar estas filas, no migrar el esquema.
+  await pool.query(
+    `insert into categories (slug, label, position) values
+       ('tecnologia', 'Tecnología', 1),
+       ('ropa',       'Ropa',       2),
+       ('ninos',      'Niños',      3)`
+  );
 
   const { rows } = await pool.query<{ id: string }>(
     `insert into sellers (alias, zone) values
@@ -22,8 +31,8 @@ async function main() {
   await pool.query(
     `insert into listings (seller_id, title, description, category, condition, price_cop) values
       ($1, 'iPhone 13 128 GB', 'Batería al 89%. Sin golpes, con caja y cargador original.', 'tecnologia', 'usado_bueno', 1850000),
-      ($2, 'Chaqueta de cuero talla M', 'Cuero legítimo, usada dos temporadas. Forro intacto.', 'ropa', 'usado_bueno', 145000),
-      ($1, 'Mesa de comedor para cuatro', 'Madera maciza. Una pata con una marca que no se ve puesta la mesa.', 'hogar', 'usado_regular', 320000)`,
+      ($2, 'Chaqueta de jean talla M', 'Poco uso, sin manchas ni descosidos. Talla M real.', 'ropa', 'usado_bueno', 95000),
+      ($1, 'Coche Chicco reclinable', 'Lo usó mi hija hasta los dos años. Ruedas y cinturones perfectos.', 'ninos', 'usado_regular', 260000)`,
     [camila, taller]
   );
 
