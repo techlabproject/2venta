@@ -4,9 +4,9 @@
 
 ## En qué voy
 
-Rebanada S-00 cerrada. Las cinco pruebas de punta a punta pasan, tipos y linter
-limpios. Falta el paso 6 del ciclo: la revisión con contexto fresco contra
-`slices/00-esqueleto-caminante.md`.
+S-00 cerrada, y encima de ella el sistema de diseño de la marca, tomado del
+proyecto de Claude Design (opción 1: verde bosque #2D5940, mostaza #E8A94C,
+Poppins y Work Sans). Seis pruebas en verde.
 
 Siguiente: S-01, cuenta con teléfono verificado. Es zona sensible.
 
@@ -30,11 +30,22 @@ Siguiente: S-01, cuenta con teléfono verificado. Es zona sensible.
   tienen que pasarle la ruta explícita o fallan conectando al puerto por defecto.
 - El puerto 3000 lo ocupa Docker en esta máquina; el servidor de desarrollo usa
   puerto asignado automáticamente.
+- Los mockups muestran un distintivo "Verificado" en cada tarjeta del feed. No se
+  implementó: la verificación de identidad no existe hasta S-02, y mostrar ese
+  distintivo sin dato real le miente al comprador sobre lo único que diferencia a
+  2venta. Entra con S-02.
+- Desde que la tarjeta del feed muestra los mismos datos que la ficha, las pruebas
+  no pueden buscar texto suelto: encuentran ambas. Cada aserción dice ahora en qué
+  región de la página espera el dato.
 - El repositorio vive en `~/Downloads/2venta`, que es un mal sitio permanente.
   Moverlo es un `mv` y no rompe nada.
 
 ## Preguntas abiertas que bloquean el lanzamiento, no el desarrollo
 
+- CONTRADICCIÓN SIN RESOLVER: los mockups dicen que las categorías son tecnología,
+  ropa y **cosas de niños**. La D-05 dice tecnología, ropa y **hogar**. El esquema
+  de base de datos hoy usa `hogar`. Cambiarlo después de tener publicaciones
+  implica migrar datos. Decidir antes de S-03.
 - Estrategia de arranque en frío: sin decidir.
 - R-02: falta confirmar con Mercado Pago si la retención se puede condicionar a un
   evento propio o solo a un calendario fijo.

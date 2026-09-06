@@ -1,25 +1,40 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 // La prueba de punta a punta de la rebanada S-00.
 // Ver slices/00-esqueleto-caminante.md
 
+// Desde que la tarjeta del feed muestra los mismos datos que la ficha, buscar
+// texto suelto encuentra ambas. Cada aserción dice explícitamente en qué región
+// de la página espera encontrar el dato.
+const detail = (page: Page) => page.getByRole("main").getByRole("definition");
+
 test("la lista muestra los productos sembrados con precio en pesos", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("link", { name: "iPhone 13 128 GB" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Chaqueta de cuero talla M" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Mesa de comedor para cuatro" })).toBeVisible();
-  await expect(page.getByText("$ 1.850.000")).toBeVisible();
+  const cards = page.getByRole("main").getByRole("listitem");
+  await expect(cards).toHaveCount(3);
+  await expect(cards.filter({ hasText: "iPhone 13 128 GB" })).toContainText("$ 1.850.000");
+  await expect(cards.filter({ hasText: "Chaqueta de cuero talla M" })).toContainText("$ 145.000");
+  await expect(cards.filter({ hasText: "Mesa de comedor para cuatro" })).toContainText("$ 320.000");
 });
 
 test("la ficha muestra el detalle y el alias del vendedor", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: "iPhone 13 128 GB" }).click();
+  await page
+    .getByRole("main")
+    .getByRole("listitem")
+    .filter({ hasText: "iPhone 13 128 GB" })
+    .getByRole("link")
+    .click();
 
+  await expect(page).toHaveURL(/\/producto\//);
   await expect(page.getByRole("heading", { name: "iPhone 13 128 GB" })).toBeVisible();
-  await expect(page.getByText("$ 1.850.000")).toBeVisible();
-  await expect(page.getByText("Tecnología")).toBeVisible();
-  await expect(page.getByText("Usado, buen estado")).toBeVisible();
-  await expect(page.getByText("Camila R. · Chapinero")).toBeVisible();
+  await expect(page.getByRole("main")).toContainText("$ 1.850.000");
+  // D-04: alias y zona, nunca nombre completo ni dirección exacta.
+  await expect(detail(page)).toHaveText([
+    "Tecnología",
+    "Usado, buen estado",
+    "Camila R. · Chapinero",
+  ]);
 });
 
 test("la ficha se sirve como HTML, sin depender de JavaScript del cliente", async ({
@@ -30,9 +45,15 @@ test("la ficha se sirve como HTML, sin depender de JavaScript del cliente", asyn
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto("/");
-  const href = await page.getByRole("link", { name: "iPhone 13 128 GB" }).getAttribute("href");
+  const href = await page
+    .getByRole("main")
+    .getByRole("listitem")
+    .filter({ hasText: "iPhone 13 128 GB" })
+    .getByRole("link")
+    .getAttribute("href");
   await page.goto(href!);
   await expect(page.getByRole("heading", { name: "iPhone 13 128 GB" })).toBeVisible();
+  await expect(detail(page)).toContainText(["Tecnología"]);
   await context.close();
 });
 
@@ -46,4 +67,13 @@ test("un identificador con formato inválido devuelve 404, no un error de servid
 }) => {
   const res = await page.goto("/producto/no-es-un-uuid");
   expect(res?.status()).toBe(404);
+});
+
+test("la marca aplica la tipografía y el color del manual", async ({ page }) => {
+  await page.goto("/");
+  // Opción 1 del manual: verde bosque de marca en la cabecera, Poppins en títulos.
+  const header = page.getByRole("banner");
+  await expect(header).toHaveCSS("background-color", "rgb(45, 89, 64)"); // #2D5940
+  const heading = page.getByRole("heading", { name: "Cerca de ti" });
+  await expect(heading).toHaveCSS("font-family", /Poppins/);
 });
