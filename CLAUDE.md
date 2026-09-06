@@ -39,6 +39,17 @@ IMPORTANT: ninguna consulta a base de datos que devuelva datos de una persona sa
 sin comprobar en el servidor que quien pregunta tiene derecho a verlos. La interfaz
 que oculta el botón no cuenta como control de acceso.
 
+# Gotchas
+
+- El servidor de desarrollo y las pruebas no pueden correr a la vez: Next se niega
+  a levantar un segundo servidor sobre el mismo directorio. Hay que parar el
+  preview antes de `npm run verify`.
+- El contenedor de Postgres corre con configuración regional en inglés. Cualquier
+  fecha con nombre de mes se formatea en la aplicación con `Intl`, nunca con
+  `to_char` en SQL.
+- `dotenv` no lee `.env.local`, eso solo lo hace Next. Los scripts fuera de Next
+  tienen que pasarle la ruta explícita.
+
 # Entorno
 
 - Docker Desktop debe estar corriendo antes de `docker compose up`.

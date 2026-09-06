@@ -4,12 +4,14 @@
 
 ## En qué voy
 
-S-01 cerrada. Quince pruebas en verde entre catálogo y cuentas.
+S-02 cerrada. Veinticinco pruebas en verde.
 
-Hecho hasta ahora: S-00 esqueleto caminante, sistema de diseño de la marca,
-categorías en tabla (D-05b), S-01 cuenta con celular verificado.
+Hecho: S-00 esqueleto caminante · sistema de diseño de la marca · categorías en
+tabla (D-05b) · S-01 cuenta con celular verificado · S-02 modo vendedor y
+verificación de identidad.
 
-Siguiente: S-02, modo vendedor y verificación de identidad. Zona sensible.
+Siguiente: S-03, publicar producto con video obligatorio. Depende de R-01, que ya
+tiene respuesta propuesta: se graba en el navegador con getUserMedia y MediaRecorder.
 
 ## Qué quedó a medias
 
@@ -19,6 +21,14 @@ Siguiente: S-02, modo vendedor y verificación de identidad. Zona sensible.
   registro del servidor y `src/lib/sms.ts` se niega a operar en producción. Conectar
   un proveedor real es cambiar esa única función.
 - Ingreso con Google y Apple: la biblioteca los soporta, faltan las credenciales.
+- El proveedor de verificación de identidad es de prueba, a la espera de R-02. Vive
+  detrás de una interfaz (`src/features/kyc/provider.ts`) y se comporta como el
+  real: entrega referencia, redirige y avisa por webhook firmado. Cambiarlo es
+  escribir otra implementación de esa interfaz.
+- Comparar la selfie al retirar plata: necesita el proveedor real.
+- Calificación, ventas y tasa de disputa no se muestran en el perfil público
+  todavía. Mostrarlas en cero daría impresión falsa de mal desempeño; llegan
+  con S-12.
 - Recuperación de contraseña: no existe todavía.
 - La forma congelada por S-00 y que las siguientes rebanadas deben copiar:
   una carpeta por funcionalidad en `src/features/`, las consultas de base de datos

@@ -4,6 +4,7 @@ import { getListing } from "@/features/catalog/queries";
 import { CONDITION_LABEL } from "@/features/catalog/labels";
 import { formatCop } from "@/lib/money";
 import { AppHeader } from "@/components/AppHeader";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 export const dynamic = "force-dynamic";
 
@@ -44,8 +45,12 @@ export default async function ListingPage({
           <dd>{CONDITION_LABEL[listing.condition]}</dd>
           <dt className="text-muted">Vendedor</dt>
           {/* D-04: alias y zona. Nunca nombre completo ni dirección exacta. */}
-          <dd>
-            {listing.seller_alias} · {listing.seller_zone}
+          <dd className="flex flex-wrap items-center gap-x-2">
+            <Link href={`/vendedor/${listing.seller_id}`} className="underline">
+              {listing.seller_alias}
+            </Link>
+            <span className="text-muted">· {listing.seller_zone}</span>
+            {listing.seller_verified && <VerifiedBadge />}
           </dd>
         </dl>
 

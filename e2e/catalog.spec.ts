@@ -30,11 +30,12 @@ test("la ficha muestra el detalle y el alias del vendedor", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "iPhone 13 128 GB" })).toBeVisible();
   await expect(page.getByRole("main")).toContainText("$ 1.850.000");
   // D-04: alias y zona, nunca nombre completo ni dirección exacta.
-  await expect(detail(page)).toHaveText([
+  await expect(detail(page)).toContainText([
     "Tecnología",
     "Usado, buen estado",
-    "Camila R. · Chapinero",
+    "Camila R.",
   ]);
+  await expect(page.getByRole("main")).toContainText("Chapinero");
 });
 
 test("la ficha se sirve como HTML, sin depender de JavaScript del cliente", async ({

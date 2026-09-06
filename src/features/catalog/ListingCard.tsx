@@ -1,12 +1,9 @@
 import Link from "next/link";
 import type { Listing } from "./queries";
 import { CONDITION_LABEL } from "./labels";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { formatCop } from "@/lib/money";
 
-// Nota deliberada: el mockup muestra un distintivo "Verificado" en cada tarjeta.
-// Todavía no existe verificación de identidad (llega en S-02), y poner el
-// distintivo ahora sería mentirle al comprador sobre lo único que diferencia a
-// 2venta. Entra cuando el dato sea real.
 export function ListingCard({ listing }: { listing: Listing }) {
   return (
     <li>
@@ -26,6 +23,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
             {listing.category_label} · {CONDITION_LABEL[listing.condition]}
           </p>
           <p className="text-xs text-muted">{listing.seller_zone}</p>
+          {listing.seller_verified && <VerifiedBadge className="mt-1.5" />}
         </div>
       </Link>
     </li>

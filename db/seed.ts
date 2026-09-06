@@ -11,7 +11,7 @@ async function main() {
   // El esquema de autenticación lo genera la biblioteca; el de dominio es nuestro.
   await pool.query(readFileSync("db/auth-schema.sql", "utf8"));
   await pool.query(readFileSync("db/schema.sql", "utf8"));
-  await pool.query("truncate listings, sellers, categories restart identity cascade");
+  await pool.query('truncate listings, categories, kyc_verifications, "user" restart identity cascade');
 
   // D-05b: las tres categorías de la versión 1 salen de los mockups. Cambiar el
   // conjunto es editar estas filas, no migrar el esquema.
@@ -22,13 +22,24 @@ async function main() {
        ('ninos',      'Niños',      3)`
   );
 
-  const { rows } = await pool.query<{ id: string }>(
-    `insert into sellers (alias, zone) values
-       ('Camila R.', 'Chapinero'),
-       ('Taller Usaquén', 'Usaquén')
-     returning id`
+  // Vendedores de prueba. Son usuarios reales de la tabla de cuentas (D-03), sin
+  // contraseña: existen solo para que el catálogo tenga algo que mostrar.
+  const camila = "seed-camila";
+  const taller = "seed-taller";
+  await pool.query(
+    `insert into "user" (id, name, email, "emailVerified", "updatedAt", "phoneNumber", "phoneNumberVerified", alias, zone) values
+       ($1, 'Camila Rodríguez', 'camila@ejemplo.co', true, now(), '+573001000001', true, 'Camila R.', 'Chapinero'),
+       ($2, 'Taller Usaquén',   'taller@ejemplo.co', true, now(), '+573001000002', true, 'Taller Usaquén', 'Usaquén')`,
+    [camila, taller]
   );
-  const [camila, taller] = rows.map((r) => r.id);
+
+  // Camila está verificada; el taller no. Así el catálogo muestra los dos casos y
+  // se ve que el distintivo solo aparece cuando hay dato real detrás.
+  await pool.query(
+    `insert into kyc_verifications (user_id, provider, reference, status) values
+       ($1, 'prueba', 'ref-seed-camila', 'aprobado')`,
+    [camila]
+  );
 
   await pool.query(
     `insert into listings (seller_id, title, description, category, condition, price_cop) values
