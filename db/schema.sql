@@ -42,6 +42,12 @@ create table if not exists listings (
   condition   listing_condition not null,
   -- D-09b y convención de montos: entero en pesos, nunca decimal.
   price_cop   integer not null check (price_cop > 0),
+  -- D-14: el video es obligatorio en toda categoría, así que la columna no admite
+  -- nulos. Una publicación sin video no puede existir ni por error de programación.
+  video_path  text not null,
+  poster_path text not null,
+  status      text not null default 'activa'
+              check (status in ('activa','reservada','vendida')),
   created_at  timestamptz not null default now()
 );
 

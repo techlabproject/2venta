@@ -28,10 +28,17 @@ export default async function ListingPage({
           Volver
         </Link>
 
-        {/* El carrusel con video obligatorio llega en S-03. */}
-        <div className="mt-4 flex aspect-[4/3] items-center justify-center rounded-2xl bg-ph text-sm text-muted">
-          Sin foto
-        </div>
+        {/* D-14: el video es la prueba de que el artículo existe y está como
+            dice. Va primero, antes que cualquier otra cosa. */}
+        <video
+          data-testid="video-articulo"
+          className="mt-4 aspect-[4/3] w-full rounded-2xl bg-ph object-cover"
+          controls
+          playsInline
+          preload="metadata"
+          poster={`/api/media/${listing.poster_path}`}
+          src={`/api/media/${listing.video_path}`}
+        />
 
         <p className="mt-5 font-title text-3xl font-semibold">
           {formatCop(listing.price_cop)}

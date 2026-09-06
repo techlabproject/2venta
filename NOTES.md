@@ -4,14 +4,18 @@
 
 ## En qué voy
 
-S-02 cerrada. Veinticinco pruebas en verde.
+S-03 cerrada. Treinta y dos pruebas en verde.
 
-Hecho: S-00 esqueleto caminante · sistema de diseño de la marca · categorías en
-tabla (D-05b) · S-01 cuenta con celular verificado · S-02 modo vendedor y
-verificación de identidad.
+Hecho: S-00 esqueleto · diseño de marca · categorías en tabla (D-05b) · S-01 cuenta
+con celular verificado · S-02 modo vendedor y verificación de identidad · S-03
+publicar con video obligatorio.
 
-Siguiente: S-03, publicar producto con video obligatorio. Depende de R-01, que ya
-tiene respuesta propuesta: se graba en el navegador con getUserMedia y MediaRecorder.
+R-01 queda demostrado: se graba en el navegador con getUserMedia y MediaRecorder,
+el archivo llega al servidor y se sirve de vuelta. Hay prueba automática con cámara
+simulada que recorre el ciclo completo.
+
+Siguiente: S-04, buscar y filtrar. Es la única de la Fase 1 que no toca zona
+sensible, así que es buena para retomar.
 
 ## Qué quedó a medias
 
@@ -26,6 +30,12 @@ tiene respuesta propuesta: se graba en el navegador con getUserMedia y MediaReco
   real: entrega referencia, redirige y avisa por webhook firmado. Cambiarlo es
   escribir otra implementación de esa interfaz.
 - Comparar la selfie al retirar plata: necesita el proveedor real.
+- Los archivos subidos van a disco local en `uploads/`, detrás de
+  `src/lib/storage.ts`. Mover a almacenamiento en la nube es reescribir esas tres
+  funciones. Falta transcodificar a un formato único: hoy se guarda lo que grabe
+  cada navegador, que no es lo mismo en Android que en iOS.
+- Fotos adicionales al cuadro de portada: el mockup las muestra, no están.
+- Editar, borrar, marcar como vendida o reservada (RF-16, RF-17): no están.
 - Calificación, ventas y tasa de disputa no se muestran en el perfil público
   todavía. Mostrarlas en cero daría impresión falsa de mal desempeño; llegan
   con S-12.

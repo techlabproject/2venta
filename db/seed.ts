@@ -42,10 +42,10 @@ async function main() {
   );
 
   await pool.query(
-    `insert into listings (seller_id, title, description, category, condition, price_cop) values
-      ($1, 'iPhone 13 128 GB', 'Batería al 89%. Sin golpes, con caja y cargador original.', 'tecnologia', 'usado_bueno', 1850000),
-      ($2, 'Chaqueta de jean talla M', 'Poco uso, sin manchas ni descosidos. Talla M real.', 'ropa', 'usado_bueno', 95000),
-      ($1, 'Coche Chicco reclinable', 'Lo usó mi hija hasta los dos años. Ruedas y cinturones perfectos.', 'ninos', 'usado_regular', 260000)`,
+    `insert into listings (seller_id, title, description, category, condition, price_cop, video_path, poster_path) values
+      ($1, 'iPhone 13 128 GB', 'Batería al 89%. Sin golpes, con caja y cargador original.', 'tecnologia', 'usado_bueno', 1850000, 'seed/demo.webm', 'seed/demo.jpg'),
+      ($2, 'Chaqueta de jean talla M', 'Poco uso, sin manchas ni descosidos. Talla M real.', 'ropa', 'usado_bueno', 95000, 'seed/demo.webm', 'seed/demo.jpg'),
+      ($1, 'Coche Chicco reclinable', 'Lo usó mi hija hasta los dos años. Ruedas y cinturones perfectos.', 'ninos', 'usado_regular', 260000, 'seed/demo.webm', 'seed/demo.jpg')`,
     [camila, taller]
   );
 

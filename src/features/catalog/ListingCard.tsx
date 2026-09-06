@@ -11,9 +11,13 @@ export function ListingCard({ listing }: { listing: Listing }) {
         href={`/producto/${listing.id}`}
         className="group block overflow-hidden rounded-2xl bg-white transition hover:shadow-md"
       >
-        <div className="flex aspect-[4/3] items-center justify-center bg-ph text-sm text-muted">
-          Sin foto
-        </div>
+        {/* La portada sale del primer cuadro del video, así que siempre
+            corresponde al artículo de verdad. */}
+        <img
+          src={`/api/media/${listing.poster_path}`}
+          alt=""
+          className="aspect-[4/3] w-full bg-ph object-cover"
+        />
         <div className="p-3">
           <p className="font-title text-lg font-semibold">{formatCop(listing.price_cop)}</p>
           <h3 className="mt-0.5 line-clamp-2 text-sm leading-snug font-medium">

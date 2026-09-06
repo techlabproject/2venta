@@ -11,6 +11,8 @@ export type Listing = {
   category_label: string;
   condition: Condition;
   price_cop: number;
+  video_path: string;
+  poster_path: string;
   seller_id: string;
   seller_alias: string;
   seller_zone: string;
@@ -23,6 +25,7 @@ export type Listing = {
 // distintivo.
 const SELECT = `
   select l.id, l.title, l.description, l.category, l.condition, l.price_cop,
+         l.video_path, l.poster_path,
          c.label as category_label,
          l.seller_id,
          coalesce(u.alias, u.name) as seller_alias,
