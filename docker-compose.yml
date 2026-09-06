@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: 2venta-db
+    environment:
+      POSTGRES_USER: 2venta
+      POSTGRES_PASSWORD: local
+      POSTGRES_DB: 2venta
+    ports:
+      - "5433:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U 2venta"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+volumes:
+  dbdata:
