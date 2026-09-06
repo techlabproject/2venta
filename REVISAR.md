@@ -1,0 +1,92 @@
+# Qué revisar
+
+Escrito la noche del 6 al 7 de septiembre de 2026, después de trabajar de corrido.
+Ordenado por lo que más cuesta cambiar después.
+
+## Cómo lo pones a correr
+
+```bash
+cd ~/Downloads/2venta
+npm run db:up && npx tsx db/seed.ts
+npm run dev
+```
+
+Para correr todas las pruebas hay que parar antes el servidor de desarrollo:
+Next se niega a levantar dos sobre el mismo directorio.
+
+```bash
+npm run verify
+```
+
+Cuenta de prueba: no hay. Crea una en `/bienvenida`, y cuando pida el código de
+verificación, míralo en la consola del servidor (`[sms] código para …`). Para
+verificar identidad, el proveedor de prueba tiene botones de aprobar y rechazar.
+
+## Decisiones que tomé solo y conviene que confirmes
+
+**1. La tercera categoría pasó de hogar a niños.** Los mockups dicen tecnología,
+ropa y cosas de niños; la D-05 decía hogar. Resolví a favor de los mockups porque
+son el artefacto más reciente y coinciden con la oportunidad que tu investigación
+había detectado. Para que revertirlo no cueste una migración, las categorías ahora
+viven en una tabla: cambiar el conjunto es editar filas en `db/seed.ts`.
+
+**2. React web en cápsula nativa, no Expo.** Quedó como D-25. Te la recomendé y no
+la confirmaste; la ejecuté para no bloquear. Revertirla ahora todavía es barato,
+más adelante no.
+
+**3. El vendedor dejó de ser una tabla aparte y pasó a ser un usuario**, siguiendo
+la D-03 (una sola cuenta con dos modos). Me pareció la lectura correcta de esa
+decisión, pero cambia el modelo de datos.
+
+## Cosas que hay que arreglar antes de lanzar
+
+**El código de verificación se guarda en texto plano.** Escribí en la
+especificación que la biblioteca lo hasheaba y resultó que no: su complemento de
+celular no ofrece esa opción, aunque otros complementos suyos sí. Quien tenga
+lectura de la base de datos puede tomar el control de una cuenta durante los cinco
+minutos que el código vive. Está mitigado (vence rápido, cinco intentos, cinco
+envíos por hora) pero no resuelto. Es la D-27 y es lo más serio de esta lista.
+
+**No hay proveedor de SMS.** En desarrollo el código sale por consola y
+`src/lib/sms.ts` se niega a operar en producción, así que no se puede desplegar por
+accidente sin conectarlo.
+
+**No hay transcodificación de video.** Se guarda lo que grabe cada navegador, y eso
+no es lo mismo en Android que en iOS. Hay que convertir a un formato único.
+
+**No hay migraciones.** El esquema se recrea entero al sembrar. Sirve mientras no
+haya un usuario real; después no.
+
+## Lo que quedó demostrado
+
+**R-01, el riesgo número uno, funciona.** Grabar con `getUserMedia` más
+`MediaRecorder` consume el flujo en vivo de la cámara, así que la galería no es una
+fuente posible por construcción. Hay una prueba automática con cámara simulada que
+recorre grabar, publicar, servir el video y verlo en el feed. La decisión D-08 (web
+y móvil con la misma base) se sostiene.
+
+## Dónde mirar si quieres revisar código
+
+- `slices/` — la especificación de cada rebanada, con su prueba de punta a punta y
+  sus casos de fallo. Es el mejor resumen de qué hace cada cosa.
+- `DECISIONS.md` — las 28 decisiones con su porqué y sus consecuencias.
+- `src/lib/auth.ts` — configuración de autenticación, con los comentarios que
+  explican por qué cada límite está donde está.
+- `src/features/publish/VideoCapture.tsx` — la respuesta a R-01.
+- `src/features/kyc/provider.ts` — la interfaz por donde entrará el proveedor real
+  cuando R-02 tenga respuesta.
+- `e2e/` — 32 pruebas. Si quieres saber qué se comprobó de verdad, están ahí.
+
+## Un problema de producto que salió construyendo
+
+El límite de envío de códigos estaba por dirección IP, que es incorrecto para este
+producto: detrás de una misma salida puede haber un edificio entero de usuarios
+legítimos, y el sexto registro del día los bloquearía a todos. Pasó a contarse por
+número de celular. No lo habíamos hablado y me pareció claro, pero es una decisión
+de producto, no solo técnica.
+
+## Lo que sigue
+
+S-04, buscar y filtrar. Es la única rebanada de la Fase 1 que no toca dinero ni
+identidad, así que es buena para retomar sin tener que recargar todo el contexto de
+seguridad.
