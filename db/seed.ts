@@ -8,6 +8,8 @@ config({ path: ".env.local" });
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 async function main() {
+  // El esquema de autenticación lo genera la biblioteca; el de dominio es nuestro.
+  await pool.query(readFileSync("db/auth-schema.sql", "utf8"));
   await pool.query(readFileSync("db/schema.sql", "utf8"));
   await pool.query("truncate listings, sellers, categories restart identity cascade");
 

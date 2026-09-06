@@ -182,3 +182,24 @@ confirmación. Es de las que conviene revisar.
 **Consecuencia.** Para que revertirla no cueste una migración, las categorías dejan
 de ser un tipo fijo de Postgres y pasan a una tabla `categories` sembrada. Cambiar
 el conjunto es editar filas.
+
+### D-27 — Biblioteca de autenticación
+Better Auth, con su complemento de código por celular. No se implementa a mano el
+manejo de contraseñas, tokens ni sesiones.
+**Por qué.** Es lo que dice la lista de zonas sensibles del método: la fluidez con
+la que un agente escribe su propia gestión de sesiones es justamente el riesgo.
+Trae además ingreso con Google y Apple listo para activar cuando existan las
+credenciales (D-01).
+**Consecuencia conocida y sin resolver.** Esta versión guarda el código de
+verificación en texto plano en la tabla `verification`; el complemento no ofrece
+opción de hashearlo, aunque otros complementos de la misma biblioteca sí. Quien
+tenga lectura de esa tabla puede tomar el control de una cuenta durante la ventana
+de vigencia. Se mitiga con vencimiento de cinco minutos, cinco intentos y límite de
+cinco envíos por hora, pero no se elimina. Hay que resolverlo antes del
+lanzamiento, y es de las cosas que conviene revisar.
+
+### D-28 — Registro solo por correo y contraseña
+Se rechaza la creación automática de cuenta al verificar un celular.
+**Por qué.** Esa opción de la biblioteca abre una segunda vía de registro, sin
+contraseña, en la que pedir un código a cualquier número crea una cuenta. Una sola
+puerta de entrada es más fácil de razonar y de defender.

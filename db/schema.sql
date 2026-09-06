@@ -38,3 +38,15 @@ create table if not exists listings (
 
 create index if not exists listings_created_at_idx on listings (created_at desc);
 create index if not exists listings_category_idx   on listings (category);
+
+-- Registro de envíos de código, para limitar por número de celular.
+-- El límite por dirección IP no sirve solo: en una red compartida (una
+-- universidad, una oficina, el NAT de un operador móvil) bloquearía a todos los
+-- usuarios legítimos que estén detrás de la misma salida.
+create table if not exists otp_sends (
+  id      bigserial primary key,
+  phone   text        not null,
+  sent_at timestamptz not null default now()
+);
+
+create index if not exists otp_sends_phone_idx on otp_sends (phone, sent_at desc);

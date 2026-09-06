@@ -4,16 +4,22 @@
 
 ## En qué voy
 
-S-00 cerrada, y encima de ella el sistema de diseño de la marca, tomado del
-proyecto de Claude Design (opción 1: verde bosque #2D5940, mostaza #E8A94C,
-Poppins y Work Sans). Seis pruebas en verde.
+S-01 cerrada. Quince pruebas en verde entre catálogo y cuentas.
 
-Siguiente: S-01, cuenta con teléfono verificado. Es zona sensible.
+Hecho hasta ahora: S-00 esqueleto caminante, sistema de diseño de la marca,
+categorías en tabla (D-05b), S-01 cuenta con celular verificado.
+
+Siguiente: S-02, modo vendedor y verificación de identidad. Zona sensible.
 
 ## Qué quedó a medias
 
-- El despliegue a producción quedó fuera de S-00 a propósito: necesita cuentas que
+- El despliegue a producción quedó fuera a propósito: necesita cuentas que
   todavía no existen (alojamiento, base de datos gestionada, proveedor de SMS).
+- El envío real de SMS no está conectado. En desarrollo el código se escribe en el
+  registro del servidor y `src/lib/sms.ts` se niega a operar en producción. Conectar
+  un proveedor real es cambiar esa única función.
+- Ingreso con Google y Apple: la biblioteca los soporta, faltan las credenciales.
+- Recuperación de contraseña: no existe todavía.
 - La forma congelada por S-00 y que las siguientes rebanadas deben copiar:
   una carpeta por funcionalidad en `src/features/`, las consultas de base de datos
   en `queries.ts` dentro de esa carpeta, las pantallas en `src/app/` sin lógica
