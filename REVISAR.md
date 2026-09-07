@@ -93,7 +93,7 @@ y móvil con la misma base) se sostiene.
 - `src/features/publish/VideoCapture.tsx` — la respuesta a R-01.
 - `src/features/kyc/provider.ts` — la interfaz por donde entrará el proveedor real
   cuando R-02 tenga respuesta.
-- `e2e/` — 62 pruebas de navegador, más 7 unitarias en `src/features/payments/money.test.ts`. Si quieres saber qué se comprobó de verdad, están ahí.
+- `e2e/` — 77 pruebas de navegador, más 10 unitarias en `src/features/payments/money.test.ts`. Si quieres saber qué se comprobó de verdad, están ahí.
 
 ## Un problema de producto que salió construyendo
 
@@ -102,6 +102,29 @@ producto: detrás de una misma salida puede haber un edificio entero de usuarios
 legítimos, y el sexto registro del día los bloquearía a todos. Pasó a contarse por
 número de celular. No lo habíamos hablado y me pareció claro, pero es una decisión
 de producto, no solo técnica.
+
+## Lo que reportó Luna en la primera ronda
+
+Encontró dos cosas reales.
+
+**El circuito de vendedor no comprobaba el celular confirmado.** Alguien podía
+registrarse, saltarse el código por SMS, verificar identidad y publicar, que es
+exactamente lo que la D-01 existe para impedir. Ya está cerrado, en las tres
+pantallas y también dentro de la acción de servidor.
+
+**El mensaje genérico al poner una contraseña corta.** Ese no lo pude reproducir en
+el código actual, y la prueba que agregué para su caso exacto pasa. Pero sondeando
+alrededor apareció la misma clase de defecto en dos variantes que sí existían: una
+contraseña demasiado larga caía al mensaje genérico, y **una de ocho espacios se
+aceptaba**, porque la biblioteca solo mide el largo. Las dos están arregladas.
+
+El tercer hallazgo, el 404 en inglés, ya estaba resuelto: Luna probó un estado
+anterior del proyecto. Le agregué al prompt que informe siempre en qué commit
+trabajó, porque sin ese dato no hay forma de saberlo.
+
+Vale la pena notar lo que esto dice del método: mis pruebas miraban el código de
+estado y no el mensaje, y por eso no veían nada de esto. Es justo el punto ciego
+que un verificador independiente existe para encontrar.
 
 ## Agente de pruebas
 
@@ -116,10 +139,12 @@ después de su propio recorrido. Si las encuentra sola, sabemos que su método s
 
 ## Lo que sigue
 
-S-06, envío y guía. Es la última de la Fase 1 y la más fácil de las que quedan:
-escribe la fecha de entrega que la liberación automática ya está esperando.
+**La Fase 1 está completa.** El circuito entero funciona: publicar con video,
+encontrar buscando, poner dirección, pagar producto más envío, despachar con guía,
+la transportadora reporta la entrega, y el pago se libera al confirmar o solo a los
+siete días. Eso convierte el proyecto de una idea en algo que se puede probar con
+personas.
 
-La Fase 1 ya está completa en lo esencial: **existe una transacción de punta a
-punta.** Alguien publica con video, otro lo encuentra buscando, paga con el dinero
-retenido, confirma y el pago se libera con la comisión descontada. Eso es lo que
-convierte el proyecto de una idea en algo que se puede probar con personas.
+Empieza la Fase 2, la que hace segura esa transacción. La primera es S-08, chat con
+ofertas y filtro anti-desvío, porque la entrega presencial con código se coordina
+dentro del chat.
