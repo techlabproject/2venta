@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { phoneNumber } from "better-auth/plugins";
 import { pool } from "./db";
@@ -58,6 +59,22 @@ export const auth = betterAuth({
       alias: { type: "string", required: false, input: true },
       zone: { type: "string", required: false, input: true },
     },
+  },
+
+  hooks: {
+    // La biblioteca solo mide el largo de la contraseña, así que "        " (ocho
+    // espacios) le parece válida. Se rechaza aquí, en el servidor, porque la
+    // comprobación en la pantalla no es control de nada.
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== "/sign-up/email") return;
+      const password = ctx.body?.password;
+      if (typeof password === "string" && password.trim().length < 8) {
+        throw new APIError("BAD_REQUEST", {
+          code: "PASSWORD_TOO_WEAK",
+          message: "La contraseña necesita al menos ocho caracteres que no sean espacios.",
+        });
+      }
+    }),
   },
 
   plugins: [

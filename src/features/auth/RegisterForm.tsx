@@ -106,7 +106,10 @@ function translate(code: string | undefined, fallback?: string): string {
     case "USER_ALREADY_EXISTS":
       return "Ese correo ya tiene una cuenta. Inicia sesión o usa otro.";
     case "PASSWORD_TOO_SHORT":
-      return "La contraseña necesita al menos ocho caracteres.";
+    case "PASSWORD_TOO_WEAK":
+      return "La contraseña necesita al menos ocho caracteres que no sean espacios.";
+    case "PASSWORD_TOO_LONG":
+      return "Esa contraseña es demasiado larga. Usa una más corta.";
     case "TOO_MANY_REQUESTS":
       return "Demasiados intentos. Espera un momento y vuelve a probar.";
     default:

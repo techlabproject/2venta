@@ -17,6 +17,12 @@ export async function publishListing(
   const user = await currentUser();
   if (!user) redirect("/ingresar");
 
+  // D-01: sin celular confirmado no se publica. La comprobación de la pantalla no
+  // basta: alguien puede llamar esta acción directamente.
+  if (!user.phoneNumberVerified) {
+    return { error: "Confirma tu celular antes de publicar." };
+  }
+
   // D-02: la comprobación vive en el servidor. Que la pantalla esconda el botón no
   // es control de acceso; alguien puede llamar esta acción directamente.
   const verification = await getVerification(user.id);

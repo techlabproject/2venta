@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function Publicar() {
   const user = await currentUser();
   if (!user) redirect("/ingresar");
+  if (!user.phoneNumberVerified) redirect("/verificar");
 
   // D-02: el vendedor verifica antes de publicar. Esta comprobación es de
   // comodidad; la que manda está dentro de la acción, en el servidor.

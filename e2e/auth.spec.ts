@@ -196,3 +196,59 @@ test("el sexto código pedido para el mismo celular se bloquea", async ({ page }
   await page.getByRole("button", { name: "No me llegó, mandar otro" }).click();
   await expect(alertIn(page)).toContainText("demasiados códigos");
 });
+
+test("una contraseña corta dice en pantalla cuántos caracteres faltan", async ({
+  page,
+}) => {
+  // Hallazgo de Luna, la verificadora independiente: el servidor rechazaba bien
+  // pero la pantalla decía "No pudimos crear tu cuenta", que no le dice al usuario
+  // qué arreglar. La prueba que ya existía solo miraba el código de estado, no el
+  // mensaje, y por eso no lo vio.
+  const { email, phoneDigits } = uniqueAccount();
+  await page.goto("/registro?rol=comprador");
+  await page.getByLabel("Nombre").fill("Clave Corta");
+  await page.getByLabel("Correo").fill(email);
+  await page.getByLabel("Celular").fill(phoneDigits);
+  await page.getByLabel("Contraseña").fill("siete77");
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Continuar" }).click();
+
+  await expect(alertIn(page)).toContainText("ocho caracteres");
+});
+
+test("una contraseña de puros espacios se rechaza en el servidor", async ({ request }) => {
+  // La biblioteca solo mide el largo, así que ocho espacios le parecían válidos.
+  // Salió sondeando el hallazgo de Luna sobre los mensajes de contraseña.
+  const { email, phoneDigits } = uniqueAccount();
+  const res = await request.post("/api/auth/sign-up/email", {
+    headers: { origin: "http://localhost:3100" },
+    data: {
+      email,
+      password: "        ",
+      name: "Espacios",
+      phoneNumber: `+57${phoneDigits}`,
+    },
+  });
+  expect(res.status()).toBeGreaterThanOrEqual(400);
+});
+
+test("sin celular confirmado no se entra al circuito de vendedor", async ({ page }) => {
+  // Hallazgo de Luna. Sin esto, alguien podía saltarse el código por SMS y aun así
+  // verificar identidad y publicar, que es justo lo que la D-01 existe para impedir.
+  const { email, phoneDigits } = uniqueAccount();
+  await page.goto("/registro?rol=vendedor");
+  await page.getByLabel("Nombre").fill("Sin Confirmar");
+  await page.getByLabel("Correo").fill(email);
+  await page.getByLabel("Celular").fill(phoneDigits);
+  await page.getByLabel("Contraseña").fill("unaClaveLarga1");
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(page).toHaveURL(/\/verificar/);
+
+  // La cuenta existe y la sesión está abierta, pero el celular no está confirmado.
+  await page.goto("/vender");
+  await expect(page).toHaveURL(/\/verificar/);
+
+  await page.goto("/publicar");
+  await expect(page).toHaveURL(/\/verificar/);
+});

@@ -13,6 +13,8 @@ export const dynamic = "force-dynamic";
 export default async function Vender() {
   const user = await currentUser();
   if (!user) redirect("/ingresar");
+  // D-01: sin celular confirmado no se entra al circuito de vendedor.
+  if (!user.phoneNumberVerified) redirect("/verificar");
 
   const v = await getVerification(user.id);
 

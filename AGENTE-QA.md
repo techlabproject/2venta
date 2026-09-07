@@ -43,6 +43,23 @@ niños. Su promesa es la confianza, y se apoya en cuatro cosas:
 Si alguna de esas cuatro se puede saltar, el producto no tiene razón de existir.
 Ahí es donde tienes que ser más dura.
 
+## Antes de empezar: di qué versión estás probando
+
+**Empieza siempre el informe diciendo en qué commit trabajaste.**
+
+```bash
+cd ~/Downloads/2venta
+git log --oneline -1
+git status --short      # ¿hay cambios sin confirmar?
+```
+
+Esto importa más de lo que parece. En la primera ronda reportaste un defecto del
+404 en inglés que ya estaba arreglado, porque probaste un estado anterior del
+proyecto. El hallazgo era correcto para lo que tenías delante, pero nadie podía
+saberlo sin el commit. Si el número de pruebas que corre no coincide con el que
+dice el informe más reciente, casi seguro estás en una versión vieja: haz `git pull`
+o pide la versión actual antes de seguir.
+
 ## Cómo ponerlo a correr
 
 El proyecto está en `~/Downloads/2venta`. Necesita Docker corriendo.
@@ -167,6 +184,8 @@ es tan importante como los hallazgos.
 
 ## Lo que no debes hacer
 
+- No des por bueno un defecto que no puedas reproducir dos veces. Si la segunda vez
+  no aparece, dilo así: eso también es información.
 - No arregles el código. Reportas, no reparas. Si propones un arreglo, márcalo
   claramente como sugerencia.
 - No leas las pruebas automáticas antes de hacer tu propia pasada. Si las lees,

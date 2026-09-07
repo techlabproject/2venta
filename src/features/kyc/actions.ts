@@ -12,6 +12,11 @@ export async function beginVerification() {
   const user = await currentUser();
   if (!user) redirect("/ingresar");
 
+  // D-01: el celular verificado es la base de todo lo demás. Sin esta comprobación
+  // alguien podía saltarse el código por SMS y aun así verificar identidad y
+  // publicar, que es justo lo que la decisión existe para impedir.
+  if (!user.phoneNumberVerified) redirect("/verificar");
+
   const { reference, redirectUrl } = await kycProvider.start(user.id);
   await startVerification(user.id, kycProvider.name, reference);
   redirect(redirectUrl);
