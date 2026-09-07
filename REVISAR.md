@@ -38,6 +38,12 @@ más adelante no.
 la D-03 (una sola cuenta con dos modos). Me pareció la lectura correcta de esa
 decisión, pero cambia el modelo de datos.
 
+**5. El código de entrega se cifra en vez de hashearse** (D-31). Empecé
+hasheándolo, que es más fuerte, y estaba mal: el comprador necesita volver a verlo
+al llegar al encuentro y de un hash no se recupera nada. Lo descubrieron las
+pruebas. Queda cifrado con un secreto del servidor, que conserva lo que importa:
+quien tenga la base sin el secreto no puede liberar pagos ajenos.
+
 **4. Precio mínimo de publicación de $10.000** (D-29). Salió construyendo el pago:
 el piso de comisión de $2.500 implica un mínimo que nadie había nombrado. Sin él,
 un artículo de $3.000 pagaría 83% de comisión. En $10.000 el piso equivale al 25%,
@@ -93,7 +99,7 @@ y móvil con la misma base) se sostiene.
 - `src/features/publish/VideoCapture.tsx` — la respuesta a R-01.
 - `src/features/kyc/provider.ts` — la interfaz por donde entrará el proveedor real
   cuando R-02 tenga respuesta.
-- `e2e/` — 77 pruebas de navegador, más 10 unitarias en `src/features/payments/money.test.ts`. Si quieres saber qué se comprobó de verdad, están ahí.
+- `e2e/` — 103 pruebas de navegador, más 31 unitarias (dinero, filtro anti-desvío y código de entrega). Si quieres saber qué se comprobó de verdad, están ahí.
 
 ## Un problema de producto que salió construyendo
 
