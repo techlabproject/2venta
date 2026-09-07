@@ -76,6 +76,22 @@ async function publish(page: Page, title: string, priceCop: number) {
   return new URL(page.url()).pathname.split("/").pop()!;
 }
 
+/**
+ * Recorre el paso de dirección y deja al comprador en la pantalla del proveedor.
+ * Desde S-06, comprar pasa primero por la dirección de entrega.
+ */
+async function goToPayment(page: Page, listingId: string) {
+  await page.goto(`/producto/${listingId}`);
+  await page.getByRole("link", { name: "Comprar con pago protegido" }).click();
+  await expect(page).toHaveURL(/\/comprar\//);
+
+  await page.getByLabel("Quién recibe").fill("Laura Torres");
+  await page.getByLabel("Celular de quien recibe").fill("300 412 88 05");
+  await page.getByLabel("Dirección").fill("Calle 72 #10-34");
+  await page.getByLabel("Zona").selectOption("Chapinero");
+  await page.getByRole("button", { name: "Ir a pagar" }).click();
+}
+
 /** Un vendedor verificado con un artículo publicado, en su propio contexto. */
 async function makeSellerWithListing(browser: Page["context"] extends never ? never : import("@playwright/test").Browser, title: string, price: number) {
   const context = await browser.newContext();
@@ -96,15 +112,13 @@ test("un comprador paga, el dinero queda retenido y el artículo sale del catál
   const buyer = await buyerContext.newPage();
   await signUpVerified(buyer, "comprador", "Laura Compradora");
 
-  await buyer.goto(`/producto/${seller.listingId}`);
-  await buyer.getByRole("button", { name: "Comprar con pago protegido" }).click();
-
+  await goToPayment(buyer, seller.listingId);
   await expect(buyer).toHaveURL(/\/dev\/pago\//);
   await buyer.getByRole("button", { name: "Simular pago aprobado" }).click();
 
   await expect(buyer).toHaveURL(/\/pedido\//);
   await expect(buyer.getByTestId("estado")).toHaveText("Pago recibido y guardado");
-  await expect(buyer.getByTestId("total")).toHaveText("$ 800.000");
+  await expect(buyer.getByTestId("total")).toHaveText("$ 812.000"); // 800.000 + 12.000 de envío
   await expect(buyer.getByRole("main")).toContainText("Tenemos guardados");
 
   // El artículo ya no aparece como disponible.
@@ -128,8 +142,7 @@ test("el comprador confirma y el dinero se libera con la comisión correcta", as
   const buyer = await buyerContext.newPage();
   await signUpVerified(buyer, "comprador", "Laura Compradora");
 
-  await buyer.goto(`/producto/${seller.listingId}`);
-  await buyer.getByRole("button", { name: "Comprar con pago protegido" }).click();
+  await goToPayment(buyer, seller.listingId);
   await buyer.getByRole("button", { name: "Simular pago aprobado" }).click();
   await expect(buyer).toHaveURL(/\/pedido\//);
   const orderUrl = buyer.url();
@@ -156,8 +169,7 @@ test("con la entrega registrada hace ocho días, el pago se libera solo", async 
   const buyer = await buyerContext.newPage();
   await signUpVerified(buyer, "comprador", "Laura Compradora");
 
-  await buyer.goto(`/producto/${seller.listingId}`);
-  await buyer.getByRole("button", { name: "Comprar con pago protegido" }).click();
+  await goToPayment(buyer, seller.listingId);
   await buyer.getByRole("button", { name: "Simular pago aprobado" }).click();
   await expect(buyer).toHaveURL(/\/pedido\//);
   const orderId = new URL(buyer.url()).pathname.split("/").pop()!;
@@ -190,8 +202,7 @@ test("un pago rechazado deja el artículo disponible otra vez", async ({ browser
   const buyer = await buyerContext.newPage();
   await signUpVerified(buyer, "comprador", "Laura Compradora");
 
-  await buyer.goto(`/producto/${seller.listingId}`);
-  await buyer.getByRole("button", { name: "Comprar con pago protegido" }).click();
+  await goToPayment(buyer, seller.listingId);
   await buyer.getByRole("button", { name: "Simular pago rechazado" }).click();
 
   await expect(buyer.getByTestId("estado")).toHaveText("Cancelado");
@@ -210,8 +221,7 @@ test("no se puede comprar el propio artículo", async ({ browser }) => {
   const titulo = `Escritorio ${Date.now()}`;
   const seller = await makeSellerWithListing(browser, titulo, 200_000);
 
-  await seller.page.goto(`/producto/${seller.listingId}`);
-  await seller.page.getByRole("button", { name: "Comprar con pago protegido" }).click();
+  await goToPayment(seller.page, seller.listingId);
   await expect(alertIn(seller.page)).toContainText("tu propio artículo");
 
   await seller.context.close();
@@ -286,9 +296,7 @@ test("un webhook repetido no libera ni cobra dos veces", async ({ browser }) => 
   const buyer = await buyerContext.newPage();
   await signUpVerified(buyer, "comprador", "Laura Compradora");
 
-  await buyer.goto(`/producto/${seller.listingId}`);
-  await buyer.getByRole("button", { name: "Comprar con pago protegido" }).click();
-  // Sin esperar la navegación, la dirección todavía es la del producto.
+  await goToPayment(buyer, seller.listingId);
   await expect(buyer).toHaveURL(/\/dev\/pago\//);
   const orderId = new URL(buyer.url()).pathname.split("/").pop()!;
 
@@ -336,8 +344,7 @@ test("un webhook fuera de orden no retrocede un estado más avanzado", async ({
   const buyer = await buyerContext.newPage();
   await signUpVerified(buyer, "comprador", "Laura Compradora");
 
-  await buyer.goto(`/producto/${seller.listingId}`);
-  await buyer.getByRole("button", { name: "Comprar con pago protegido" }).click();
+  await goToPayment(buyer, seller.listingId);
   await buyer.getByRole("button", { name: "Simular pago aprobado" }).click();
   await expect(buyer).toHaveURL(/\/pedido\//);
   const orderId = new URL(buyer.url()).pathname.split("/").pop()!;
@@ -376,8 +383,7 @@ test("nadie más que el comprador puede liberar el pago, ni ver el pedido", asyn
   const buyerContext = await browser.newContext();
   const buyer = await buyerContext.newPage();
   await signUpVerified(buyer, "comprador", "Laura Compradora");
-  await buyer.goto(`/producto/${seller.listingId}`);
-  await buyer.getByRole("button", { name: "Comprar con pago protegido" }).click();
+  await goToPayment(buyer, seller.listingId);
   await buyer.getByRole("button", { name: "Simular pago aprobado" }).click();
   await expect(buyer).toHaveURL(/\/pedido\//);
   const orderId = new URL(buyer.url()).pathname.split("/").pop()!;

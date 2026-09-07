@@ -94,7 +94,7 @@ create table if not exists orders (
   seller_id         text not null references "user"(id),
 
   status            text not null default 'pendiente_pago'
-                    check (status in ('pendiente_pago','pagado','entregado',
+                    check (status in ('pendiente_pago','pagado','despachado','entregado',
                                       'liberado','cancelado','reembolsado')),
 
   -- Todo entero en pesos. Se guardan las tres cifras, no solo el total: cuando
@@ -103,6 +103,12 @@ create table if not exists orders (
   subtotal_cop      integer not null check (subtotal_cop > 0),
   commission_cop    integer not null check (commission_cop >= 0),
   seller_payout_cop integer not null check (seller_payout_cop >= 0),
+
+  -- El envío se cobra al comprador y no entra en el cálculo de la comisión: 2venta
+  -- no gana sobre la plata de la transportadora.
+  shipping_cop      integer not null default 0 check (shipping_cop >= 0),
+  carrier           text,
+  tracking_number   text,
 
   provider          text not null,
   provider_ref      text unique,
@@ -155,3 +161,20 @@ create table if not exists order_events (
 );
 
 create index if not exists order_events_order_idx on order_events (order_id, created_at);
+
+-- Dirección de entrega (S-06). Dato personal.
+--
+-- Vive en su propia tabla y no en `orders` para que ninguna consulta de pedidos la
+-- traiga por descuido: hay que pedirla a propósito. La ven quien compra, la
+-- transportadora, y quien vende solo dentro de la guía.
+create table if not exists shipping_addresses (
+  order_id       uuid primary key references orders(id) on delete cascade,
+  recipient      text not null,
+  phone          text not null,
+  line1          text not null,
+  details        text,
+  city           text not null default 'Bogotá',
+  zone           text not null,
+  notes          text,
+  created_at     timestamptz not null default now()
+);

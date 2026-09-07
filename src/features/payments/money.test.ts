@@ -66,3 +66,24 @@ test("rechaza montos que no son enteros en pesos", () => {
   assert.throws(() => commissionCop(NaN), /Monto inválido/);
   assert.throws(() => commissionCop(Infinity), /Monto inválido/);
 });
+
+test("el envío se le cobra al comprador pero no paga comisión", () => {
+  const b = breakdown(200_000, 15_000);
+  assert.equal(b.buyerTotalCop, 215_000, "el comprador paga producto más envío");
+  // La comisión sale del producto solamente: 5% de 200.000.
+  assert.equal(b.commissionCop, 10_000);
+  assert.equal(b.sellerPayoutCop, 190_000);
+  // 2venta no gana sobre la plata de la transportadora.
+  assert.equal(b.commissionCop, commissionCop(200_000));
+});
+
+test("sin envío el total del comprador es el subtotal", () => {
+  const b = breakdown(200_000);
+  assert.equal(b.buyerTotalCop, b.subtotalCop);
+  assert.equal(b.shippingCop, 0);
+});
+
+test("rechaza un costo de envío que no sea entero", () => {
+  assert.throws(() => breakdown(200_000, 15_000.5), /Monto inválido/);
+  assert.throws(() => breakdown(200_000, -1), /Monto inválido/);
+});

@@ -1,22 +1,14 @@
-"use client";
+import Link from "next/link";
 
-import { useActionState } from "react";
-import { buyListing, type BuyResult } from "./actions";
-import { Button, ErrorNote } from "@/components/ui";
-
+// Comprar pasa primero por la dirección de entrega (S-06): el comprador tiene que
+// ver el total con envío antes de que le cobren nada.
 export function BuyButton({ listingId }: { listingId: string }) {
-  const [result, submit, pending] = useActionState<BuyResult | null, FormData>(
-    buyListing,
-    null
-  );
-
   return (
-    <form action={submit} className="mt-4 flex flex-col gap-3">
-      {result?.error && <ErrorNote>{result.error}</ErrorNote>}
-      <input type="hidden" name="listingId" value={listingId} />
-      <Button type="submit" disabled={pending}>
-        {pending ? "Preparando el pago…" : "Comprar con pago protegido"}
-      </Button>
-    </form>
+    <Link
+      href={`/comprar/${listingId}`}
+      className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-accent px-4 py-3 text-sm font-medium text-on-accent hover:brightness-95"
+    >
+      Comprar con pago protegido
+    </Link>
   );
 }

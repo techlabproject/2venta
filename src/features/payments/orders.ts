@@ -4,6 +4,7 @@ import { breakdown } from "./money";
 export type OrderStatus =
   | "pendiente_pago"
   | "pagado"
+  | "despachado"
   | "entregado"
   | "liberado"
   | "cancelado"
@@ -15,6 +16,9 @@ export type Order = {
   seller_id: string;
   status: OrderStatus;
   subtotal_cop: number;
+  shipping_cop: number;
+  carrier: string | null;
+  tracking_number: string | null;
   commission_cop: number;
   seller_payout_cop: number;
   provider_ref: string | null;
@@ -33,7 +37,8 @@ export type Order = {
  */
 const ALLOWED: Record<OrderStatus, OrderStatus[]> = {
   pendiente_pago: ["pagado", "cancelado"],
-  pagado: ["entregado", "liberado", "reembolsado"],
+  pagado: ["despachado", "entregado", "liberado", "reembolsado"],
+  despachado: ["entregado", "liberado", "reembolsado"],
   entregado: ["liberado", "reembolsado"],
   liberado: [],
   cancelado: [],
@@ -50,10 +55,11 @@ export async function createOrder(input: {
   listingId: string;
   title: string;
   priceCop: number;
+  shippingCop?: number;
   provider: string;
   idempotencyKey: string;
 }): Promise<Order> {
-  const money = breakdown(input.priceCop);
+  const money = breakdown(input.priceCop, input.shippingCop ?? 0);
 
   // Pedido y renglones se escriben juntos o no se escribe ninguno: un pedido sin
   // renglones no dice qué se compró, y eso rompe cualquier reclamo posterior.
@@ -64,8 +70,8 @@ export async function createOrder(input: {
     const { rows } = await client.query<Order>(
       `insert into orders
          (buyer_id, seller_id, subtotal_cop, commission_cop, seller_payout_cop,
-          provider, idempotency_key)
-       values ($1, $2, $3, $4, $5, $6, $7)
+          shipping_cop, provider, idempotency_key)
+       values ($1, $2, $3, $4, $5, $6, $7, $8)
        returning *`,
       [
         input.buyerId,
@@ -73,6 +79,7 @@ export async function createOrder(input: {
         money.subtotalCop,
         money.commissionCop,
         money.sellerPayoutCop,
+        money.shippingCop,
         input.provider,
         input.idempotencyKey,
       ]

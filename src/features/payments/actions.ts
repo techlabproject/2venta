@@ -7,7 +7,9 @@ import { query } from "@/lib/db";
 import { getListing } from "@/features/catalog/queries";
 import { paymentProvider, newIdempotencyKey } from "./provider";
 import { createOrder, getOrder, transition } from "./orders";
-import { MIN_PRICE_COP } from "./money";
+import { MIN_PRICE_COP, breakdown } from "./money";
+import { shippingProvider } from "@/features/shipping/provider";
+import { saveAddress } from "@/features/shipping/queries";
 
 export type BuyResult = { error: string };
 
@@ -25,6 +27,21 @@ export async function buyListing(
   }
 
   const listingId = String(form.get("listingId") ?? "");
+
+  // S-06: sin dirección no hay envío y sin envío no hay total que cobrar.
+  const address = {
+    recipient: String(form.get("recipient") ?? "").trim(),
+    phone: String(form.get("phone") ?? "").trim(),
+    line1: String(form.get("line1") ?? "").trim(),
+    details: String(form.get("details") ?? "").trim() || null,
+    city: "Bogotá",
+    zone: String(form.get("zone") ?? "").trim(),
+    notes: String(form.get("notes") ?? "").trim() || null,
+  };
+  if (!address.recipient || !address.phone || !address.line1 || !address.zone) {
+    return { error: "Completa la dirección de entrega para poder pagar." };
+  }
+
   const listing = await getListing(listingId);
   if (!listing) return { error: "Ese artículo ya no existe." };
 
@@ -52,19 +69,27 @@ export async function buyListing(
   // impide que un reintento por timeout cobre dos veces.
   const idempotencyKey = newIdempotencyKey();
 
+  const quote = await shippingProvider.quote({
+    zone: address.zone,
+    priceCop: listing.price_cop,
+  });
+
   const order = await createOrder({
     buyerId: user.id,
     sellerId: listing.seller_id,
     listingId: listing.id,
     title: listing.title,
     priceCop: listing.price_cop,
+    shippingCop: quote.costCop,
     provider: paymentProvider.name,
     idempotencyKey,
   });
 
+  await saveAddress(order.id, address);
+
   const checkout = await paymentProvider.createCheckout({
     orderId: order.id,
-    amountCop: order.subtotal_cop,
+    amountCop: breakdown(order.subtotal_cop, order.shipping_cop).buyerTotalCop,
     commissionCop: order.commission_cop,
     sellerId: listing.seller_id,
     idempotencyKey,

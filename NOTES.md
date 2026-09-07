@@ -4,15 +4,20 @@
 
 ## En qué voy
 
-S-05 cerrada. **La Fase 1 está completa: existe una transacción de punta a punta.**
-62 pruebas de navegador y 7 unitarias.
+S-06 cerrada. **La Fase 1 está completa entera.** 77 pruebas de navegador y 10
+unitarias.
 
 Hecho: S-00 esqueleto · diseño de marca · categorías en tabla (D-05b) · S-01 cuenta
 con celular verificado · S-02 modo vendedor y KYC · S-03 publicar con video ·
-S-04 buscar y filtrar · S-05 comprar con pago retenido.
+S-04 buscar y filtrar · S-05 comprar con pago retenido · S-06 envío y guía.
+Más los hallazgos de Luna cerrados.
 
-Siguiente: S-06, envío y guía. Escribe la fecha de entrega que la liberación
-automática ya está esperando.
+El circuito completo funciona: publicar con video, encontrar buscando, poner
+dirección, pagar producto más envío, despachar con guía, la transportadora reporta
+la entrega, y el pago se libera al confirmar o solo a los siete días.
+
+Siguiente: empieza la Fase 2. La primera es S-08, chat con ofertas y filtro
+anti-desvío, porque S-09 (entrega presencial con código) se coordina dentro del chat.
 
 ## Qué quedó a medias
 
@@ -34,8 +39,12 @@ automática ya está esperando.
   'liberado' y ahí se detiene.
 - La liberación automática necesita un programador de tareas que llame
   `POST /api/tareas/liberar` con el secreto. En desarrollo se llama a mano.
-- `delivered_at` no la escribe nadie todavía: la va a escribir S-06 cuando la
-  transportadora reporte la entrega.
+- La transportadora es de prueba: tarifa plana de $12.000 y una sola opción. R-04
+  propone un agregador logístico, pero no hay contrato.
+- No se puede elegir entre transportadoras ni ver opciones de precio.
+- No hay direcciones guardadas: hay que escribirla en cada compra.
+- El seguimiento del envío solo tiene dos estados, despachado y entregado. Falta el
+  detalle intermedio que muestra el mockup.
 - Los archivos subidos van a disco local en `uploads/`, detrás de
   `src/lib/storage.ts`. Mover a almacenamiento en la nube es reescribir esas tres
   funciones. Falta transcodificar a un formato único: hoy se guarda lo que grabe

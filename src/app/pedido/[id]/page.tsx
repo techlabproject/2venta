@@ -5,6 +5,9 @@ import { getOrder, getOrderItems } from "@/features/payments/orders";
 import { query } from "@/lib/db";
 import { ConfirmReceiptButton } from "@/features/payments/ConfirmReceiptButton";
 import { AppHeader } from "@/components/AppHeader";
+import { ShipButton } from "@/features/shipping/ShipButton";
+import { getAddress } from "@/features/shipping/queries";
+import { breakdown } from "@/features/payments/money";
 import { formatCop } from "@/lib/money";
 
 // Pantalla 1j del mockup: seguimiento y liberación del pago.
@@ -13,6 +16,7 @@ export const dynamic = "force-dynamic";
 const LABEL: Record<string, string> = {
   pendiente_pago: "Esperando el pago",
   pagado: "Pago recibido y guardado",
+  despachado: "El vendedor despachó",
   entregado: "Entregado",
   liberado: "Pago liberado al vendedor",
   cancelado: "Cancelado",
@@ -33,6 +37,10 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
 
   const isBuyer = order.buyer_id === user.id;
   const items = await getOrderItems(order.id);
+  // La dirección se pide a propósito y solo después de comprobar que quien mira es
+  // una de las dos partes. Nunca llega arrastrada por la consulta del pedido.
+  const address = await getAddress(order.id);
+  const money = breakdown(order.subtotal_cop, order.shipping_cop);
   const events = await query<{ to_status: string; detail: string | null; created_at: Date }>(
     `select to_status, detail, created_at from order_events
       where order_id = $1 order by created_at`,
@@ -64,8 +72,18 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
         </ul>
 
         <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-          <dt className="text-muted">{isBuyer ? "Pagaste" : "Precio"}</dt>
-          <dd data-testid="total">{formatCop(order.subtotal_cop)}</dd>
+          <dt className="text-muted">Producto</dt>
+          <dd>{formatCop(order.subtotal_cop)}</dd>
+          <dt className="text-muted">Envío</dt>
+          <dd>{formatCop(order.shipping_cop)}</dd>
+          {isBuyer && (
+            <>
+              <dt className="text-muted">Pagaste</dt>
+              <dd data-testid="total" className="font-medium">
+                {formatCop(money.buyerTotalCop)}
+              </dd>
+            </>
+          )}
           {!isBuyer && (
             <>
               <dt className="text-muted">Comisión 2venta</dt>
@@ -78,10 +96,45 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
           )}
         </dl>
 
-        {isBuyer && order.status === "pagado" && (
+        {order.tracking_number && (
+          <div className="mt-5 rounded-2xl bg-white p-4 text-sm">
+            <p className="font-medium">Guía {order.tracking_number}</p>
+            <p className="mt-1 text-muted">{order.carrier}</p>
+          </div>
+        )}
+
+        {!isBuyer && order.status === "pagado" && (
+          <div className="mt-6 rounded-2xl bg-brand/10 p-4">
+            <p className="text-sm font-medium text-brand">Te pagaron. Ya puedes despachar.</p>
+            <p className="mt-1 text-sm text-ink2">
+              Generamos la guía y te decimos a dónde llevarlo. El dinero llega a tu
+              cuenta cuando el comprador confirme que recibió.
+            </p>
+            <ShipButton orderId={order.id} />
+          </div>
+        )}
+
+        {address && (
+          <section className="mt-6 rounded-2xl bg-white p-4 text-sm">
+            <h2 className="font-medium">Entrega</h2>
+            {/* El vendedor ve la dirección solo desde que el pedido está pagado, que
+                es cuando la necesita para despachar. Nunca antes. */}
+            <p className="mt-1 text-ink2">{address.recipient}</p>
+            <p className="text-ink2">
+              {address.line1}
+              {address.details ? `, ${address.details}` : ""}
+            </p>
+            <p className="text-muted">
+              {address.zone} · {address.city}
+            </p>
+            {address.notes && <p className="mt-1 text-muted">Nota: {address.notes}</p>}
+          </section>
+        )}
+
+        {isBuyer && (order.status === "pagado" || order.status === "despachado" || order.status === "entregado") && (
           <div className="mt-6 rounded-2xl bg-brand/10 p-4">
             <p className="text-sm font-medium text-brand">
-              Tenemos guardados {formatCop(order.subtotal_cop)}
+              Tenemos guardados {formatCop(money.buyerTotalCop)}
             </p>
             <p className="mt-1 text-sm text-ink2">
               El dinero llega al vendedor cuando confirmes que recibiste el producto,

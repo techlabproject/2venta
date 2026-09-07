@@ -39,14 +39,22 @@ export function sellerPayoutCop(subtotalCop: number): number {
  * Desglose completo de un pedido. Que las tres cifras salgan de una sola función
  * es lo que garantiza que siempre cuadren entre sí.
  */
-export function breakdown(subtotalCop: number) {
+export function breakdown(subtotalCop: number, shippingCop = 0) {
+  assertMoney(shippingCop);
   const commission = commissionCop(subtotalCop);
   return {
     subtotalCop,
+    shippingCop,
     commissionCop: commission,
     sellerPayoutCop: subtotalCop - commission,
-    /** Lo que paga el comprador. El envío se suma aquí cuando exista (S-06). */
-    buyerTotalCop: subtotalCop,
+    /**
+     * Lo que paga el comprador: producto más envío.
+     *
+     * El envío no entra en el cálculo de la comisión a propósito. 2venta no gana
+     * sobre la plata de la transportadora, y cobrarle porcentaje al envío haría
+     * que un artículo barato y pesado pague comisión por algo que no es la venta.
+     */
+    buyerTotalCop: subtotalCop + shippingCop,
   };
 }
 
