@@ -50,6 +50,19 @@ un artículo de $3.000 pagaría 83% de comisión. En $10.000 el piso equivale al
 que sigue siendo alto pero es defendible para el tramo más barato. Deja fuera el
 accesorio muy barato, así que es una decisión de producto, no un detalle técnico.
 
+## Entrar con Google: falta que pegues las credenciales
+
+El código está listo. Las credenciales salen de la consola de Google Cloud y solo
+las puedes generar tú. Instrucciones paso a paso en `GOOGLE.md`.
+
+El botón solo aparece cuando existen `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`:
+sin ellas el proveedor ni se registra, así que la app no se rompe por no tenerlas.
+
+Un detalle que resolví y conviene que sepas: **entrar con Google no exime del
+celular verificado.** Google entrega el correo, no el número, y la D-01 no admite
+excepción. Sin ese paso cualquiera podría estafar y volver a entrar con otra cuenta
+de Google en dos minutos.
+
 ## Cosas que hay que arreglar antes de lanzar
 
 **El código de verificación se guarda en texto plano.** Escribí en la
@@ -99,7 +112,7 @@ y móvil con la misma base) se sostiene.
 - `src/features/publish/VideoCapture.tsx` — la respuesta a R-01.
 - `src/features/kyc/provider.ts` — la interfaz por donde entrará el proveedor real
   cuando R-02 tenga respuesta.
-- `e2e/` — 103 pruebas de navegador, más 31 unitarias (dinero, filtro anti-desvío y código de entrega). Si quieres saber qué se comprobó de verdad, están ahí.
+- `e2e/` — 118 pruebas de navegador, más 44 unitarias (dinero, filtro anti-desvío, código de entrega, IMEI y moderación). Si quieres saber qué se comprobó de verdad, están ahí.
 
 ## Un problema de producto que salió construyendo
 
