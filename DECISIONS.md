@@ -314,3 +314,21 @@ dígitos con vencimiento, que es lógica de aplicación, no criptografía.
 **Consecuencia.** El secreto del servidor pasa a ser crítico, como el del código de
 entrega. Y se pierde el inicio de sesión por celular que traía el complemento, que
 no se usaba.
+
+### D-40 — La recuperación de contraseña va por celular, no por correo
+El RF-04 decía "correo o SMS". Se hace solo por celular.
+**Por qué.** El celular está verificado y el correo no. Mandar la recuperación a un
+correo que nadie comprobó convierte ese correo en la llave real de la cuenta, y
+cualquiera que se registre con un correo ajeno se queda con la puerta abierta.
+Recuperar por el canal verificado es lo coherente con la D-01.
+**Además:** ya existe toda la maquinaria del código por celular de S-17, cifrada y
+con límite de intentos, y no hay proveedor de correo conectado.
+**Consecuencia.** Quien pierde el acceso a su celular pierde la cuenta hasta que
+haya un procedimiento con soporte humano. Es un caso real y no tiene solución de
+pantalla: recuperar sin el canal verificado sería exactamente el agujero que esto
+evita.
+
+### D-41 — Cambiar la contraseña cierra las demás sesiones
+**Por qué.** Si alguien entró a la cuenta, recuperar la contraseña tiene que
+echarlo. No hacerlo dejaría al intruso adentro mientras el dueño cree que ya lo
+resolvió, que es el peor de los dos mundos.

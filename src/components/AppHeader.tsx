@@ -27,7 +27,9 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
               <Link href="/avisos" className="text-cream/85 underline">
                 Avisos
               </Link>
-              <span data-testid="usuario">{user.alias ?? user.name}</span>
+              <Link href="/cuenta" data-testid="usuario" className="underline">
+                {user.alias ?? user.name}
+              </Link>
               <SignOutButton />
             </>
           ) : (

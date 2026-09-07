@@ -4,13 +4,13 @@
 
 ## En qué voy
 
-Las tres fases completas, más S-17 (brecha D-27 cerrada), migraciones, S-18 (mis
-compras, ventas y chats) y S-19 (editar y retirar). 191 pruebas de navegador y 70
-unitarias.
+Las tres fases completas, más S-17 (D-27 cerrada), migraciones, S-18 (actividad),
+S-19 (editar y retirar) y S-20 (recuperar contraseña y sesiones). 199 pruebas de
+navegador y 70 unitarias.
 
-S-19 cierra el RF-16 y el RF-17, los dos marcados de prioridad alta en los
-requisitos originales y que nunca se habían construido: un error de dedo en el
-precio se quedaba para siempre y un artículo vendido por fuera seguía apareciendo.
+Las tres últimas salieron de revisar los requisitos originales contra lo
+construido, no de una prueba: RF-04, RF-05, RF-16 y RF-17 estaban sin hacer, y no
+había forma de volver a un pedido ni a una conversación.
 
 Lo que queda es la lista de abajo, y lo más urgente ya no es código nuestro sino
 conectar proveedores reales.
@@ -98,7 +98,8 @@ conectar proveedores reales.
 - Calificación, ventas y tasa de disputa no se muestran en el perfil público
   todavía. Mostrarlas en cero daría impresión falsa de mal desempeño; llegan
   con S-12.
-- Recuperación de contraseña: no existe todavía.
+- (RESUELTO en S-20) Recuperación de contraseña por celular y lista de sesiones
+  abiertas (RF-04, RF-05).
 - La forma congelada por S-00 y que las siguientes rebanadas deben copiar:
   una carpeta por funcionalidad en `src/features/`, las consultas de base de datos
   en `queries.ts` dentro de esa carpeta, las pantallas en `src/app/` sin lógica

@@ -15,6 +15,11 @@ export default function Ingresar() {
       )}
       <LoginForm />
       <p className="text-center text-sm text-ink2">
+        <Link href="/recuperar" className="text-brand underline">
+          Olvidé mi contraseña
+        </Link>
+      </p>
+      <p className="text-center text-sm text-ink2">
         ¿No tienes cuenta?{" "}
         <Link href="/bienvenida" className="font-medium text-brand underline">
           Crear una
