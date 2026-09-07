@@ -10,8 +10,9 @@ const detail = (page: Page) => page.getByRole("main").getByRole("definition");
 
 test("la lista muestra los productos sembrados con precio en pesos", async ({ page }) => {
   await page.goto("/");
+  // No se cuenta el total: las pruebas de publicar agregan artículos a la misma
+  // base. Se comprueba que los sembrados estén y con el precio correcto.
   const cards = page.getByRole("main").getByRole("listitem");
-  await expect(cards).toHaveCount(3);
   await expect(cards.filter({ hasText: "iPhone 13 128 GB" })).toContainText("$ 1.850.000");
   await expect(cards.filter({ hasText: "Chaqueta de jean talla M" })).toContainText("$ 95.000");
   await expect(cards.filter({ hasText: "Coche Chicco reclinable" })).toContainText("$ 260.000");

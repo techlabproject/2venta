@@ -4,18 +4,15 @@
 
 ## En qué voy
 
-S-03 cerrada. Treinta y dos pruebas en verde.
+S-04 cerrada. La Fase 1 del lado del comprador está completa. Cuarenta y ocho
+pruebas en verde.
 
 Hecho: S-00 esqueleto · diseño de marca · categorías en tabla (D-05b) · S-01 cuenta
-con celular verificado · S-02 modo vendedor y verificación de identidad · S-03
-publicar con video obligatorio.
+con celular verificado · S-02 modo vendedor y KYC · S-03 publicar con video ·
+S-04 buscar y filtrar.
 
-R-01 queda demostrado: se graba en el navegador con getUserMedia y MediaRecorder,
-el archivo llega al servidor y se sirve de vuelta. Hay prueba automática con cámara
-simulada que recorre el ciclo completo.
-
-Siguiente: S-04, buscar y filtrar. Es la única de la Fase 1 que no toca zona
-sensible, así que es buena para retomar.
+Siguiente: S-05, comprar con pago retenido. Es la rebanada más delicada del
+proyecto y depende de R-02, que sigue sin respuesta.
 
 ## Qué quedó a medias
 
@@ -35,6 +32,13 @@ sensible, así que es buena para retomar.
   funciones. Falta transcodificar a un formato único: hoy se guarda lo que grabe
   cada navegador, que no es lo mismo en Android que en iOS.
 - Fotos adicionales al cuadro de portada: el mockup las muestra, no están.
+- Filtro por distancia en kilómetros: el mockup lo muestra, pero no hay coordenadas
+  de nada. Se filtra por zona. La distancia entra cuando exista el dato.
+- Paginación de resultados: la búsqueda corta en 60. Con una sola ciudad alcanza
+  por ahora.
+- Las pruebas se acumulan en la misma base: las de publicar crean artículos que
+  quedan. Por eso las de búsqueda no cuentan totales sino qué aparece y qué no.
+  `npx tsx db/seed.ts` deja todo limpio otra vez.
 - Editar, borrar, marcar como vendida o reservada (RF-16, RF-17): no están.
 - Calificación, ventas y tasa de disputa no se muestran en el perfil público
   todavía. Mostrarlas en cero daría impresión falsa de mal desempeño; llegan

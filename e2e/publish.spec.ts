@@ -68,7 +68,10 @@ test("un vendedor verificado graba, publica y el artículo aparece en el feed", 
   await page.goto("/publicar");
   await recordVideo(page);
 
-  await page.getByLabel("Título").fill("Bicicleta todoterreno rin 29");
+  // Título único por corrida: las pruebas se acumulan en la misma base y dos
+  // artículos con el mismo nombre vuelven ambigua la aserción.
+  const titulo = `Bicicleta todoterreno ${Date.now()}`;
+  await page.getByLabel("Título").fill(titulo);
   await page.getByLabel("Categoría").selectOption("ninos");
   await page.getByLabel("Precio").fill("450000");
   await page.getByLabel("Descripción").fill("Usada dos temporadas, frenos nuevos.");
@@ -76,7 +79,7 @@ test("un vendedor verificado graba, publica y el artículo aparece en el feed", 
 
   await expect(page).toHaveURL(/\/producto\//);
   await expect(
-    page.getByRole("heading", { name: "Bicicleta todoterreno rin 29" })
+    page.getByRole("heading", { name: titulo })
   ).toBeVisible();
   await expect(page.getByRole("main")).toContainText("$ 450.000");
 
@@ -88,8 +91,8 @@ test("un vendedor verificado graba, publica y el artículo aparece en el feed", 
 
   await page.goto("/");
   await expect(
-    page.getByRole("main").getByRole("listitem").filter({ hasText: "Bicicleta todoterreno" })
-  ).toBeVisible();
+    page.getByRole("main").getByRole("listitem").filter({ hasText: titulo })
+  ).toHaveCount(1);
 });
 
 test("sin video no se puede publicar", async ({ page }) => {

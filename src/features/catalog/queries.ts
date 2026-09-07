@@ -23,7 +23,7 @@ export type Listing = {
 // El distintivo de verificado no es una columna que la aplicación pueda escribir:
 // sale del estado que reportó el proveedor externo. Si no hay fila aprobada, no hay
 // distintivo.
-const SELECT = `
+export const LISTING_SELECT = `
   select l.id, l.title, l.description, l.category, l.condition, l.price_cop,
          l.video_path, l.poster_path,
          c.label as category_label,
@@ -45,11 +45,11 @@ export function listCategories(): Promise<Category[]> {
 
 export function listListings(category?: string): Promise<Listing[]> {
   if (category) {
-    return query<Listing>(`${SELECT} where l.category = $1 order by l.created_at desc`, [
+    return query<Listing>(`${LISTING_SELECT} where l.category = $1 order by l.created_at desc`, [
       category,
     ]);
   }
-  return query<Listing>(`${SELECT} order by l.created_at desc`);
+  return query<Listing>(`${LISTING_SELECT} order by l.created_at desc`);
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -83,7 +83,7 @@ export async function getPublicSeller(id: string): Promise<PublicSeller | null> 
 }
 
 export function listSellerListings(sellerId: string): Promise<Listing[]> {
-  return query<Listing>(`${SELECT} where l.seller_id = $1 order by l.created_at desc`, [
+  return query<Listing>(`${LISTING_SELECT} where l.seller_id = $1 order by l.created_at desc`, [
     sellerId,
   ]);
 }
@@ -92,6 +92,6 @@ export async function getListing(id: string): Promise<Listing | null> {
   // Un id con formato inválido no debe llegar a Postgres: allí produciría una
   // excepción de tipo en vez de un 404 limpio.
   if (!UUID.test(id)) return null;
-  const rows = await query<Listing>(`${SELECT} where l.id = $1`, [id]);
+  const rows = await query<Listing>(`${LISTING_SELECT} where l.id = $1`, [id]);
   return rows[0] ?? null;
 }

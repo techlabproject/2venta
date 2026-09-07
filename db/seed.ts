@@ -8,6 +8,17 @@ config({ path: ".env.local" });
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 async function main() {
+  // El seed recrea el esquema entero (pre-lanzamiento, ver db/schema.sql). Eso
+  // borra todo, así que se niega a correr contra cualquier base que no sea la
+  // local: un descuido con la variable de entorno apuntando a producción sería
+  // irreversible.
+  const url = process.env.DATABASE_URL ?? "";
+  if (!/@(localhost|127\.0\.0\.1|db):/.test(url)) {
+    throw new Error(`Este script borra todo y solo corre contra una base local. Recibió: ${url}`);
+  }
+
+  await pool.query("drop schema public cascade; create schema public;");
+
   // El esquema de autenticación lo genera la biblioteca; el de dominio es nuestro.
   await pool.query(readFileSync("db/auth-schema.sql", "utf8"));
   await pool.query(readFileSync("db/schema.sql", "utf8"));

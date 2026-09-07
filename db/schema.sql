@@ -54,6 +54,22 @@ create table if not exists listings (
 create index if not exists listings_created_at_idx on listings (created_at desc);
 create index if not exists listings_category_idx   on listings (category);
 create index if not exists listings_seller_idx     on listings (seller_id);
+create index if not exists listings_price_idx      on listings (price_cop);
+
+-- Búsqueda de texto completo en español: reconoce plurales y conjugaciones, y
+-- 'unaccent' hace que "bicicleta" encuentre "bicicléta" y viceversa. Con una sola
+-- ciudad y tres categorías esto sobra; un motor dedicado sería complicar por gusto.
+create extension if not exists "unaccent";
+
+-- unaccent() no está marcada como inmutable, y Postgres no acepta funciones no
+-- inmutables dentro de un índice. Este envoltorio es el patrón estándar: fija el
+-- diccionario, con lo cual el resultado sí es estable.
+create or replace function sin_tildes(text) returns text
+  language sql immutable strict parallel safe
+  as $$ select public.unaccent('public.unaccent', $1) $$;
+
+create index if not exists listings_search_idx on listings
+  using gin (to_tsvector('spanish', sin_tildes(title || ' ' || description)));
 
 -- Registro de envíos de código, para limitar por número de celular.
 -- El límite por dirección IP no sirve solo: en una red compartida (una
