@@ -1,10 +1,7 @@
 import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
-import { phoneNumber } from "better-auth/plugins";
 import { pool } from "./db";
-import { sendVerificationCode } from "./sms";
-import { assertCanSendCode } from "./otp-rate-limit";
 
 // La autenticación se delega en una biblioteca establecida a propósito: el manejo
 // de contraseñas, tokens y sesiones es exactamente lo que no se implementa a mano
@@ -43,9 +40,7 @@ export const auth = betterAuth({
     max: 60,
     customRules: {
       // Techo por dirección IP, solo contra inundación. El límite que de verdad
-      // protege cada cuenta es por número de celular y vive en sendOTP.
-      "/phone-number/send-otp": { window: 3600, max: 40 },
-      "/phone-number/verify": { window: 600, max: 10 },
+      // protege cada cuenta es por número de celular y vive en sendCode.
       "/sign-in/email": { window: 600, max: 10 },
     },
   },
@@ -72,6 +67,10 @@ export const auth = betterAuth({
     additionalFields: {
       // D-04: el alias es lo que ve el resto de la plataforma. El nombre real
       // nunca es público.
+      // El celular y su estado de verificación los maneja S-17, no la biblioteca:
+      // su complemento guardaba el código en texto plano (D-27).
+      phoneNumber: { type: "string", required: false, input: true },
+      phoneNumberVerified: { type: "boolean", required: false, input: false, defaultValue: false },
       alias: { type: "string", required: false, input: true },
       zone: { type: "string", required: false, input: true },
       // El rol NO es escribible desde el cliente: si lo fuera, cualquiera se
@@ -97,19 +96,6 @@ export const auth = betterAuth({
   },
 
   plugins: [
-    phoneNumber({
-      // D-01: sin número verificado no se compra ni se escribe.
-      sendOTP: async ({ phoneNumber, code }) => {
-        await assertCanSendCode(phoneNumber);
-        await sendVerificationCode(phoneNumber, code);
-      },
-      otpLength: 6,
-      expiresIn: 300, // cinco minutos
-      allowedAttempts: 5,
-      // A propósito NO se activa signUpOnVerification. Crearía una segunda vía de
-      // registro, solo con celular y sin contraseña, que contradice la D-01 y
-      // deja que pedir un código a un número cualquiera cree una cuenta.
-    }),
     // Debe ir de último: es lo que deja que la biblioteca escriba la cookie de
     // sesión desde una acción de servidor.
     nextCookies(),

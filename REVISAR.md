@@ -65,12 +65,11 @@ de Google en dos minutos.
 
 ## Cosas que hay que arreglar antes de lanzar
 
-**El código de verificación se guarda en texto plano.** Escribí en la
-especificación que la biblioteca lo hasheaba y resultó que no: su complemento de
-celular no ofrece esa opción, aunque otros complementos suyos sí. Quien tenga
-lectura de la base de datos puede tomar el control de una cuenta durante los cinco
-minutos que el código vive. Está mitigado (vence rápido, cinco intentos, cinco
-envíos por hora) pero no resuelto. Es la D-27 y es lo más serio de esta lista.
+**El código de verificación en texto plano: RESUELTO.** Era lo más serio de esta
+lista y venía desde S-01. Se dejó de usar el complemento de la biblioteca, que lo
+guardaba en claro y no ofrecía alternativa, y ahora se cifra con un secreto del
+servidor, igual que el código de entrega presencial. Quien tenga la base sin el
+secreto no puede tomar el control de ninguna cuenta. Queda como D-39.
 
 **No hay proveedor de SMS.** En desarrollo el código sale por consola y
 `src/lib/sms.ts` se niega a operar en producción, así que no se puede desplegar por
@@ -112,7 +111,7 @@ y móvil con la misma base) se sostiene.
 - `src/features/publish/VideoCapture.tsx` — la respuesta a R-01.
 - `src/features/kyc/provider.ts` — la interfaz por donde entrará el proveedor real
   cuando R-02 tenga respuesta.
-- `e2e/` — 175 pruebas de navegador, más 64 unitarias (dinero, filtro anti-desvío, código de entrega, IMEI, moderación, NIT y carga en lote). Si quieres saber qué se comprobó de verdad, están ahí.
+- `e2e/` — 177 pruebas de navegador, más 70 unitarias (dinero, filtro anti-desvío, códigos cifrados, IMEI, moderación, NIT y carga en lote). Si quieres saber qué se comprobó de verdad, están ahí.
 
 ## Un problema de producto que salió construyendo
 

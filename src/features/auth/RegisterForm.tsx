@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { sendCode } from "./actions";
 import { Button, ErrorNote, Field } from "@/components/ui";
 
 export function RegisterForm() {
@@ -44,14 +45,18 @@ export function RegisterForm() {
       return;
     }
 
-    const sent = await authClient.phoneNumber.sendOtp({ phoneNumber: phone });
+    // El código se manda aquí y se espera. Hacerlo después de navegar deja una
+    // carrera: la pantalla de verificación puede aparecer antes de que el código
+    // exista, y quien lo pide de inmediato no encuentra nada.
+    const sent = await sendCode();
     if (sent.error) {
-      setError(translate(sent.error.code, sent.error.message));
+      setError(sent.error);
       setBusy(false);
       return;
     }
 
-    router.push(`/verificar?tel=${encodeURIComponent(phone)}&rol=${rol}`);
+    router.push(`/verificar?rol=${rol}`);
+    router.refresh();
   }
 
   return (

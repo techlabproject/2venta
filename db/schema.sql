@@ -413,3 +413,20 @@ create table if not exists favorites (
 );
 
 create index if not exists favorites_listing_idx on favorites (listing_id);
+
+-- Código de verificación por celular (S-17, cierra la D-27).
+--
+-- Cifrado con un secreto del servidor, no en texto plano. La biblioteca de
+-- autenticación lo guardaba en claro y no ofrecía alternativa; aquí el código es
+-- nuestro, así que se hace bien. Quien tenga la base sin el secreto no puede tomar
+-- el control de ninguna cuenta.
+create table if not exists phone_codes (
+  phone      text primary key,
+  code_enc   text not null,
+  attempts   integer not null default 0,
+  expires_at timestamptz not null,
+  used_at    timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists phone_codes_expiry_idx on phone_codes (expires_at);

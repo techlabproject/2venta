@@ -1,45 +1,9 @@
 import { test, expect, type Page } from "@playwright/test";
-import { config } from "dotenv";
-
-config({ path: ".env.local" });
+import { alertIn, signUpVerified, uniqueAccount, withDb } from "./helpers";
 
 // La prueba de punta a punta de la rebanada S-03.
 // Ver slices/03-publicar-con-video.md
 
-const alertIn = (page: Page) => page.getByRole("main").getByRole("alert");
-
-function uniqueAccount() {
-  const n = Math.floor(Math.random() * 900_000_000) + 100_000_000;
-  return {
-    phoneDigits: `3${String(n).padStart(9, "0")}`.slice(0, 10),
-    email: `publica.${Date.now()}.${n}@correo.com`,
-  };
-}
-
-async function signUpVerified(page: Page) {
-  const { email, phoneDigits } = uniqueAccount();
-  await page.goto("/registro?rol=vendedor");
-  await page.getByLabel("Nombre").fill("Andrés Molina");
-  await page.getByLabel("Correo").fill(email);
-  await page.getByLabel("Celular").fill(phoneDigits);
-  await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page).toHaveURL(/\/verificar/);
-
-  const { Client } = await import("pg");
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
-  const { rows } = await client.query<{ value: string }>(
-    `select value from verification where identifier = $1 order by "createdAt" desc limit 1`,
-    [`+57${phoneDigits}`]
-  );
-  await client.end();
-
-  await page.getByLabel("Código de seis dígitos").fill(rows[0].value.split(":")[0]);
-  await page.getByRole("button", { name: "Confirmar celular" }).click();
-  await expect(page.getByTestId("usuario")).toBeVisible();
-}
 
 async function approveKyc(page: Page) {
   await page.goto("/vender");
@@ -62,7 +26,7 @@ async function recordVideo(page: Page) {
 test("un vendedor verificado graba, publica y el artículo aparece en el feed", async ({
   page,
 }) => {
-  await signUpVerified(page);
+  await signUpVerified(page, "vendedor", "Andrés Molina");
   await approveKyc(page);
 
   await page.goto("/publicar");
@@ -96,7 +60,7 @@ test("un vendedor verificado graba, publica y el artículo aparece en el feed", 
 });
 
 test("sin video no se puede publicar", async ({ page }) => {
-  await signUpVerified(page);
+  await signUpVerified(page, "vendedor", "Andrés Molina");
   await approveKyc(page);
   await page.goto("/publicar");
 
@@ -109,7 +73,7 @@ test("sin video no se puede publicar", async ({ page }) => {
 test("el servidor rechaza publicar sin video aunque se salte la pantalla", async ({
   page,
 }) => {
-  await signUpVerified(page);
+  await signUpVerified(page, "vendedor", "Andrés Molina");
   await approveKyc(page);
 
   // Llama la acción de servidor directamente, como haría alguien con las
@@ -134,7 +98,7 @@ test("el servidor rechaza publicar sin video aunque se salte la pantalla", async
 });
 
 test("un vendedor sin verificar no llega a la pantalla de publicar", async ({ page }) => {
-  await signUpVerified(page);
+  await signUpVerified(page, "vendedor", "Andrés Molina");
   await page.goto("/publicar");
   await expect(page).toHaveURL(/\/vender/);
 });
@@ -145,7 +109,7 @@ test("sin sesión no se puede publicar", async ({ page }) => {
 });
 
 test("un precio de cero se rechaza", async ({ page }) => {
-  await signUpVerified(page);
+  await signUpVerified(page, "vendedor", "Andrés Molina");
   await approveKyc(page);
   await page.goto("/publicar");
   await recordVideo(page);

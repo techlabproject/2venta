@@ -1,6 +1,7 @@
 import { expect, type Browser, type Page } from "@playwright/test";
 import { Client } from "pg";
 import { config } from "dotenv";
+import { decryptCode } from "../src/features/auth/otp";
 
 config({ path: ".env.local" });
 
@@ -44,11 +45,11 @@ export async function signUpVerified(page: Page, prefix: string, name: string) {
   await expect(page).toHaveURL(/\/verificar/);
 
   const code = await withDb(async (c) => {
-    const { rows } = await c.query<{ value: string }>(
-      `select value from verification where identifier = $1 order by "createdAt" desc limit 1`,
+    const { rows } = await c.query<{ code_enc: string }>(
+      `select code_enc from phone_codes where phone = $1`,
       [`+57${phoneDigits}`]
     );
-    return rows[0].value.split(":")[0];
+    return decryptCode(rows[0].code_enc)!;
   });
   await page.getByLabel("Código de seis dígitos").fill(code);
   await page.getByRole("button", { name: "Confirmar celular" }).click();

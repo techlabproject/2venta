@@ -1,53 +1,16 @@
 import { test, expect, type Page } from "@playwright/test";
 import { createHmac } from "node:crypto";
-import { config } from "dotenv";
-
-config({ path: ".env.local" });
+import { alertIn, signUpVerified, uniqueAccount, withDb } from "./helpers";
 
 // La prueba de punta a punta de la rebanada S-02.
 // Ver slices/02-modo-vendedor-verificacion.md
 
-const alertIn = (page: Page) => page.getByRole("main").getByRole("alert");
-
-function uniqueAccount() {
-  const n = Math.floor(Math.random() * 900_000_000) + 100_000_000;
-  return {
-    phoneDigits: `3${String(n).padStart(9, "0")}`.slice(0, 10),
-    email: `vendedor.${Date.now()}.${n}@correo.com`,
-  };
-}
 
 // Crea una cuenta con celular ya confirmado y deja la sesión abierta.
-async function signUpVerified(page: Page) {
-  const { email, phoneDigits } = uniqueAccount();
-  await page.goto("/registro?rol=vendedor");
-  await page.getByLabel("Nombre").fill("Andrés Molina");
-  await page.getByLabel("Correo").fill(email);
-  await page.getByLabel("Celular").fill(phoneDigits);
-  await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page).toHaveURL(/\/verificar/);
-
-  const { Client } = await import("pg");
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
-  const { rows } = await client.query<{ value: string }>(
-    `select value from verification where identifier = $1 order by "createdAt" desc limit 1`,
-    [`+57${phoneDigits}`]
-  );
-  await client.end();
-
-  await page.getByLabel("Código de seis dígitos").fill(rows[0].value.split(":")[0]);
-  await page.getByRole("button", { name: "Confirmar celular" }).click();
-  await expect(page.getByTestId("usuario")).toBeVisible();
-  return { email };
-}
-
 test("activar modo vendedor deja la verificación en curso y lo dice en pantalla", async ({
   page,
 }) => {
-  await signUpVerified(page);
+  await signUpVerified(page, "vendedor", "Andrés Molina");
   await page.goto("/vender");
   await page.getByRole("button", { name: "Empezar verificación" }).click();
 
@@ -58,7 +21,7 @@ test("activar modo vendedor deja la verificación en curso y lo dice en pantalla
 });
 
 test("cuando el proveedor aprueba, el perfil muestra el distintivo", async ({ page }) => {
-  await signUpVerified(page);
+  await signUpVerified(page, "vendedor", "Andrés Molina");
   await page.goto("/vender");
   await page.getByRole("button", { name: "Empezar verificación" }).click();
   await page.getByRole("button", { name: "Simular aprobación" }).click();
@@ -69,7 +32,7 @@ test("cuando el proveedor aprueba, el perfil muestra el distintivo", async ({ pa
 });
 
 test("un rechazo muestra el motivo y deja reintentar", async ({ page }) => {
-  await signUpVerified(page);
+  await signUpVerified(page, "vendedor", "Andrés Molina");
   await page.goto("/vender");
   await page.getByRole("button", { name: "Empezar verificación" }).click();
   await page.getByRole("button", { name: "Simular rechazo" }).click();
@@ -115,7 +78,7 @@ test("el perfil público muestra alias y zona, y nada de datos personales", asyn
 });
 
 test("un webhook con firma inválida no cambia nada", async ({ page, request }) => {
-  await signUpVerified(page);
+  await signUpVerified(page, "vendedor", "Andrés Molina");
   await page.goto("/vender");
   await page.getByRole("button", { name: "Empezar verificación" }).click();
   // Sin esperar a que la navegación termine, la URL todavía es /vender y la
@@ -141,7 +104,7 @@ test("un webhook sin firma tampoco pasa", async ({ request }) => {
 });
 
 test("un webhook repetido no revierte ni duplica el estado", async ({ page, request }) => {
-  await signUpVerified(page);
+  await signUpVerified(page, "vendedor", "Andrés Molina");
   await page.goto("/vender");
   await page.getByRole("button", { name: "Empezar verificación" }).click();
   // Sin esperar a que la navegación termine, la URL todavía es /vender y la

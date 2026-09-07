@@ -4,20 +4,15 @@
 
 ## En qué voy
 
-**Las tres fases del plan están completas.** 175 pruebas de navegador y 64
-unitarias.
+Las tres fases completas, más S-17: **la brecha D-27 está cerrada.** 177 pruebas de
+navegador y 70 unitarias.
 
-- Fase 1, el circuito mínimo: S-00 esqueleto, S-01 cuenta, S-02 KYC, S-03 publicar
-  con video, S-04 buscar, S-05 pago retenido, S-06 envío.
-- Fase 2, lo que la hace segura: S-08 chat, S-09 presencial, S-10 IMEI y
-  moderación, S-11 disputas, S-12 calificaciones.
-- Fase 3, lo que hace crecer: S-13 tienda, S-14 destacados, S-15 alertas y
-  métricas, S-16 favoritos.
+El código de verificación por celular ya no vive en texto plano. Se dejó de usar el
+complemento de la biblioteca y se maneja con el mismo patrón del código de entrega
+presencial: cifrado con un secreto del servidor.
 
-Más entrar con Google, y los hallazgos de Luna de la primera ronda cerrados.
-
-Lo que sigue no es una rebanada más: es cerrar la lista de "qué quedó a medias" de
-abajo, que es lo que separa esto de algo que se puede poner delante de personas.
+Lo que queda es la lista de abajo. Lo más urgente ahora es conectar un proveedor de
+SMS y resolver las migraciones.
 
 ## Qué quedó a medias
 

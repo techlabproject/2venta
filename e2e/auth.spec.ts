@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { Client } from "pg";
 import { config } from "dotenv";
+import { decryptCode } from "../src/features/auth/otp";
 
 config({ path: ".env.local" });
 
@@ -8,19 +9,18 @@ config({ path: ".env.local" });
 // Ver slices/01-cuenta-telefono-verificado.md
 
 // El código llega por SMS, que en desarrollo no existe. La prueba lo lee de la
-// base de datos, que es donde la biblioteca lo guarda. Esto también documenta la
-// brecha conocida de la D-27: ahí está en texto plano.
+// base de datos. Desde S-17 está cifrado (la D-27 quedó cerrada), así que la
+// prueba lo descifra con el mismo secreto del servidor.
 async function readOtp(phone: string): Promise<string> {
   const client = new Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
   try {
-    const { rows } = await client.query<{ value: string }>(
-      `select value from verification
-       where identifier = $1 order by "createdAt" desc limit 1`,
+    const { rows } = await client.query<{ code_enc: string }>(
+      `select code_enc from phone_codes where phone = $1`,
       [phone]
     );
     if (!rows[0]) throw new Error(`No hay código guardado para ${phone}`);
-    return rows[0].value.split(":")[0];
+    return decryptCode(rows[0].code_enc)!;
   } finally {
     await client.end();
   }
@@ -31,8 +31,8 @@ async function expireOtp(phone: string) {
   await client.connect();
   try {
     await client.query(
-      `update verification set "expiresAt" = now() - interval '1 minute'
-       where identifier = $1`,
+      `update phone_codes set expires_at = now() - interval '1 minute'
+       where phone = $1`,
       [phone]
     );
   } finally {
@@ -288,4 +288,52 @@ test("quien no tiene celular llega a la pantalla que se lo pide", async ({ page 
   await page.goto("/verificar");
   await expect(page.getByRole("heading", { name: "Falta tu celular" })).toBeVisible();
   await expect(page.getByLabel("Tu celular")).toBeVisible();
+});
+
+test("el código de verificación no queda en claro en la base", async ({ page }) => {
+  // Cierra la D-27, que arrastraba desde S-01: la biblioteca lo guardaba en texto
+  // plano y quien tuviera lectura de la base podía tomar el control de cualquier
+  // cuenta durante los cinco minutos que el código vive.
+  const { email, phoneDigits } = uniqueAccount();
+  await page.goto("/registro?rol=comprador");
+  await page.getByLabel("Nombre").fill("Cifrado Uno");
+  await page.getByLabel("Correo").fill(email);
+  await page.getByLabel("Celular").fill(phoneDigits);
+  await page.getByLabel("Contraseña").fill("unaClaveLarga1");
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(page).toHaveURL(/\/verificar/);
+
+  const code = await readOtp(`+57${phoneDigits}`);
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  await client.connect();
+  const { rows } = await client.query<{ code_enc: string }>(
+    `select code_enc from phone_codes where phone = $1`,
+    [`+57${phoneDigits}`]
+  );
+  await client.end();
+
+  expect(rows[0].code_enc).not.toContain(code);
+  expect(rows[0].code_enc).toMatch(/^[0-9a-f]+:[0-9a-f]+:[0-9a-f]+$/);
+});
+
+test("un código ya usado no sirve otra vez", async ({ page }) => {
+  const { email, phoneDigits } = uniqueAccount();
+  await page.goto("/registro?rol=comprador");
+  await page.getByLabel("Nombre").fill("Cifrado Dos");
+  await page.getByLabel("Correo").fill(email);
+  await page.getByLabel("Celular").fill(phoneDigits);
+  await page.getByLabel("Contraseña").fill("unaClaveLarga1");
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(page).toHaveURL(/\/verificar/);
+
+  const code = await readOtp(`+57${phoneDigits}`);
+  await page.getByLabel("Código de seis dígitos").fill(code);
+  await page.getByRole("button", { name: "Confirmar celular" }).click();
+  await expect(page.getByTestId("usuario")).toBeVisible();
+
+  // El código se consumió: la pantalla ya ni siquiera existe para esta cuenta.
+  await page.goto("/verificar");
+  await expect(page).toHaveURL(/^[^?]*\/$|\/$/);
 });

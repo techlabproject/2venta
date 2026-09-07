@@ -9,20 +9,16 @@ import { currentUser } from "@/lib/session";
 // lo que impide crear cuentas desechables para estafar y volver a entrar.
 export const dynamic = "force-dynamic";
 
-export default async function Verificar({
-  searchParams,
-}: {
-  searchParams: Promise<{ tel?: string }>;
-}) {
-  const { tel } = await searchParams;
+export default async function Verificar() {
   const user = await currentUser();
+  if (!user) redirect("/ingresar");
 
   // Ya confirmado: no hay nada que hacer aquí.
-  if (user?.phoneNumberVerified) redirect("/");
+  if (user.phoneNumberVerified) redirect("/");
 
   // Quien entró con Google llega sin número, porque Google trae correo y no
   // celular. Primero hay que pedírselo.
-  const needsPhone = !tel && user && !user.phoneNumber;
+  const needsPhone = !user.phoneNumber;
 
   return (
     <AuthShell
@@ -33,7 +29,9 @@ export default async function Verificar({
           : "Es lo que evita que alguien estafe y vuelva a entrar con otra cuenta."
       }
     >
-      <Suspense fallback={null}>{needsPhone ? <PhoneForm /> : <VerifyForm />}</Suspense>
+      <Suspense fallback={null}>
+        {needsPhone ? <PhoneForm /> : <VerifyForm phone={user.phoneNumber!} />}
+      </Suspense>
     </AuthShell>
   );
 }

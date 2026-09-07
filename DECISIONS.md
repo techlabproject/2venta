@@ -190,13 +190,9 @@ manejo de contraseñas, tokens ni sesiones.
 la que un agente escribe su propia gestión de sesiones es justamente el riesgo.
 Trae además ingreso con Google y Apple listo para activar cuando existan las
 credenciales (D-01).
-**Consecuencia conocida y sin resolver.** Esta versión guarda el código de
-verificación en texto plano en la tabla `verification`; el complemento no ofrece
-opción de hashearlo, aunque otros complementos de la misma biblioteca sí. Quien
-tenga lectura de esa tabla puede tomar el control de una cuenta durante la ventana
-de vigencia. Se mitiga con vencimiento de cinco minutos, cinco intentos y límite de
-cinco envíos por hora, pero no se elimina. Hay que resolverlo antes del
-lanzamiento, y es de las cosas que conviene revisar.
+**Consecuencia, RESUELTA en la D-39.** Esta versión guardaba el código de
+verificación en texto plano en la tabla `verification` y su complemento no ofrecía
+opción de cifrarlo. Se dejó de usar ese complemento.
 
 ### D-28 — Registro solo por correo y contraseña
 Se rechaza la creación automática de cuenta al verificar un celular.
@@ -302,3 +298,19 @@ plataforma no tiene histórico. Un promedio de dos ventas es ruido presentado co
 consejo, y quien fija su precio por un dato inventado se lleva la peor parte.
 **Consecuencia.** Al principio no se sugiere nada, que es correcto. Cuando haya
 volumen, este es el lugar donde entra un modelo de verdad.
+
+
+### D-39 — El código por celular deja de delegarse
+Se retira el complemento de celular de la biblioteca de autenticación. El código se
+genera, cifra, guarda y comprueba en `src/features/auth/otp.ts`, con AES-256-GCM y
+un secreto del servidor.
+**Por qué.** Cierra la D-27, que arrastraba desde S-01: quien tuviera lectura de la
+base podía tomar el control de cualquier cuenta durante los cinco minutos que el
+código vive. En S-09 ya se había demostrado que el problema desaparece cuando el
+código es nuestro.
+**Qué NO cambia.** La biblioteca sigue manejando contraseñas, sesiones y tokens.
+Eso sí no se implementa a mano. Lo que se dejó de delegar es un código de seis
+dígitos con vencimiento, que es lógica de aplicación, no criptografía.
+**Consecuencia.** El secreto del servidor pasa a ser crítico, como el del código de
+entrega. Y se pierde el inicio de sesión por celular que traía el complemento, que
+no se usaba.

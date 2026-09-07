@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { sendCode } from "./actions";
 import { Button, ErrorNote, Field } from "@/components/ui";
 
 /**
@@ -42,18 +43,15 @@ export function PhoneForm() {
       return;
     }
 
-    const sent = await authClient.phoneNumber.sendOtp({ phoneNumber: phone });
+    const sent = await sendCode();
     if (sent.error) {
-      setError(
-        sent.error.code === "TOO_MANY_REQUESTS"
-          ? "Pediste demasiados códigos. Espera un momento."
-          : "No pudimos mandar el código. Intenta de nuevo."
-      );
+      setError(sent.error);
       setBusy(false);
       return;
     }
 
-    router.push(`/verificar?tel=${encodeURIComponent(phone)}`);
+    router.push("/verificar");
+    router.refresh();
   }
 
   return (
