@@ -35,7 +35,14 @@ export default async function PerfilVendedor({
           Volver
         </Link>
 
-        <h1 className="mt-5 font-title text-2xl font-semibold">{seller.alias}</h1>
+        <h1 className="mt-5 font-title text-2xl font-semibold">
+          {seller.is_store ? seller.legal_name : seller.alias}
+        </h1>
+        {seller.is_store && (
+          <p className="mt-1 inline-block rounded-full bg-accent/20 px-2.5 py-0.5 text-xs font-medium text-accent-text">
+            Tienda registrada
+          </p>
+        )}
         <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted">
           {seller.verified ? (
             <VerifiedBadge label="Identidad verificada" />

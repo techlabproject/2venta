@@ -18,6 +18,7 @@ export type Listing = {
   seller_zone: string;
   /** Solo es cierto cuando el proveedor externo reportó "aprobado" (D-02). */
   seller_verified: boolean;
+  seller_is_store: boolean;
   status: string;
 };
 
@@ -31,11 +32,13 @@ export const LISTING_SELECT = `
          l.seller_id,
          coalesce(u.alias, u.name) as seller_alias,
          coalesce(u.zone, 'Bogotá') as seller_zone,
-         (k.status = 'aprobado') as seller_verified
+         (k.status = 'aprobado') as seller_verified,
+         (st.user_id is not null) as seller_is_store
   from listings l
   join "user" u          on u.id = l.seller_id
   join categories c      on c.slug = l.category
   left join kyc_verifications k on k.user_id = l.seller_id
+  left join stores st on st.user_id = l.seller_id
 `;
 
 export function listCategories(): Promise<Category[]> {
@@ -63,6 +66,8 @@ export type PublicSeller = {
   alias: string;
   zone: string;
   verified: boolean;
+  is_store: boolean;
+  legal_name: string | null;
   member_since: Date;
   listing_count: number;
 };
@@ -76,10 +81,13 @@ export async function getPublicSeller(id: string): Promise<PublicSeller | null> 
             coalesce(u.alias, u.name)  as alias,
             coalesce(u.zone, 'Bogotá') as zone,
             (k.status = 'aprobado')    as verified,
+            (st.user_id is not null)   as is_store,
+            st.legal_name,
             u."createdAt"              as member_since,
             (select count(*)::int from listings l where l.seller_id = u.id) as listing_count
        from "user" u
        left join kyc_verifications k on k.user_id = u.id
+       left join stores st on st.user_id = u.id
       where u.id = $1`,
     [id]
   );

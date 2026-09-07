@@ -44,13 +44,16 @@ create table if not exists listings (
   price_cop   integer not null check (price_cop > 0),
   -- D-14: el video es obligatorio en toda categoría, así que la columna no admite
   -- nulos. Una publicación sin video no puede existir ni por error de programación.
-  video_path  text not null,
-  poster_path text not null,
+  -- Nulos solo mientras la publicación es un borrador de carga en lote.
+  video_path  text,
+  poster_path text,
   -- D-16 y R-03: la electrónica nace en revisión, porque no hay forma automática
   -- de contrastar el IMEI contra la base de equipos reportados. Ropa y niños salen
   -- directo. Cuando el contraste sea automático, esto cambia en un solo lugar.
   status      text not null default 'activa'
-              check (status in ('activa','en_revision','rechazada','reservada','vendida')),
+              -- 'borrador' es lo que crea la carga en lote de una tienda (S-13):
+              -- tiene todo menos el video, que hay que grabar desde el móvil.
+              check (status in ('borrador','activa','en_revision','rechazada','reservada','vendida')),
   -- D-15: solo en electrónica. Se guarda desde ya para poder contrastarlo después
   -- sin volver a molestar al vendedor.
   imei        text,
@@ -331,3 +334,12 @@ create table if not exists ratings (
 );
 
 create index if not exists ratings_ratee_idx on ratings (ratee_id, created_at desc);
+
+-- Datos de tienda (S-13, D-07). Viven aparte de la cuenta porque la mayoría de los
+-- vendedores nunca van a tener ninguno.
+create table if not exists stores (
+  user_id     text primary key references "user"(id) on delete cascade,
+  legal_name  text not null,
+  nit         text not null unique,
+  created_at  timestamptz not null default now()
+);

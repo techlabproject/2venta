@@ -19,6 +19,8 @@ const ROUTES = [
   "/verificar",
   "/vender",
   "/publicar",
+  "/tienda",
+  "/publicar/00000000-0000-4000-8000-000000000000",
   "/admin",
   "/admin/disputas",
   "/producto/00000000-0000-4000-8000-000000000000",

@@ -132,3 +132,15 @@ export function freshImei(): string {
   }
   return padded + ((10 - (sum % 10)) % 10);
 }
+
+/** Un NIT válido y distinto en cada llamada, con su dígito de verificación. */
+export function freshNit(): string {
+  const WEIGHTS = [3, 7, 13, 17, 19, 23, 29, 37, 41, 43, 47, 53, 59, 67, 71];
+  const base = String(Math.floor(Math.random() * 900_000_000) + 100_000_000);
+  const sum = base
+    .split("")
+    .reverse()
+    .reduce((acc, d, i) => acc + Number(d) * WEIGHTS[i], 0);
+  const rest = sum % 11;
+  return `${base}-${rest > 1 ? 11 - rest : rest}`;
+}

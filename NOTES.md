@@ -4,15 +4,12 @@
 
 ## En qué voy
 
-S-12 cerrada. **La Fase 2 está completa.** 139 pruebas de navegador y 47 unitarias.
+S-13 cerrada. Primera de la Fase 3. 152 pruebas de navegador y 64 unitarias.
 
-Hecho: Fase 1 (S-00 a S-06) y Fase 2 (S-08 chat, S-09 presencial, S-10 IMEI y
-moderación, S-11 disputas, S-12 calificaciones). Google implementado. Hallazgos de
-Luna cerrados.
+Hecho: Fase 1 (S-00 a S-06), Fase 2 (S-08 a S-12), S-13 cuenta de tienda. Google
+implementado. Hallazgos de Luna cerrados.
 
-Siguiente: Fase 3, lo que hace crecer. S-13 cuenta de tienda, S-14 destacados,
-S-15 alertas y métricas, S-16 favoritos y filtros avanzados. Ninguna desbloquea
-nada, todas mejoran lo que ya funciona.
+Siguiente: S-14 destacados, S-15 alertas y métricas, S-16 favoritos.
 
 ## Qué quedó a medias
 
@@ -38,6 +35,11 @@ nada, todas mejoran lo que ya funciona.
   propone un agregador logístico, pero no hay contrato.
 - No se puede elegir entre transportadoras ni ver opciones de precio.
 - No hay direcciones guardadas: hay que escribirla en cada compra.
+- El NIT no se valida contra la DIAN: no hay acceso. Solo se comprueba el dígito
+  de verificación.
+- No hay facturación electrónica, que es un requisito real para una tienda formal.
+- Las retenciones tributarias para persona jurídica siguen sin resolverse; está
+  anotado como consecuencia de la D-07 desde el principio.
 - No se puede responder ni reportar una reseña.
 - El perfil público del comprador no existe; sus calificaciones están en la base
   pero solo las ve el vendedor.

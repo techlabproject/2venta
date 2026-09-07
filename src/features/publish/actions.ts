@@ -111,3 +111,56 @@ export async function publishListing(
   revalidatePath("/");
   return { id: rows[0].id };
 }
+
+/** Completa un borrador de carga en lote grabándole el video (S-13). */
+export async function publishDraft(
+  _prev: PublishResult | null,
+  form: FormData
+): Promise<PublishResult> {
+  const user = await currentUser();
+  if (!user) redirect("/ingresar");
+  if (!user.phoneNumberVerified) {
+    return { error: "Confirma tu celular antes de publicar." };
+  }
+
+  const verification = await getVerification(user.id);
+  if (verification?.status !== "aprobado") {
+    return { error: "Necesitas verificar tu identidad antes de publicar." };
+  }
+
+  const draftId = String(form.get("draftId") ?? "");
+  const drafts = await query<{ id: string; category: string }>(
+    `select id, category from listings
+      where id = $1 and seller_id = $2 and status = 'borrador'`,
+    [draftId, user.id]
+  );
+  const draft = drafts[0];
+  if (!draft) return { error: "Ese borrador no existe o ya se publicó." };
+
+  const video = form.get("video");
+  const poster = form.get("poster");
+  if (!(video instanceof File) || !(poster instanceof File)) {
+    return { error: "Falta el video del artículo." };
+  }
+  if (!isAllowedType(video.type) || !isAllowedType(poster.type)) {
+    return { error: "Ese tipo de archivo no sirve." };
+  }
+  if (video.size > MAX_BYTES || poster.size > MAX_BYTES) {
+    return { error: "El video pesa demasiado. Graba uno más corto." };
+  }
+
+  const videoPath = await store(await video.arrayBuffer(), video.type);
+  const posterPath = await store(await poster.arrayBuffer(), poster.type);
+
+  // El borrador sigue el mismo camino que cualquier publicación, revisión de
+  // electrónica incluida: cargar en lote no salta la moderación.
+  await query(
+    `update listings set video_path = $2, poster_path = $3, status = $4
+      where id = $1 and status = 'borrador'`,
+    [draft.id, videoPath, posterPath, initialStatus(draft.category)]
+  );
+
+  revalidatePath("/");
+  revalidatePath("/tienda");
+  return { id: draft.id };
+}

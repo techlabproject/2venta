@@ -27,7 +27,14 @@ export function ListingCard({ listing }: { listing: Listing }) {
             {listing.category_label} · {CONDITION_LABEL[listing.condition]}
           </p>
           <p className="text-xs text-muted">{listing.seller_zone}</p>
-          {listing.seller_verified && <VerifiedBadge className="mt-1.5" />}
+          <span className="mt-1.5 flex flex-wrap items-center gap-2">
+            {listing.seller_verified && <VerifiedBadge />}
+            {listing.seller_is_store && (
+              <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-medium text-accent-text">
+                Tienda
+              </span>
+            )}
+          </span>
         </div>
       </Link>
     </li>

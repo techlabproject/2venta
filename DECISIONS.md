@@ -266,3 +266,14 @@ estrellas" se lee como mal desempeño cuando en realidad es ausencia de datos.
 eso es correcto: la que había era falsa. Lo que sostiene la confianza mientras tanto
 es la verificación de identidad y el pago retenido, que es exactamente para lo que
 existen.
+
+### D-35 — La carga en lote crea borradores, no publicaciones
+Una tienda carga título, categoría, precio, estado, descripción e IMEI de varios
+artículos a la vez, pero el video de cada uno se sigue grabando desde el móvil.
+**Por qué.** Choca de frente con la D-14: si una tienda pudiera cargar cincuenta
+artículos con sus videos desde un archivo, la garantía se cae, y la garantía es el
+producto. Lo que se ahorra es escribir, que es el trabajo que de verdad cuesta en
+volumen.
+**Consecuencia.** Es más lento de lo que pediría una tienda con cincuenta equipos, y
+es a propósito. Si el volumen resulta ser la barrera real para traer casas de
+empeño, la conversación no es relajar el video sino ayudarles a grabarlo.
