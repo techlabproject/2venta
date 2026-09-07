@@ -4,13 +4,13 @@
 
 ## En qué voy
 
-Las tres fases completas, más S-17 (brecha D-27 cerrada), migraciones numeradas, y
-S-18 (mis compras, mis ventas, mis chats). 183 pruebas de navegador y 70 unitarias.
+Las tres fases completas, más S-17 (brecha D-27 cerrada), migraciones, S-18 (mis
+compras, ventas y chats) y S-19 (editar y retirar). 191 pruebas de navegador y 70
+unitarias.
 
-S-18 salió de revisar qué faltaba, no de una prueba: no había forma de volver a un
-pedido ni a una conversación. Se pagaba, se cerraba la pestaña y no se encontraba
-nunca más. Ninguna prueba lo cubría porque todas navegan con la dirección en la
-mano.
+S-19 cierra el RF-16 y el RF-17, los dos marcados de prioridad alta en los
+requisitos originales y que nunca se habían construido: un error de dedo en el
+precio se quedaba para siempre y un artículo vendido por fuera seguía apareciendo.
 
 Lo que queda es la lista de abajo, y lo más urgente ya no es código nuestro sino
 conectar proveedores reales.
@@ -94,7 +94,7 @@ conectar proveedores reales.
 - Las pruebas se acumulan en la misma base: las de publicar crean artículos que
   quedan. Por eso las de búsqueda no cuentan totales sino qué aparece y qué no.
   `npx tsx db/seed.ts` deja todo limpio otra vez.
-- Editar, borrar, marcar como vendida o reservada (RF-16, RF-17): no están.
+- (RESUELTO en S-19) Editar, reservar, marcar vendida y retirar (RF-16, RF-17).
 - Calificación, ventas y tasa de disputa no se muestran en el perfil público
   todavía. Mostrarlas en cero daría impresión falsa de mal desempeño; llegan
   con S-12.

@@ -10,6 +10,7 @@ import { AskForm, AnswerForm, ChatButton } from "@/features/chat/QuestionForms";
 import { listQuestions } from "@/features/chat/queries";
 import { ReportForm } from "@/features/moderation/Forms";
 import { PromoteButton } from "@/features/promotions/PromoteButton";
+import { StatusButton } from "@/features/publish/EditForms";
 import { getActivePromotion } from "@/features/promotions/queries";
 import { recordView } from "@/features/metrics/queries";
 import { FavoriteButton } from "@/features/favorites/FavoriteButton";
@@ -124,11 +125,29 @@ export default async function ListingPage({
             que trae a revisión lo que se le escapó. */}
         {user && !isSeller && <ReportForm listingId={listing.id} />}
 
-        {isSeller && listing.status === "activa" && (
+        {isSeller && ["activa", "reservada", "en_revision"].includes(listing.status) && (
           <section className="mt-8 rounded-2xl bg-white p-4 text-sm">
             <h2 className="font-medium">Tu publicación</h2>
+
+            {/* RF-16 y RF-17. Sin esto, un error de dedo en el precio se queda para
+                siempre y un artículo vendido por fuera sigue apareciendo. */}
+            <div className="mt-3 flex flex-col gap-2">
+              <Link href={`/producto/${listing.id}/editar`}
+                className="inline-flex w-full items-center justify-center rounded-xl border border-brand/25 bg-white px-4 py-3 text-sm font-medium hover:bg-ph">
+                Editar
+              </Link>
+              {listing.status === "activa" && (
+                <StatusButton listingId={listing.id} status="reservada" />
+              )}
+              {listing.status === "reservada" && (
+                <StatusButton listingId={listing.id} status="activa" />
+              )}
+              <StatusButton listingId={listing.id} status="vendida" />
+              <StatusButton listingId={listing.id} status="retirada" variant="ghost" />
+            </div>
+
             {promotion && (
-              <p className="mt-1 text-muted">
+              <p className="mt-4 text-muted">
                 Destacada hasta el{" "}
                 {new Intl.DateTimeFormat("es-CO", {
                   day: "numeric",
