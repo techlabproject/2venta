@@ -1,0 +1,4 @@
+# Las capturas pesan y se regeneran en cada ronda.
+capturas/*.png
+capturas/*.jpg
+salidas/*.txt

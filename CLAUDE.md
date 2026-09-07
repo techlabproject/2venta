@@ -24,6 +24,16 @@ Este proyecto sigue la skill `product-build-loop`. En corto:
 - Toda decisión nueva se anota en `DECISIONS.md`; el estado vive en `NOTES.md`.
 - `SPEC.md` manda sobre cualquier suposición. Si algo no está ahí, se pregunta.
 
+# Control de calidad independiente
+
+`qa/` tiene los informes de Luna, la verificadora que corre aparte (su prompt está
+en `AGENTE-QA.md`). Al empezar una sesión, mirar si hay un informe nuevo: cerrar sus
+hallazgos va antes que construir nada más.
+
+Cuando un hallazgo suyo sea real, escribir primero la prueba que lo reproduce y
+después el arreglo. Si no se puede reproducir, decirlo así en vez de darlo por
+cerrado.
+
 # Convenciones
 
 - Los montos de dinero son enteros en pesos colombianos. Nunca decimales, nunca
