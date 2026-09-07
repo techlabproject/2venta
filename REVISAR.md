@@ -112,7 +112,7 @@ y móvil con la misma base) se sostiene.
 - `src/features/publish/VideoCapture.tsx` — la respuesta a R-01.
 - `src/features/kyc/provider.ts` — la interfaz por donde entrará el proveedor real
   cuando R-02 tenga respuesta.
-- `e2e/` — 118 pruebas de navegador, más 44 unitarias (dinero, filtro anti-desvío, código de entrega, IMEI y moderación). Si quieres saber qué se comprobó de verdad, están ahí.
+- `e2e/` — 175 pruebas de navegador, más 64 unitarias (dinero, filtro anti-desvío, código de entrega, IMEI, moderación, NIT y carga en lote). Si quieres saber qué se comprobó de verdad, están ahí.
 
 ## Un problema de producto que salió construyendo
 
