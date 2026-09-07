@@ -4,14 +4,14 @@
 
 ## En qué voy
 
-S-09 cerrada. 103 pruebas de navegador y 31 unitarias.
+S-10 cerrada, más entrar con Google. 118 pruebas de navegador y 44 unitarias, con
+dos corridas seguidas estables.
 
-Hecho: la Fase 1 completa (S-00 a S-06), S-08 chat y ofertas, S-09 entrega
-presencial con código. Los hallazgos de Luna de la primera ronda, cerrados.
+Hecho: Fase 1 completa (S-00 a S-06), S-08 chat, S-09 entrega presencial, S-10 IMEI
+y moderación. Los hallazgos de Luna de la primera ronda, cerrados.
 
-Siguiente: S-10, IMEI y moderación automática. Depende de R-03, cuya respuesta
-propuesta es el modelo híbrido: automática para ropa y niños, humana para
-electrónica, guardando el IMEI desde ya.
+Siguiente: S-11, reclamos y disputas. Es la que hace cumplible la D-13, que hoy es
+una promesa sin panel detrás.
 
 ## Qué quedó a medias
 
@@ -37,6 +37,14 @@ electrónica, guardando el IMEI desde ya.
   propone un agregador logístico, pero no hay contrato.
 - No se puede elegir entre transportadoras ni ver opciones de precio.
 - No hay direcciones guardadas: hay que escribirla en cada compra.
+- Google: falta pegar las credenciales, ver GOOGLE.md. El botón solo aparece
+  cuando existen las dos variables.
+- El panel de administración solo tiene la cola de revisión y reportes. Faltan
+  verificaciones de identidad, disputas, usuarios y métricas del mockup.
+- No se puede suspender una cuenta (RF-41).
+- Al vendedor no se le avisa cuando aprueban o rechazan su publicación; lo ve al
+  entrar.
+- Nadie mira el video automáticamente.
 - No hay forma de reemitir el código si el comprador lo pierde. Sin una manera de
   comprobar quién lo pide, sería un camino para liberar sin entregar.
 - No hay devolución si el encuentro nunca ocurre: va con S-11.

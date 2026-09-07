@@ -2,6 +2,8 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
+  // Compila las rutas antes de empezar: ver e2e/global-setup.ts.
+  globalSetup: "./e2e/global-setup.ts",
   // Las pruebas de compra y envío abren varios contextos de navegador y graban
   // video en cada uno. Treinta segundos les queda corto cuando corren en paralelo,
   // y el síntoma es un fallo intermitente que no dice nada.
@@ -20,6 +22,7 @@ export default defineConfig({
   },
   webServer: {
     command: "next dev --port 3100",
+    stdout: "ignore",
     url: "http://localhost:3100",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

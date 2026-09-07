@@ -236,3 +236,22 @@ código por SMS, y aquí sí, porque el código es nuestro.
 **Consecuencia.** El secreto pasa a ser crítico: si se filtra, se filtran todos los
 códigos vigentes. Rotarlo invalida los códigos en curso, así que hay que hacerlo
 con la plataforma sin pedidos presenciales abiertos.
+
+### D-32 — Modelo híbrido de moderación, según R-03
+Ropa y niños salen directo al catálogo; electrónica queda en revisión humana.
+**Por qué.** R-03 confirmó que no hay API pública para contrastar el IMEI contra la
+base de equipos reportados. Reemplaza a la D-16 original, que decía moderación
+automática al publicar y humana solo si alguien reporta.
+**Consecuencia.** Un vendedor de electrónica espera antes de estar visible, y eso
+cuesta. Se acepta porque publicar un equipo robado cuesta más. Cuando el contraste
+sea automático, lo único que cambia es la función `initialStatus`.
+**Además.** El IMEI se pide y se guarda desde ya aunque hoy no se pueda contrastar:
+así se puede revisar el histórico cuando haya convenio, sin volver a molestar a
+nadie, y pedirlo ahuyenta a una parte de quien vende robado.
+
+### D-33 — Precio mínimo del filtro de contenido
+La lista de términos prohibidos es corta y específica, no amplia y difusa.
+**Por qué.** Rechazar una publicación legítima pierde un vendedor. Salió construyendo
+un caso concreto: "perico" estaba en la lista de sustancias, y en Colombia son
+huevos revueltos y también un loro. Detectar droga por jerga es una carrera que no
+se gana; ese trabajo le toca a la cola de reportes.

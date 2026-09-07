@@ -151,6 +151,9 @@ test("un precio de cero se rechaza", async ({ page }) => {
   await recordVideo(page);
 
   await page.getByLabel("Título").fill("Regalo");
+  // Ropa a propósito: esta prueba es sobre el precio, no sobre el IMEI que exige
+  // la categoría de tecnología.
+  await page.getByLabel("Categoría").selectOption("ropa");
   await page.getByLabel("Precio").fill("0");
   await page.getByLabel("Descripción").fill("Gratis");
   await page.getByRole("button", { name: "Publicar" }).click();

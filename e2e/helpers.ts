@@ -111,3 +111,24 @@ export async function approveKycFor(email: string): Promise<void> {
     );
   });
 }
+
+/** Convierte una cuenta en administrador. El rol no es escribible desde el cliente. */
+export async function makeAdmin(email: string): Promise<void> {
+  await withDb((c) => c.query(`update "user" set role = 'admin' where email = $1`, [email]));
+}
+
+/** Un IMEI válido y único por corrida, con su dígito verificador. */
+export function freshImei(): string {
+  const base = String(Date.now()).slice(-9) + String(Math.floor(Math.random() * 90000) + 10000);
+  let sum = 0;
+  const padded = base.padStart(14, "0").slice(0, 14);
+  for (let i = 0; i < 14; i++) {
+    let v = Number(padded[13 - i]);
+    if (i % 2 === 0) {
+      v *= 2;
+      if (v > 9) v -= 9;
+    }
+    sum += v;
+  }
+  return padded + ((10 - (sum % 10)) % 10);
+}

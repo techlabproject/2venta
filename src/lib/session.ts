@@ -7,7 +7,14 @@ export type SessionUser = {
   alias: string | null;
   phoneNumber: string | null;
   phoneNumberVerified: boolean | null;
+  role: string | null;
 };
+
+/** Solo para pantallas de administración. Se comprueba en el servidor, siempre. */
+export async function currentAdmin(): Promise<SessionUser | null> {
+  const user = await currentUser();
+  return user?.role === "admin" ? user : null;
+}
 
 // Punto único para leer la sesión desde el servidor. Ninguna pantalla debe
 // deducir quién es el usuario de otra forma: la cookie se valida aquí.

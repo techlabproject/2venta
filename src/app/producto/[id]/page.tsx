@@ -8,6 +8,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { BuyButton } from "@/features/payments/BuyButton";
 import { AskForm, AnswerForm, ChatButton } from "@/features/chat/QuestionForms";
 import { listQuestions } from "@/features/chat/queries";
+import { ReportForm } from "@/features/moderation/Forms";
 import { currentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -103,6 +104,10 @@ export default async function ListingPage({
           </ul>
           {user && !isSeller && <AskForm listingId={listing.id} />}
         </section>
+
+        {/* RF-32 y D-16: la moderación automática filtra lo evidente; esto es lo
+            que trae a revisión lo que se le escapó. */}
+        {user && !isSeller && <ReportForm listingId={listing.id} />}
       </main>
     </>
   );

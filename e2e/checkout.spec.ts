@@ -167,6 +167,7 @@ test("no se puede publicar por debajo del precio mínimo", async ({ browser }) =
   await expect(page.getByRole("status")).toContainText("Video listo");
 
   await page.getByLabel("Título").fill("Llavero barato");
+  await page.getByLabel("Categoría").selectOption("ropa");
   await page.getByLabel("Precio").fill("3000");
   await page.getByLabel("Descripción").fill("Muy barato.");
   await page.getByRole("button", { name: "Publicar" }).click();

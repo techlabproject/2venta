@@ -18,6 +18,7 @@ export type Listing = {
   seller_zone: string;
   /** Solo es cierto cuando el proveedor externo reportó "aprobado" (D-02). */
   seller_verified: boolean;
+  status: string;
 };
 
 // El distintivo de verificado no es una columna que la aplicación pueda escribir:
@@ -25,7 +26,7 @@ export type Listing = {
 // distintivo.
 export const LISTING_SELECT = `
   select l.id, l.title, l.description, l.category, l.condition, l.price_cop,
-         l.video_path, l.poster_path,
+         l.video_path, l.poster_path, l.status,
          c.label as category_label,
          l.seller_id,
          coalesce(u.alias, u.name) as seller_alias,
@@ -43,13 +44,16 @@ export function listCategories(): Promise<Category[]> {
   );
 }
 
+// Solo lo activo sale al público: lo que está en revisión, rechazado o vendido no
+// tiene por qué verse.
 export function listListings(category?: string): Promise<Listing[]> {
   if (category) {
-    return query<Listing>(`${LISTING_SELECT} where l.category = $1 order by l.created_at desc`, [
-      category,
-    ]);
+    return query<Listing>(
+      `${LISTING_SELECT} where l.status = 'activa' and l.category = $1 order by l.created_at desc`,
+      [category]
+    );
   }
-  return query<Listing>(`${LISTING_SELECT} order by l.created_at desc`);
+  return query<Listing>(`${LISTING_SELECT} where l.status = 'activa' order by l.created_at desc`);
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -83,9 +87,11 @@ export async function getPublicSeller(id: string): Promise<PublicSeller | null> 
 }
 
 export function listSellerListings(sellerId: string): Promise<Listing[]> {
-  return query<Listing>(`${LISTING_SELECT} where l.seller_id = $1 order by l.created_at desc`, [
-    sellerId,
-  ]);
+  return query<Listing>(
+    `${LISTING_SELECT} where l.seller_id = $1 and l.status = 'activa'
+      order by l.created_at desc`,
+    [sellerId]
+  );
 }
 
 export async function getListing(id: string): Promise<Listing | null> {

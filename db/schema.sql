@@ -46,14 +46,25 @@ create table if not exists listings (
   -- nulos. Una publicación sin video no puede existir ni por error de programación.
   video_path  text not null,
   poster_path text not null,
+  -- D-16 y R-03: la electrónica nace en revisión, porque no hay forma automática
+  -- de contrastar el IMEI contra la base de equipos reportados. Ropa y niños salen
+  -- directo. Cuando el contraste sea automático, esto cambia en un solo lugar.
   status      text not null default 'activa'
-              check (status in ('activa','reservada','vendida')),
+              check (status in ('activa','en_revision','rechazada','reservada','vendida')),
+  -- D-15: solo en electrónica. Se guarda desde ya para poder contrastarlo después
+  -- sin volver a molestar al vendedor.
+  imei        text,
+  review_note text,
   created_at  timestamptz not null default now()
 );
 
 create index if not exists listings_created_at_idx on listings (created_at desc);
 create index if not exists listings_category_idx   on listings (category);
 create index if not exists listings_seller_idx     on listings (seller_id);
+create index if not exists listings_status_idx     on listings (status);
+-- Un mismo IMEI publicado dos veces es señal de fraude, no de coincidencia.
+create unique index if not exists listings_imei_unico on listings (imei)
+  where imei is not null and status <> 'rechazada';
 create index if not exists listings_price_idx      on listings (price_cop);
 
 -- Búsqueda de texto completo en español: reconoce plurales y conjugaciones, y
@@ -261,3 +272,20 @@ create table if not exists pickup_codes (
   used_at    timestamptz,
   created_at timestamptz not null default now()
 );
+
+-- Reportes de la comunidad (D-16, RF-39). La moderación automática filtra lo
+-- evidente; esto es lo que trae a revisión lo que se le escapó.
+create table if not exists reports (
+  id          bigserial primary key,
+  listing_id  uuid not null references listings(id) on delete cascade,
+  reporter_id text not null references "user"(id) on delete cascade,
+  reason      text not null,
+  detail      text,
+  resolved_at timestamptz,
+  created_at  timestamptz not null default now(),
+  -- Una persona reporta una publicación una vez. Sin esto, un competidor podría
+  -- inflar la cola reportando lo mismo cien veces.
+  unique (listing_id, reporter_id)
+);
+
+create index if not exists reports_pending_idx on reports (resolved_at, created_at);

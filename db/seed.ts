@@ -44,6 +44,13 @@ async function main() {
     [camila, taller]
   );
 
+  // Un administrador para poder abrir la cola de moderación en desarrollo. No
+  // tiene contraseña: se le pone rol a una cuenta creada por la interfaz.
+  await pool.query(
+    `insert into "user" (id, name, email, "emailVerified", "updatedAt", alias, role)
+     values ('seed-admin', 'Equipo 2venta', 'admin@ejemplo.co', true, now(), 'Moderación', 'admin')`
+  );
+
   // Camila está verificada; el taller no. Así el catálogo muestra los dos casos y
   // se ve que el distintivo solo aparece cuando hay dato real detrás.
   await pool.query(
@@ -53,10 +60,10 @@ async function main() {
   );
 
   await pool.query(
-    `insert into listings (seller_id, title, description, category, condition, price_cop, video_path, poster_path) values
-      ($1, 'iPhone 13 128 GB', 'Batería al 89%. Sin golpes, con caja y cargador original.', 'tecnologia', 'usado_bueno', 1850000, 'seed/demo.webm', 'seed/demo.jpg'),
-      ($2, 'Chaqueta de jean talla M', 'Poco uso, sin manchas ni descosidos. Talla M real.', 'ropa', 'usado_bueno', 95000, 'seed/demo.webm', 'seed/demo.jpg'),
-      ($1, 'Coche Chicco reclinable', 'Lo usó mi hija hasta los dos años. Ruedas y cinturones perfectos.', 'ninos', 'usado_regular', 260000, 'seed/demo.webm', 'seed/demo.jpg')`,
+    `insert into listings (seller_id, title, description, category, condition, price_cop, video_path, poster_path, imei) values
+      ($1, 'iPhone 13 128 GB', 'Batería al 89%. Sin golpes, con caja y cargador original.', 'tecnologia', 'usado_bueno', 1850000, 'seed/demo.webm', 'seed/demo.jpg', '490154203237518'),
+      ($2, 'Chaqueta de jean talla M', 'Poco uso, sin manchas ni descosidos. Talla M real.', 'ropa', 'usado_bueno', 95000, 'seed/demo.webm', 'seed/demo.jpg', null),
+      ($1, 'Coche Chicco reclinable', 'Lo usó mi hija hasta los dos años. Ruedas y cinturones perfectos.', 'ninos', 'usado_regular', 260000, 'seed/demo.webm', 'seed/demo.jpg', null)`,
     [camila, taller]
   );
 

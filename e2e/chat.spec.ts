@@ -137,6 +137,9 @@ test("una oferta aceptada lleva a pagar el precio acordado", async ({ browser })
 
   await seller.page.goto(`/chat/${chatId}`);
   await seller.page.getByRole("button", { name: "Aceptar" }).click();
+  // Sin esperar a que la oferta quede aceptada, el comprador recarga antes de que
+  // exista el botón de pagar.
+  await expect(seller.page.getByRole("button", { name: "Aceptar" })).toHaveCount(0);
 
   await buyer.reload();
   await buyer.getByRole("link", { name: /Pagar \$ 1\.700\.000/ }).click();
@@ -161,6 +164,7 @@ test("una oferta rechazada no deja pagar el precio ofrecido", async ({ browser }
 
   await seller.page.goto(`/chat/${chatId}`);
   await seller.page.getByRole("button", { name: "Rechazar" }).click();
+  await expect(seller.page.getByRole("button", { name: "Rechazar" })).toHaveCount(0);
 
   const offerId = await withDb(async (c) => {
     const { rows } = await c.query<{ id: string }>(

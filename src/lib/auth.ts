@@ -74,6 +74,9 @@ export const auth = betterAuth({
       // nunca es público.
       alias: { type: "string", required: false, input: true },
       zone: { type: "string", required: false, input: true },
+      // El rol NO es escribible desde el cliente: si lo fuera, cualquiera se
+      // haría administrador al registrarse.
+      role: { type: "string", required: false, input: false, defaultValue: "usuario" },
     },
   },
 

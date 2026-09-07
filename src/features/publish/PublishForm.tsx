@@ -26,6 +26,8 @@ function asFile(blob: Blob, base: string): File {
 export function PublishForm({ categories }: { categories: Category[] }) {
   const router = useRouter();
   const [media, setMedia] = useState<{ video: Blob; poster: Blob } | null>(null);
+  // D-15: el IMEI solo se pide en electrónica.
+  const [category, setCategory] = useState(categories[0]?.slug ?? "");
 
   const [result, submit, pending] = useActionState<PublishResult | null, FormData>(
     async (prev, form) => {
@@ -60,13 +62,20 @@ export function PublishForm({ categories }: { categories: Category[] }) {
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="category" className="text-sm font-medium">Categoría</label>
-        <select id="category" name="category" required
+        <select id="category" name="category" required value={category}
+          onChange={(e) => setCategory(e.target.value)}
           className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm">
           {categories.map((c) => (
             <option key={c.slug} value={c.slug}>{c.label}</option>
           ))}
         </select>
       </div>
+
+      {category === "tecnologia" && (
+        <Field id="imei" name="imei" label="IMEI del equipo" inputMode="numeric" required
+          placeholder="490154203237518"
+          hint="Márcalo en el teclado con *#06# y cópialo tal cual. Son 15 dígitos. Lo pedimos para que nadie venda equipos robados." />
+      )}
 
       <Field id="price" name="price" label="Precio" inputMode="numeric" required
         placeholder="260000" hint="En pesos, sin puntos ni comas. Mínimo $10.000." />
@@ -91,6 +100,13 @@ export function PublishForm({ categories }: { categories: Category[] }) {
       <Button type="submit" disabled={pending || !media}>
         {pending ? "Publicando…" : media ? "Publicar" : "Graba el video para continuar"}
       </Button>
+
+      {category === "tecnologia" && (
+        <p className="text-xs text-muted">
+          La electrónica la revisa una persona antes de quedar visible. Suele tardar
+          pocas horas y te avisamos.
+        </p>
+      )}
     </form>
   );
 }

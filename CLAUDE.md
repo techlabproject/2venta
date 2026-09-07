@@ -67,6 +67,13 @@ el número y se le manda el código antes de dejarlo comprar o escribir.
 - El servidor de desarrollo y las pruebas no pueden correr a la vez: Next se niega
   a levantar un segundo servidor sobre el mismo directorio. Hay que parar el
   preview antes de `npm run verify`.
+- Las pruebas precompilan las rutas antes de empezar (`e2e/global-setup.ts`). Sin
+  eso, la primera prueba que toca una ruta nueva paga la compilación dentro de su
+  presupuesto de tiempo, y el resultado son fallos intermitentes distintos en cada
+  corrida. Cuando agregues una ruta, agrégala a esa lista.
+- Regenerar el esquema de autenticación (`@better-auth/cli generate`) emite solo el
+  diff contra la base que encuentre. Para obtener el esquema completo hay que vaciar
+  el esquema público primero.
 - El contenedor de Postgres corre con configuración regional en inglés. Cualquier
   fecha con nombre de mes se formatea en la aplicación con `Intl`, nunca con
   `to_char` en SQL.
