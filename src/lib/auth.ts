@@ -9,6 +9,10 @@ import { assertCanSendCode } from "./otp-rate-limit";
 // La autenticación se delega en una biblioteca establecida a propósito: el manejo
 // de contraseñas, tokens y sesiones es exactamente lo que no se implementa a mano
 // (ver references/zonas-sensibles.md de la skill product-build-loop).
+export function googleConfigured(): boolean {
+  return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+}
+
 export const auth = betterAuth({
   database: pool,
   secret: process.env.BETTER_AUTH_SECRET,
@@ -45,6 +49,18 @@ export const auth = betterAuth({
       "/sign-in/email": { window: 600, max: 10 },
     },
   },
+
+  // Entrar con Google (D-01). Las credenciales salen de la consola de Google Cloud;
+  // sin ellas el proveedor simplemente no se registra y el botón no aparece, en vez
+  // de romper el arranque.
+  socialProviders: googleConfigured()
+    ? {
+        google: {
+          clientId: process.env.GOOGLE_CLIENT_ID!,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        },
+      }
+    : undefined,
 
   emailAndPassword: {
     enabled: true,

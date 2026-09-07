@@ -53,6 +53,15 @@ IMPORTANT: ninguna consulta a base de datos que devuelva datos de una persona sa
 sin comprobar en el servidor que quien pregunta tiene derecho a verlos. La interfaz
 que oculta el botón no cuenta como control de acceso.
 
+# Entrar con Google
+
+Está implementado y se activa solo si existen `GOOGLE_CLIENT_ID` y
+`GOOGLE_CLIENT_SECRET`. Sin ellas el proveedor no se registra y el botón no
+aparece. Instrucciones para obtenerlas en `GOOGLE.md`.
+
+Quien entra con Google llega sin celular, y la D-01 no admite excepción: se le pide
+el número y se le manda el código antes de dejarlo comprar o escribir.
+
 # Gotchas
 
 - El servidor de desarrollo y las pruebas no pueden correr a la vez: Next se niega

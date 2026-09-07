@@ -5,6 +5,7 @@ export type SessionUser = {
   id: string;
   name: string;
   alias: string | null;
+  phoneNumber: string | null;
   phoneNumberVerified: boolean | null;
 };
 

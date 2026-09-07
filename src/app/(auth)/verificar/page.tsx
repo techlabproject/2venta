@@ -1,18 +1,39 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { AuthShell } from "@/components/ui";
 import { VerifyForm } from "@/features/auth/VerifyForm";
+import { PhoneForm } from "@/features/auth/PhoneForm";
+import { currentUser } from "@/lib/session";
 
 // D-01: sin celular verificado no se compra ni se escribe. El número verificado es
 // lo que impide crear cuentas desechables para estafar y volver a entrar.
-export default function Verificar() {
+export const dynamic = "force-dynamic";
+
+export default async function Verificar({
+  searchParams,
+}: {
+  searchParams: Promise<{ tel?: string }>;
+}) {
+  const { tel } = await searchParams;
+  const user = await currentUser();
+
+  // Ya confirmado: no hay nada que hacer aquí.
+  if (user?.phoneNumberVerified) redirect("/");
+
+  // Quien entró con Google llega sin número, porque Google trae correo y no
+  // celular. Primero hay que pedírselo.
+  const needsPhone = !tel && user && !user.phoneNumber;
+
   return (
     <AuthShell
-      title="Confirma tu celular"
-      subtitle="Es lo que evita que alguien estafe y vuelva a entrar con otra cuenta."
+      title={needsPhone ? "Falta tu celular" : "Confirma tu celular"}
+      subtitle={
+        needsPhone
+          ? "Google nos dio tu correo, pero no tu número. Lo necesitamos para que puedas comprar y escribirle a un vendedor."
+          : "Es lo que evita que alguien estafe y vuelva a entrar con otra cuenta."
+      }
     >
-      <Suspense fallback={null}>
-        <VerifyForm />
-      </Suspense>
+      <Suspense fallback={null}>{needsPhone ? <PhoneForm /> : <VerifyForm />}</Suspense>
     </AuthShell>
   );
 }

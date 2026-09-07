@@ -252,3 +252,40 @@ test("sin celular confirmado no se entra al circuito de vendedor", async ({ page
   await page.goto("/publicar");
   await expect(page).toHaveURL(/\/verificar/);
 });
+
+test("entrar con Google no aparece si no hay credenciales configuradas", async ({
+  page,
+}) => {
+  // El proveedor se registra solo cuando existen las dos variables de entorno. Sin
+  // ellas la app no se rompe: simplemente no ofrece el botón.
+  await page.goto("/ingresar");
+  const hayCredenciales = Boolean(process.env.GOOGLE_CLIENT_ID);
+  await expect(page.getByRole("button", { name: /Continuar con Google/ })).toHaveCount(
+    hayCredenciales ? 1 : 0
+  );
+});
+
+test("quien no tiene celular llega a la pantalla que se lo pide", async ({ page }) => {
+  // Es el caso de quien entra con Google: trae correo, no número. La D-01 no admite
+  // excepción, así que hay que pedírselo antes de dejarlo comprar o escribir.
+  const { email, phoneDigits } = uniqueAccount();
+  await page.goto("/registro?rol=comprador");
+  await page.getByLabel("Nombre").fill("Sin Celular");
+  await page.getByLabel("Correo").fill(email);
+  await page.getByLabel("Celular").fill(phoneDigits);
+  await page.getByLabel("Contraseña").fill("unaClaveLarga1");
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(page).toHaveURL(/\/verificar/);
+
+  // Se le quita el número, como si hubiera entrado con Google.
+  const { Client } = await import("pg");
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  await client.connect();
+  await client.query(`update "user" set "phoneNumber" = null where email = $1`, [email]);
+  await client.end();
+
+  await page.goto("/verificar");
+  await expect(page.getByRole("heading", { name: "Falta tu celular" })).toBeVisible();
+  await expect(page.getByLabel("Tu celular")).toBeVisible();
+});
