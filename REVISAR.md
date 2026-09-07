@@ -78,8 +78,9 @@ accidente sin conectarlo.
 **No hay transcodificación de video.** Se guarda lo que grabe cada navegador, y eso
 no es lo mismo en Android que en iOS. Hay que convertir a un formato único.
 
-**No hay migraciones.** El esquema se recrea entero al sembrar. Sirve mientras no
-haya un usuario real; después no.
+**Migraciones: RESUELTO.** Ya hay migraciones numeradas en `db/migrations/`, con
+registro de aplicadas y una transacción por migración. El procedimiento está en
+`db/LEEME.md`.
 
 ## El límite del proveedor de prueba, dicho claro
 
