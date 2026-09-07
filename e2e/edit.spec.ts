@@ -48,11 +48,15 @@ test("marcar como reservada la saca del catálogo, y volver a publicarla la devu
   await seller.page.goto(`/producto/${seller.listingId}`);
   await seller.page.getByRole("button", { name: "Marcar como reservada" }).click();
   await expect(seller.page.getByRole("button", { name: "Volver a publicar" })).toBeVisible();
-  expect(await visibleInCatalog(browser, titulo)).toBe(false);
+  await expect(async () => {
+    expect(await visibleInCatalog(browser, titulo)).toBe(false);
+  }).toPass({ timeout: 10_000 });
 
   await seller.page.getByRole("button", { name: "Volver a publicar" }).click();
   await expect(seller.page.getByRole("button", { name: "Marcar como reservada" })).toBeVisible();
-  expect(await visibleInCatalog(browser, titulo)).toBe(true);
+  await expect(async () => {
+    expect(await visibleInCatalog(browser, titulo)).toBe(true);
+  }).toPass({ timeout: 10_000 });
 
   await seller.context.close();
 });
@@ -63,7 +67,20 @@ test("marcar como vendida la saca del catálogo", async ({ browser }) => {
 
   await seller.page.goto(`/producto/${seller.listingId}`);
   await seller.page.getByRole("button", { name: "Marcar como vendida" }).click();
-  await expect(seller.page.getByRole("button", { name: "Marcar como vendida" })).toHaveCount(0);
+
+  // Se espera al estado real y no al botón: el botón puede desaparecer mientras la
+  // página se vuelve a dibujar, antes de que el cambio esté escrito.
+  await expect(async () => {
+    const estado = await withDb(async (c) => {
+      const { rows } = await c.query<{ status: string }>(
+        `select status from listings where id = $1`,
+        [seller.listingId]
+      );
+      return rows[0].status;
+    });
+    expect(estado).toBe("vendida");
+  }).toPass({ timeout: 10_000 });
+
   expect(await visibleInCatalog(browser, titulo)).toBe(false);
 
   await seller.context.close();

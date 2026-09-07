@@ -7,6 +7,7 @@ import { shippingProvider } from "@/features/shipping/provider";
 import { AddressForm } from "@/features/shipping/AddressForm";
 import { AppHeader } from "@/components/AppHeader";
 import { getOffer } from "@/features/chat/queries";
+import { listCart } from "@/features/cart/queries";
 
 // Paso previo al pago: a dónde llega y cuánto cuesta llevarlo. El comprador ve el
 // total completo antes de que le cobren nada.
@@ -24,7 +25,12 @@ export default async function Comprar({
   if (!user.phoneNumberVerified) redirect("/verificar");
 
   const { id } = await params;
-  const listing = await getListing(id);
+
+  // "carrito" no es un artículo: es el pedido completo de un solo vendedor (D-20).
+  const cart = id === "carrito" ? await listCart(user.id) : [];
+  if (id === "carrito" && cart.length === 0) redirect("/carrito");
+
+  const listing = await getListing(id === "carrito" ? cart[0].listing_id : id);
   if (!listing) notFound();
 
   // Si viene de una oferta aceptada, el precio es el de la oferta. La comprobación
@@ -32,9 +38,11 @@ export default async function Comprar({
   const { oferta } = await searchParams;
   const offer = oferta ? await getOffer(oferta) : null;
   const priceCop =
-    offer && offer.listing_id === listing.id && offer.status === "aceptada"
-      ? offer.price_cop
-      : listing.price_cop;
+    id === "carrito"
+      ? cart.reduce((sum, i) => sum + i.price_cop, 0)
+      : offer && offer.listing_id === listing.id && offer.status === "aceptada"
+        ? offer.price_cop
+        : listing.price_cop;
 
   const [quote, zones] = await Promise.all([
     shippingProvider.quote({ zone: listing.seller_zone, priceCop }),
@@ -53,12 +61,19 @@ export default async function Comprar({
           Volver al artículo
         </Link>
         <h1 className="mt-4 font-title text-xl font-semibold">¿A dónde lo llevamos?</h1>
-        <p className="mt-1 mb-6 text-sm text-muted">{listing.title}</p>
+        <p className="mt-1 mb-6 text-sm text-muted">
+          {id === "carrito"
+            ? cart.length === 1
+              ? cart[0].title
+              : `${cart.length} artículos de ${cart[0].seller_alias}`
+            : listing.title}
+        </p>
 
         <AddressForm
           listingId={listing.id}
           priceCop={priceCop}
           offerId={offer && offer.status === "aceptada" ? offer.id : undefined}
+          fromCart={id === "carrito"}
           shippingCop={quote.costCop}
           zones={zoneNames}
         />

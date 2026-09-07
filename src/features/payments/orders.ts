@@ -54,17 +54,21 @@ export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
   return ALLOWED[from].includes(to);
 }
 
+export type OrderLine = { listingId: string; title: string; priceCop: number };
+
 export async function createOrder(input: {
   buyerId: string;
   sellerId: string;
-  listingId: string;
-  title: string;
-  priceCop: number;
+  /** Uno o varios artículos, siempre del mismo vendedor (D-20). */
+  lines: OrderLine[];
   shippingCop?: number;
   provider: string;
   idempotencyKey: string;
 }): Promise<Order> {
-  const money = breakdown(input.priceCop, input.shippingCop ?? 0);
+  // La comisión se calcula sobre el total del pedido, no artículo por artículo.
+  // Es justo el punto: tres camisetas juntas pagan una comisión, no tres pisos.
+  const subtotal = input.lines.reduce((sum, l) => sum + l.priceCop, 0);
+  const money = breakdown(subtotal, input.shippingCop ?? 0);
 
   // Pedido y renglones se escriben juntos o no se escribe ninguno: un pedido sin
   // renglones no dice qué se compró, y eso rompe cualquier reclamo posterior.
@@ -91,11 +95,13 @@ export async function createOrder(input: {
     );
     const order = rows[0];
 
-    await client.query(
-      `insert into order_items (order_id, listing_id, title_cop, price_cop)
-       values ($1, $2, $3, $4)`,
-      [order.id, input.listingId, input.title, input.priceCop]
-    );
+    for (const line of input.lines) {
+      await client.query(
+        `insert into order_items (order_id, listing_id, title_cop, price_cop)
+         values ($1, $2, $3, $4)`,
+        [order.id, line.listingId, line.title, line.priceCop]
+      );
+    }
 
     await client.query(
       `insert into order_events (order_id, from_status, to_status, source, detail)

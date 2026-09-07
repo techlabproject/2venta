@@ -11,6 +11,8 @@ import { MIN_PRICE_COP, breakdown } from "./money";
 import { shippingProvider } from "@/features/shipping/provider";
 import { saveAddress } from "@/features/shipping/queries";
 import { getOffer } from "@/features/chat/queries";
+import { listCart } from "@/features/cart/queries";
+import { clearCart } from "@/features/cart/actions";
 
 export type BuyResult = { error: string };
 
@@ -27,7 +29,10 @@ export async function buyListing(
     return { error: "Confirma tu celular antes de comprar." };
   }
 
+  // Puede venir un artículo suelto o el carrito completo. En los dos casos es un
+  // solo vendedor (D-20).
   const listingId = String(form.get("listingId") ?? "");
+  const fromCart = String(form.get("desdeCarrito") ?? "") === "1";
 
   // D-19: envío a domicilio o encuentro en persona.
   const presencial = String(form.get("metodo") ?? "envio") === "presencial";
@@ -50,7 +55,13 @@ export async function buyListing(
     return { error: "Completa la dirección de entrega para poder pagar." };
   }
 
-  const listing = await getListing(listingId);
+  const cart = fromCart ? await listCart(user.id) : [];
+  if (fromCart && cart.length === 0) return { error: "Tu carrito está vacío." };
+  if (fromCart && cart.some((i) => i.status !== "activa")) {
+    return { error: "Algo de tu carrito ya no está disponible. Quítalo y vuelve a intentar." };
+  }
+
+  const listing = fromCart ? await getListing(cart[0].listing_id) : await getListing(listingId);
   if (!listing) return { error: "Ese artículo ya no existe." };
 
   if (listing.seller_id === user.id) {
@@ -59,7 +70,9 @@ export async function buyListing(
   // D-21: si hay una oferta aceptada, el precio es el de la oferta, no el de la
   // publicación. Se comprueba en el servidor que sea de este comprador, de este
   // artículo, y que siga aceptada: si no, cualquiera pagaría lo que quisiera.
-  let priceCop = listing.price_cop;
+  let priceCop = fromCart
+    ? cart.reduce((sum, i) => sum + i.price_cop, 0)
+    : listing.price_cop;
   const offerId = String(form.get("offerId") ?? "");
   if (offerId) {
     const offer = await getOffer(offerId);
@@ -73,17 +86,25 @@ export async function buyListing(
     return { error: "Ese artículo está por debajo del precio mínimo." };
   }
 
-  // El artículo se reserva marcándolo como vendido en la misma consulta que
-  // comprueba que siga activo. Hacerlo en dos pasos deja una ventana en la que dos
-  // compradores pagan lo mismo.
+  const ids = fromCart ? cart.map((i) => i.listing_id) : [listing.id];
+
+  // Los artículos se reservan en la misma consulta que comprueba que sigan activos.
+  // Hacerlo en dos pasos deja una ventana en la que dos compradores pagan lo mismo.
   const claimed = await query<{ id: string }>(
     `update listings set status = 'reservada'
-      where id = $1 and status = 'activa'
+      where id = any($1::uuid[]) and status = 'activa'
       returning id`,
-    [listingId]
+    [ids]
   );
-  if (claimed.length === 0) {
-    return { error: "Alguien más se adelantó: ese artículo ya no está disponible." };
+  if (claimed.length !== ids.length) {
+    // Si solo algunos se pudieron reservar, se devuelven los que sí, para no
+    // dejarlos bloqueados por un pedido que nunca se creó.
+    if (claimed.length > 0) {
+      await query(`update listings set status = 'activa' where id = any($1::uuid[])`, [
+        claimed.map((c) => c.id),
+      ]);
+    }
+    return { error: "Alguien más se adelantó: algo de tu pedido ya no está disponible." };
   }
 
   // La clave de idempotencia se genera antes de llamar al proveedor. Es lo que
@@ -98,13 +119,19 @@ export async function buyListing(
   const order = await createOrder({
     buyerId: user.id,
     sellerId: listing.seller_id,
-    listingId: listing.id,
-    title: listing.title,
-    priceCop,
+    lines: fromCart
+      ? cart.map((i) => ({
+          listingId: i.listing_id,
+          title: i.title,
+          priceCop: i.price_cop,
+        }))
+      : [{ listingId: listing.id, title: listing.title, priceCop }],
     shippingCop,
     provider: paymentProvider.name,
     idempotencyKey,
   });
+
+  if (fromCart) await clearCart();
 
   if (presencial) {
     await query(

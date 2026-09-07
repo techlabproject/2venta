@@ -11,12 +11,14 @@ export function AddressForm({
   shippingCop,
   zones,
   offerId,
+  fromCart = false,
 }: {
   listingId: string;
   priceCop: number;
   shippingCop: number;
   zones: string[];
   offerId?: string;
+  fromCart?: boolean;
 }) {
   const [result, submit, pending] = useActionState<BuyResult | null, FormData>(
     buyListing,
@@ -32,6 +34,7 @@ export function AddressForm({
       {result?.error && <ErrorNote>{result.error}</ErrorNote>}
       <input type="hidden" name="listingId" value={listingId} />
       {offerId && <input type="hidden" name="offerId" value={offerId} />}
+      {fromCart && <input type="hidden" name="desdeCarrito" value="1" />}
 
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-medium">¿Cómo lo recibes?</legend>

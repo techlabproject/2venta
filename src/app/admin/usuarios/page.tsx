@@ -27,13 +27,20 @@ export default async function Usuarios() {
     reports: number;
     reasons: string;
   }>(
+    // Se incluyen las cuentas suspendidas hace poco. Suspender resuelve sus
+    // reportes, así que si solo se mostraran los pendientes la fila desaparecería
+    // al apretar el botón, sin ninguna confirmación de que pasó algo.
     `select u.id, coalesce(u.alias, u.name) as alias, u.suspended_at,
-            count(r.id)::int as reports,
-            string_agg(distinct r.reason, ',') as reasons
+            count(r.id) filter (where r.resolved_at is null)::int as reports,
+            coalesce(
+              string_agg(distinct r.reason, ',') filter (where r.resolved_at is null),
+              ''
+            ) as reasons
        from user_reports r join "user" u on u.id = r.reported_id
       where r.resolved_at is null
+         or u.suspended_at > now() - interval '7 days'
       group by u.id, u.alias, u.name, u.suspended_at
-      order by count(r.id) desc`
+      order by u.suspended_at nulls first, count(r.id) desc`
   );
 
   return (
@@ -45,7 +52,9 @@ export default async function Usuarios() {
         </Link>
         <h1 className="mt-4 font-title text-2xl font-semibold">Cuentas reportadas</h1>
         <p data-testid="cola-usuarios" className="mt-1 text-sm text-muted">
-          {reported.length === 1 ? "1 cuenta reportada" : `${reported.length} cuentas reportadas`}
+          {reported.length === 1
+            ? "1 cuenta por revisar"
+            : `${reported.length} cuentas por revisar`}
         </p>
 
         {reported.length === 0 && (
@@ -63,16 +72,20 @@ export default async function Usuarios() {
                 <Link href={`/vendedor/${u.id}`} className="font-medium underline">
                   {u.alias}
                 </Link>
-                <span className="shrink-0 text-warn">
-                  {u.reports === 1 ? "1 reporte" : `${u.reports} reportes`}
-                </span>
+                {u.reports > 0 && (
+                  <span className="shrink-0 text-warn">
+                    {u.reports === 1 ? "1 reporte" : `${u.reports} reportes`}
+                  </span>
+                )}
               </div>
-              <p className="mt-1 text-muted">
-                {u.reasons
-                  .split(",")
-                  .map((r) => REASON_LABEL[r] ?? r)
-                  .join(", ")}
-              </p>
+              {u.reasons && (
+                <p className="mt-1 text-muted">
+                  {u.reasons
+                    .split(",")
+                    .map((r) => REASON_LABEL[r] ?? r)
+                    .join(", ")}
+                </p>
+              )}
               {u.suspended_at ? (
                 <p className="mt-3 font-medium text-danger">Cuenta suspendida</p>
               ) : (

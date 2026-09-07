@@ -4,16 +4,16 @@
 
 ## En qué voy
 
-Las tres fases del plan, más seis rebanadas que salieron de repasar los requisitos
+Las tres fases del plan, más siete rebanadas que salieron de repasar los requisitos
 originales contra lo construido: S-17 (D-27 cerrada), migraciones, S-18 (actividad),
-S-19 (editar y retirar), S-20 (recuperar contraseña y sesiones) y S-21 (perfil,
-reportar usuario y suspender cuenta).
+S-19 (editar y retirar), S-20 (recuperar y sesiones), S-21 (perfil, reportes y
+suspensión) y S-22 (carrito).
 
-208 pruebas de navegador y 70 unitarias.
+216 pruebas de navegador y 70 unitarias.
 
-De los requisitos funcionales originales quedan sin construir: RF-15 en su parte de
-fotos adicionales, RF-26 en su parte de carrito con varios artículos, RF-38 en su
-parte de envío real, y RF-42 (reportes de ventas y comisiones, prioridad baja).
+De los requisitos funcionales originales queda sin construir: RF-15 en su parte de
+fotos adicionales, RF-38 en su parte de envío real de notificaciones, y RF-42
+(reportes de ventas y comisiones, prioridad baja).
 
 ## Qué quedó a medias
 

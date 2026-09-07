@@ -15,6 +15,8 @@ import { getActivePromotion } from "@/features/promotions/queries";
 import { recordView } from "@/features/metrics/queries";
 import { FavoriteButton } from "@/features/favorites/FavoriteButton";
 import { isFavorite } from "@/features/favorites/queries";
+import { AddToCartButton } from "@/features/cart/Forms";
+import { isInCart } from "@/features/cart/queries";
 import { currentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +40,7 @@ export default async function ListingPage({
   // llena de visitas suyas y creería que interesa.
   await recordView(listing.id, user?.id ?? null, listing.seller_id);
   const favorited = user ? await isFavorite(user.id, listing.id) : false;
+  const inCart = user ? await isInCart(user.id, listing.id) : false;
 
   return (
     <>
@@ -88,6 +91,9 @@ export default async function ListingPage({
             Guardamos tu plata hasta que confirmes que recibiste el producto.
           </p>
           <BuyButton listingId={listing.id} />
+          {user && !isSeller && listing.status === "activa" && (
+            <AddToCartButton listingId={listing.id} inCart={inCart} />
+          )}
           {!isSeller && <ChatButton listingId={listing.id} />}
           {user && !isSeller && (
             <div className="mt-3">

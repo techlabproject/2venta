@@ -184,9 +184,27 @@ test("un administrador suspende una cuenta y sus publicaciones dejan de verse", 
 
   const admin = await adminPage(browser);
   await admin.page.goto("/admin/usuarios");
-  const fila = admin.page.getByRole("listitem").filter({ hasText: "Camila" }).first();
+  // Se identifica por el enlace al perfil: varias cuentas de prueba se llaman
+  // igual, y filtrar por nombre suspendía a otra.
+  const fila = admin.page.locator(`li:has(a[href="/vendedor/${sellerId}"])`);
+  await expect(fila).toHaveCount(1);
   await fila.getByLabel("Motivo de la suspensión").fill("Intento de estafa comprobado");
   await fila.getByRole("button", { name: "Suspender la cuenta" }).click();
+  // Sin esperar a que la suspensión quede aplicada, el catálogo se consulta antes.
+  await expect(admin.page.getByText("Cuenta suspendida")).toBeVisible();
+
+  // Se espera al estado real: la suspensión toca varias tablas y la pantalla puede
+  // volver antes de que todo esté escrito.
+  await expect(async () => {
+    const suspendido = await withDb(async (c) => {
+      const { rows } = await c.query<{ suspended_at: Date | null }>(
+        `select suspended_at from "user" where id = $1`,
+        [sellerId]
+      );
+      return rows[0].suspended_at;
+    });
+    expect(suspendido).not.toBeNull();
+  }).toPass({ timeout: 10_000 });
 
   const anonCtx = await browser.newContext();
   const anon = await anonCtx.newPage();
