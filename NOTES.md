@@ -4,15 +4,16 @@
 
 ## En qué voy
 
-Las tres fases completas, más S-17: **la brecha D-27 está cerrada.** 177 pruebas de
-navegador y 70 unitarias.
+Las tres fases completas, más S-17 (brecha D-27 cerrada), migraciones numeradas, y
+S-18 (mis compras, mis ventas, mis chats). 183 pruebas de navegador y 70 unitarias.
 
-El código de verificación por celular ya no vive en texto plano. Se dejó de usar el
-complemento de la biblioteca y se maneja con el mismo patrón del código de entrega
-presencial: cifrado con un secreto del servidor.
+S-18 salió de revisar qué faltaba, no de una prueba: no había forma de volver a un
+pedido ni a una conversación. Se pagaba, se cerraba la pestaña y no se encontraba
+nunca más. Ninguna prueba lo cubría porque todas navegan con la dirección en la
+mano.
 
-Lo que queda es la lista de abajo. Lo más urgente ahora es conectar un proveedor de
-SMS y los proveedores reales de pagos y envíos, que dependen de R-02 y R-04.
+Lo que queda es la lista de abajo, y lo más urgente ya no es código nuestro sino
+conectar proveedores reales.
 
 ## Qué quedó a medias
 
@@ -77,7 +78,7 @@ SMS y los proveedores reales de pagos y envíos, que dependen de R-02 y R-04.
   capturas de pantalla con el número visible; mientras no haya imágenes no hay
   hueco abierto, pero el filtro tiene que crecer cuando se agreguen.
 - Contraoferta como acción propia: hoy se rechaza y se ofrece otro precio.
-- Bandeja con todas las conversaciones: no existe, hay que entrar por el artículo.
+- (RESUELTO en S-18) Bandeja de conversaciones y listas de compras y ventas.
 - Reportar una conversación o un usuario (RF-32): va con moderación.
 - El seguimiento del envío solo tiene dos estados, despachado y entregado. Falta el
   detalle intermedio que muestra el mockup.

@@ -111,3 +111,41 @@ export function listQuestions(listingId: string): Promise<Question[]> {
 }
 
 export { pool };
+
+export type ConversationSummary = {
+  id: string;
+  listing_title: string;
+  listing_status: string;
+  counterpart_alias: string;
+  last_message: string | null;
+  last_at: Date;
+};
+
+/**
+ * Las conversaciones de alguien, de las dos puntas.
+ *
+ * Incluye las de artículos ya vendidos: la conversación es la única evidencia de lo
+ * que se acordó, y hacerla desaparecer justo cuando puede hacer falta para un
+ * reclamo sería lo contrario de lo que el producto promete.
+ */
+export function listConversations(userId: string): Promise<ConversationSummary[]> {
+  return query<ConversationSummary>(
+    `select c.id,
+            l.title as listing_title,
+            l.status as listing_status,
+            coalesce(u.alias, u.name) as counterpart_alias,
+            (select m.body from messages m
+              where m.conversation_id = c.id
+              order by m.created_at desc limit 1) as last_message,
+            coalesce(
+              (select max(m.created_at) from messages m where m.conversation_id = c.id),
+              c.created_at
+            ) as last_at
+       from conversations c
+       join listings l on l.id = c.listing_id
+       join "user" u on u.id = case when c.buyer_id = $1 then c.seller_id else c.buyer_id end
+      where c.buyer_id = $1 or c.seller_id = $1
+      order by last_at desc limit 30`,
+    [userId]
+  );
+}

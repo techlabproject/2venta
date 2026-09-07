@@ -18,6 +18,9 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
         <div className="ml-auto flex items-center gap-4 text-sm">
           {user ? (
             <>
+              <Link href="/actividad" className="text-cream/85 underline">
+                Actividad
+              </Link>
               <Link href="/favoritos" className="text-cream/85 underline">
                 Guardados
               </Link>
