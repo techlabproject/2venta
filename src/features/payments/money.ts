@@ -1,0 +1,63 @@
+// Aritmética del dinero. Todo entero, en pesos colombianos.
+//
+// Vive aparte y sin depender de nada más para poder probarse sola: es el punto
+// donde un error no se ve en pantalla y aparece meses después en la conciliación.
+
+/** D-09b: 5% del subtotal, con piso y techo. */
+export const COMMISSION_RATE = 0.05;
+export const COMMISSION_MIN_COP = 2_500;
+export const COMMISSION_MAX_COP = 120_000;
+
+/**
+ * D-29: precio mínimo de publicación.
+ *
+ * Es consecuencia directa del piso de comisión, y nadie lo había nombrado: sin un
+ * mínimo, un artículo de $3.000 pagaría el 83% de comisión. En $10.000 el piso
+ * equivale al 25%, que ya es alto pero defendible para el tramo más barato.
+ */
+export const MIN_PRICE_COP = 10_000;
+
+/**
+ * Comisión que cobra 2venta sobre un subtotal.
+ *
+ * El redondeo va al entero más cercano. La diferencia la absorbe la comisión y no
+ * el vendedor: es de un peso como mucho, pero tener escrito hacia dónde cae evita
+ * discusiones cuando alguien cuadre las cuentas del mes.
+ */
+export function commissionCop(subtotalCop: number): number {
+  assertMoney(subtotalCop);
+  const raw = Math.round(subtotalCop * COMMISSION_RATE);
+  return clamp(raw, COMMISSION_MIN_COP, COMMISSION_MAX_COP);
+}
+
+/** Lo que recibe el vendedor: el subtotal menos la comisión. */
+export function sellerPayoutCop(subtotalCop: number): number {
+  return subtotalCop - commissionCop(subtotalCop);
+}
+
+/**
+ * Desglose completo de un pedido. Que las tres cifras salgan de una sola función
+ * es lo que garantiza que siempre cuadren entre sí.
+ */
+export function breakdown(subtotalCop: number) {
+  const commission = commissionCop(subtotalCop);
+  return {
+    subtotalCop,
+    commissionCop: commission,
+    sellerPayoutCop: subtotalCop - commission,
+    /** Lo que paga el comprador. El envío se suma aquí cuando exista (S-06). */
+    buyerTotalCop: subtotalCop,
+  };
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+function assertMoney(value: number): void {
+  // Un monto no entero significa que en algún punto se usó punto flotante, y eso
+  // produce diferencias que aparecen meses después. Mejor romper aquí.
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new Error(`Monto inválido: ${value}. Los montos son enteros en pesos.`);
+  }
+}

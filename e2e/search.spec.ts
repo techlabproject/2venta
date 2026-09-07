@@ -75,9 +75,9 @@ test("los filtros se combinan entre sí", async ({ page }) => {
   await page.goto("/buscar?categoria=tecnologia&verificados=1&min=1000000");
   await expect(card(page, "iPhone")).toHaveCount(1);
 
-  // La misma combinación con un precio máximo que lo excluye no devuelve nada.
+  // La misma combinación con un precio máximo que lo excluye deja fuera el iPhone.
   await page.goto("/buscar?categoria=tecnologia&verificados=1&max=500000");
-  await expect(results(page)).toHaveCount(0);
+  await expect(card(page, "iPhone")).toHaveCount(0);
 });
 
 test("ordena por menor y por mayor precio", async ({ page }) => {

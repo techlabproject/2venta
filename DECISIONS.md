@@ -203,3 +203,22 @@ Se rechaza la creación automática de cuenta al verificar un celular.
 **Por qué.** Esa opción de la biblioteca abre una segunda vía de registro, sin
 contraseña, en la que pedir un código a cualquier número crea una cuenta. Una sola
 puerta de entrada es más fácil de razonar y de defender.
+
+### D-29 — Precio mínimo de publicación
+$10.000 COP.
+**Por qué.** Es consecuencia directa del piso de comisión de la D-09b, y nadie lo
+había nombrado: sin un mínimo, un artículo de $3.000 pagaría el 83% de comisión.
+En $10.000 el piso equivale al 25%, que sigue siendo alto pero es defendible para
+el tramo más barato del catálogo.
+**Estado.** Tomada al construir S-05. Pendiente de confirmación.
+**Consecuencia.** Deja fuera el accesorio muy barato. Se mitiga igual que el
+problema del piso: varios artículos del mismo vendedor en un pedido (D-20).
+
+### D-30 — Proveedor de pagos de prueba mientras R-02 no tenga respuesta
+Se construye contra una interfaz propia, igual que con mensajes e identidad.
+**Consecuencia, y aquí la técnica tiene un límite distinto.** Con el envío de
+mensajes, cambiar de implementación no altera nada más. Con pagos sí puede: si
+resulta que la retención no se puede condicionar a un evento nuestro, cambia el
+flujo del producto y no solo la integración. Lo que queda listo pase lo que pase es
+el modelo de datos, la máquina de estados, la aritmética y el registro de
+auditoría. Lo que puede tener que rehacerse es el momento exacto de la liberación.

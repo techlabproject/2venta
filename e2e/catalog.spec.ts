@@ -79,3 +79,14 @@ test("la marca aplica la tipografía y el color del manual", async ({ page }) =>
   const heading = page.getByRole("heading", { name: "Cerca de ti" });
   await expect(heading).toHaveCSS("font-family", /Poppins/);
 });
+
+test("la pantalla de no encontrado está en español y ofrece a dónde ir", async ({
+  page,
+}) => {
+  // La de Next sale en inglés y sin marca. Un comprador que abre un enlace viejo de
+  // un artículo ya vendido llega aquí.
+  const res = await page.goto("/producto/00000000-0000-4000-8000-000000000000");
+  expect(res?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "Esto ya no está" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Ver lo que hay ahora" })).toBeVisible();
+});

@@ -6,6 +6,7 @@ import { currentUser } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
 import { isAllowedType, MAX_BYTES, store } from "@/lib/storage";
 import { query } from "@/lib/db";
+import { MIN_PRICE_COP } from "@/features/payments/money";
 
 export type PublishResult = { error: string } | { id: string };
 
@@ -32,6 +33,13 @@ export async function publishListing(
   if (!title || !description) return { error: "Falta el título o la descripción." };
   if (!Number.isInteger(price) || price <= 0) {
     return { error: "El precio tiene que ser un número mayor que cero." };
+  }
+  // D-29: consecuencia del piso de comisión. Por debajo de este precio, el piso se
+  // come una parte absurda de la venta.
+  if (price < MIN_PRICE_COP) {
+    return {
+      error: `El precio mínimo para publicar es de $${MIN_PRICE_COP.toLocaleString("es-CO")}.`,
+    };
   }
 
   const video = form.get("video");

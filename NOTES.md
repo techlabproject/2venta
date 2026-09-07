@@ -4,15 +4,15 @@
 
 ## En qué voy
 
-S-04 cerrada. La Fase 1 del lado del comprador está completa. Cuarenta y ocho
-pruebas en verde.
+S-05 cerrada. **La Fase 1 está completa: existe una transacción de punta a punta.**
+62 pruebas de navegador y 7 unitarias.
 
 Hecho: S-00 esqueleto · diseño de marca · categorías en tabla (D-05b) · S-01 cuenta
 con celular verificado · S-02 modo vendedor y KYC · S-03 publicar con video ·
-S-04 buscar y filtrar.
+S-04 buscar y filtrar · S-05 comprar con pago retenido.
 
-Siguiente: S-05, comprar con pago retenido. Es la rebanada más delicada del
-proyecto y depende de R-02, que sigue sin respuesta.
+Siguiente: S-06, envío y guía. Escribe la fecha de entrega que la liberación
+automática ya está esperando.
 
 ## Qué quedó a medias
 
@@ -27,6 +27,15 @@ proyecto y depende de R-02, que sigue sin respuesta.
   real: entrega referencia, redirige y avisa por webhook firmado. Cambiarlo es
   escribir otra implementación de esa interfaz.
 - Comparar la selfie al retirar plata: necesita el proveedor real.
+- El proveedor de pagos es de prueba (D-30). A diferencia de los otros dos, aquí
+  cambiar de implementación puede alterar el flujo del producto y no solo la
+  integración: depende de lo que conteste R-02.
+- El retiro del dinero por parte del vendedor no existe. El pedido llega a
+  'liberado' y ahí se detiene.
+- La liberación automática necesita un programador de tareas que llame
+  `POST /api/tareas/liberar` con el secreto. En desarrollo se llama a mano.
+- `delivered_at` no la escribe nadie todavía: la va a escribir S-06 cuando la
+  transportadora reporte la entrega.
 - Los archivos subidos van a disco local en `uploads/`, detrás de
   `src/lib/storage.ts`. Mover a almacenamiento en la nube es reescribir esas tres
   funciones. Falta transcodificar a un formato único: hoy se guarda lo que grabe

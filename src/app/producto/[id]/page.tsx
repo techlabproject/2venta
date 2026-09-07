@@ -5,6 +5,7 @@ import { CONDITION_LABEL } from "@/features/catalog/labels";
 import { formatCop } from "@/lib/money";
 import { AppHeader } from "@/components/AppHeader";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { BuyButton } from "@/features/payments/BuyButton";
 
 export const dynamic = "force-dynamic";
 
@@ -66,9 +67,9 @@ export default async function ListingPage({
         <div className="mt-6 rounded-2xl bg-white p-4 text-sm">
           <p className="font-medium">Pago protegido</p>
           <p className="mt-1 text-muted">
-            Guardamos tu plata hasta que confirmes que recibiste el producto. Comprar
-            llega en una próxima entrega.
+            Guardamos tu plata hasta que confirmes que recibiste el producto.
           </p>
+          <BuyButton listingId={listing.id} />
         </div>
       </main>
     </>

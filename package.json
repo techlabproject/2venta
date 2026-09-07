@@ -10,7 +10,8 @@
     "db:up": "docker compose up -d --wait",
     "db:seed": "tsx db/seed.ts",
     "test:e2e": "playwright test",
-    "verify": "tsc --noEmit && eslint && playwright test"
+    "verify": "tsc --noEmit && eslint && npm run test:unit && playwright test",
+    "test:unit": "node --import tsx --test \"src/**/*.test.ts\""
   },
   "dependencies": {
     "better-auth": "^1.7.3",

@@ -82,3 +82,76 @@ create table if not exists otp_sends (
 );
 
 create index if not exists otp_sends_phone_idx on otp_sends (phone, sent_at desc);
+
+-- ---------------------------------------------------------------------------
+-- Pedidos y pago retenido (S-05)
+-- ---------------------------------------------------------------------------
+
+-- D-20: un vendedor por pedido. Está en el modelo, no solo en la pantalla.
+create table if not exists orders (
+  id                uuid primary key default gen_random_uuid(),
+  buyer_id          text not null references "user"(id),
+  seller_id         text not null references "user"(id),
+
+  status            text not null default 'pendiente_pago'
+                    check (status in ('pendiente_pago','pagado','entregado',
+                                      'liberado','cancelado','reembolsado')),
+
+  -- Todo entero en pesos. Se guardan las tres cifras, no solo el total: cuando
+  -- alguien cuadre las cuentas del mes tiene que poder ver el desglose exacto
+  -- que se aplicó ese día, aunque la tarifa haya cambiado después.
+  subtotal_cop      integer not null check (subtotal_cop > 0),
+  commission_cop    integer not null check (commission_cop >= 0),
+  seller_payout_cop integer not null check (seller_payout_cop >= 0),
+
+  provider          text not null,
+  provider_ref      text unique,
+  -- Generada por el cliente antes de llamar al proveedor. Es lo que impide que un
+  -- reintento por timeout cobre dos veces.
+  idempotency_key   text not null unique,
+
+  delivered_at      timestamptz,
+  released_at       timestamptz,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now(),
+
+  constraint cuentas_cuadran
+    check (seller_payout_cop + commission_cop = subtotal_cop),
+  constraint el_comprador_no_es_el_vendedor
+    check (buyer_id <> seller_id)
+);
+
+create index if not exists orders_buyer_idx  on orders (buyer_id, created_at desc);
+create index if not exists orders_seller_idx on orders (seller_id, created_at desc);
+-- Para el trabajo de liberación automática (D-11b).
+create index if not exists orders_release_idx on orders (status, delivered_at);
+
+create table if not exists order_items (
+  id         bigserial primary key,
+  order_id   uuid not null references orders(id) on delete cascade,
+  listing_id uuid not null references listings(id),
+  -- Copia del título y del precio al momento de comprar. Si el vendedor los
+  -- cambia después, el pedido tiene que seguir diciendo qué se compró y por
+  -- cuánto: es la evidencia si hay reclamo.
+  title_cop  text    not null,
+  price_cop  integer not null check (price_cop > 0)
+);
+
+create index if not exists order_items_order_idx on order_items (order_id);
+
+-- Registro de auditoría. Cuando haya una disputa, esto es la única evidencia que
+-- existe de qué pasó y cuándo.
+create table if not exists order_events (
+  id                bigserial primary key,
+  order_id          uuid not null references orders(id) on delete cascade,
+  from_status       text,
+  to_status         text not null,
+  source            text not null check (source in ('comprador','vendedor','proveedor','sistema')),
+  -- Identificador del aviso del proveedor. Único, y es lo que hace que un webhook
+  -- repetido no se procese dos veces.
+  provider_event_id text unique,
+  detail            text,
+  created_at        timestamptz not null default now()
+);
+
+create index if not exists order_events_order_idx on order_events (order_id, created_at);

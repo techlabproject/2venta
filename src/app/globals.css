@@ -18,6 +18,7 @@
   --color-ph: #e9ebe5;
   --color-warn: #b26b2e;
   --color-danger: #a33b2b;
+  --color-line: #dbe1d7;
 
   --font-title: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-work-sans), ui-sans-serif, system-ui, sans-serif;

@@ -69,7 +69,7 @@ export function PublishForm({ categories }: { categories: Category[] }) {
       </div>
 
       <Field id="price" name="price" label="Precio" inputMode="numeric" required
-        placeholder="260000" hint="En pesos, sin puntos ni comas." />
+        placeholder="260000" hint="En pesos, sin puntos ni comas. Mínimo $10.000." />
 
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-medium">Estado del artículo</legend>
