@@ -30,11 +30,11 @@ test("busca por una palabra que solo está en la descripción", async ({ page })
 
 test("la búsqueda ignora tildes y mayúsculas", async ({ page }) => {
   await page.goto("/buscar?q=CHAQUETA");
-  await expect(results(page)).toContainText("Chaqueta de jean");
+  await expect(card(page, "Chaqueta de jean")).toHaveCount(1);
 
   // "batería" lleva tilde en la descripción del iPhone.
   await page.goto("/buscar?q=bateria");
-  await expect(results(page)).toContainText("iPhone");
+  await expect(card(page, "iPhone")).toHaveCount(1);
 });
 
 test("filtra por categoría", async ({ page }) => {
@@ -114,7 +114,7 @@ test("la búsqueda funciona sin JavaScript del cliente", async ({ browser }) => 
   await page.getByLabel("Buscar").fill("chaqueta");
   await page.getByRole("button", { name: "Buscar" }).click();
   await expect(page).toHaveURL(/q=chaqueta/);
-  await expect(results(page)).toContainText("Chaqueta de jean");
+  await expect(card(page, "Chaqueta de jean")).toHaveCount(1);
   await context.close();
 });
 

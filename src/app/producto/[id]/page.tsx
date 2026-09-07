@@ -12,6 +12,8 @@ import { ReportForm } from "@/features/moderation/Forms";
 import { PromoteButton } from "@/features/promotions/PromoteButton";
 import { getActivePromotion } from "@/features/promotions/queries";
 import { recordView } from "@/features/metrics/queries";
+import { FavoriteButton } from "@/features/favorites/FavoriteButton";
+import { isFavorite } from "@/features/favorites/queries";
 import { currentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +36,7 @@ export default async function ListingPage({
   // S-15: no cuenta las vistas del propio vendedor, que si no vería su publicación
   // llena de visitas suyas y creería que interesa.
   await recordView(listing.id, user?.id ?? null, listing.seller_id);
+  const favorited = user ? await isFavorite(user.id, listing.id) : false;
 
   return (
     <>
@@ -85,6 +88,11 @@ export default async function ListingPage({
           </p>
           <BuyButton listingId={listing.id} />
           {!isSeller && <ChatButton listingId={listing.id} />}
+          {user && !isSeller && (
+            <div className="mt-3">
+              <FavoriteButton listingId={listing.id} saved={favorited} />
+            </div>
+          )}
         </div>
 
         {/* D-21: preguntas públicas. Una pregunta respondida le ahorra la misma

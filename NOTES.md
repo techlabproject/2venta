@@ -4,9 +4,20 @@
 
 ## En qué voy
 
-S-15 cerrada. 169 pruebas de navegador y 64 unitarias.
+**Las tres fases del plan están completas.** 175 pruebas de navegador y 64
+unitarias.
 
-Siguiente y última: S-16, favoritos y filtros avanzados.
+- Fase 1, el circuito mínimo: S-00 esqueleto, S-01 cuenta, S-02 KYC, S-03 publicar
+  con video, S-04 buscar, S-05 pago retenido, S-06 envío.
+- Fase 2, lo que la hace segura: S-08 chat, S-09 presencial, S-10 IMEI y
+  moderación, S-11 disputas, S-12 calificaciones.
+- Fase 3, lo que hace crecer: S-13 tienda, S-14 destacados, S-15 alertas y
+  métricas, S-16 favoritos.
+
+Más entrar con Google, y los hallazgos de Luna de la primera ronda cerrados.
+
+Lo que sigue no es una rebanada más: es cerrar la lista de "qué quedó a medias" de
+abajo, que es lo que separa esto de algo que se puede poner delante de personas.
 
 ## Qué quedó a medias
 
