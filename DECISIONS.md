@@ -255,3 +255,14 @@ La lista de términos prohibidos es corta y específica, no amplia y difusa.
 un caso concreto: "perico" estaba en la lista de sustancias, y en Colombia son
 huevos revueltos y también un loro. Detectar droga por jerga es una carrera que no
 se gana; ese trabajo le toca a la cola de reportes.
+
+### D-34 — Un vendedor sin ventas no muestra cifras en cero
+El perfil de quien no ha vendido nada muestra desde cuándo es miembro y que su
+identidad está verificada, y nada más. Las cifras aparecen con la primera venta.
+**Por qué.** La D-17 dejó el problema abierto: el vendedor nuevo arranca sin nada
+que mostrar, justo cuando toda la plataforma son vendedores nuevos. "0 ventas, 0
+estrellas" se lee como mal desempeño cuando en realidad es ausencia de datos.
+**Consecuencia.** El comprador tiene menos información sobre un vendedor nuevo, y
+eso es correcto: la que había era falsa. Lo que sostiene la confianza mientras tanto
+es la verificación de identidad y el pago retenido, que es exactamente para lo que
+existen.

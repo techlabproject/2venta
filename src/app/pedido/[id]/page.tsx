@@ -12,6 +12,8 @@ import { issueCode, getCodeState } from "@/features/pickup/queries";
 import { RedeemForm } from "@/features/pickup/RedeemForm";
 import { getClaim, KIND_LABEL } from "@/features/claims/queries";
 import { OpenClaimForm, ReplyClaimForm } from "@/features/claims/Forms";
+import { hasRated } from "@/features/ratings/queries";
+import { RateForm } from "@/features/ratings/RateForm";
 import { formatCop } from "@/lib/money";
 
 // Pantalla 1j del mockup: seguimiento y liberación del pago.
@@ -47,6 +49,10 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
   const address = await getAddress(order.id);
   const money = breakdown(order.subtotal_cop, order.shipping_cop);
   const claim = await getClaim(order.id);
+  // D-17: se califica cuando el pedido terminó, no antes. Calificar durante la
+  // transacción convertiría la reseña en una forma de presionar.
+  const completed = order.status === "liberado" || order.status === "reembolsado";
+  const alreadyRated = completed ? await hasRated(order.id, user.id) : true;
 
   // D-19: el código lo ve solo el comprador, y solo mientras haga falta. Se emite
   // la primera vez que abre el pedido pagado; después se muestra el mismo.
@@ -235,6 +241,24 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
           ["pagado", "despachado", "entregado"].includes(order.status) && (
             <OpenClaimForm orderId={order.id} />
           )}
+
+        {completed && !alreadyRated && (
+          <RateForm
+            orderId={order.id}
+            counterpart={isBuyer ? "quien te vendió" : "quien te compró"}
+          />
+        )}
+
+        {completed && alreadyRated && (
+          // Se muestra desde el servidor y no desde el formulario: al calificar, la
+          // pantalla se vuelve a dibujar y el formulario desaparece, así que un
+          // mensaje que viviera dentro de él no se llegaría a ver. Además sirve
+          // cuando la persona vuelve al pedido días después.
+          <p data-testid="ya-calificado" className="mt-6 rounded-2xl bg-brand/10 p-4 text-sm text-brand">
+            Ya calificaste este pedido. Gracias: es lo que le permite al siguiente
+            comprador saber con quién está tratando.
+          </p>
+        )}
 
         <h2 className="mt-8 font-title text-sm font-semibold">Movimientos</h2>
         <ol className="mt-3 flex flex-col gap-2 text-sm">

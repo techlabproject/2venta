@@ -314,3 +314,20 @@ create table if not exists claims (
 );
 
 create index if not exists claims_open_idx on claims (resolved_at, created_at);
+
+-- Calificaciones mutuas (S-12, D-17).
+create table if not exists ratings (
+  id         bigserial primary key,
+  order_id   uuid not null references orders(id) on delete cascade,
+  rater_id   text not null references "user"(id) on delete cascade,
+  ratee_id   text not null references "user"(id) on delete cascade,
+  stars      integer not null check (stars between 1 and 5),
+  review     text,
+  created_at timestamptz not null default now(),
+  -- Una calificación por persona y por pedido. Sin esto, alguien podría hundir a
+  -- otro calificándolo diez veces por la misma venta.
+  unique (order_id, rater_id),
+  constraint no_se_califica_a_si_mismo check (rater_id <> ratee_id)
+);
+
+create index if not exists ratings_ratee_idx on ratings (ratee_id, created_at desc);

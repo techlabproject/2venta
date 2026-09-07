@@ -4,13 +4,15 @@
 
 ## En qué voy
 
-S-11 cerrada. 130 pruebas de navegador y 47 unitarias.
+S-12 cerrada. **La Fase 2 está completa.** 139 pruebas de navegador y 47 unitarias.
 
-Hecho: Fase 1 completa (S-00 a S-06), S-08 chat, S-09 presencial, S-10 IMEI y
-moderación, S-11 reclamos y disputas. Google implementado (faltan credenciales).
-Los hallazgos de Luna de la primera ronda, cerrados, incluido el precio negativo.
+Hecho: Fase 1 (S-00 a S-06) y Fase 2 (S-08 chat, S-09 presencial, S-10 IMEI y
+moderación, S-11 disputas, S-12 calificaciones). Google implementado. Hallazgos de
+Luna cerrados.
 
-Siguiente: S-12, calificaciones. Cierra la Fase 2.
+Siguiente: Fase 3, lo que hace crecer. S-13 cuenta de tienda, S-14 destacados,
+S-15 alertas y métricas, S-16 favoritos y filtros avanzados. Ninguna desbloquea
+nada, todas mejoran lo que ya funciona.
 
 ## Qué quedó a medias
 
@@ -36,6 +38,9 @@ Siguiente: S-12, calificaciones. Cierra la Fase 2.
   propone un agregador logístico, pero no hay contrato.
 - No se puede elegir entre transportadoras ni ver opciones de precio.
 - No hay direcciones guardadas: hay que escribirla en cada compra.
+- No se puede responder ni reportar una reseña.
+- El perfil público del comprador no existe; sus calificaciones están en la base
+  pero solo las ve el vendedor.
 - El reembolso real no mueve dinero: el proveedor de pagos es de prueba. Se llama
   a su método de devolución y queda en el registro, igual que la liberación.
 - Quién paga el envío de retorno en una disputa: la D-12 dice que la parte
