@@ -38,6 +38,12 @@ más adelante no.
 la D-03 (una sola cuenta con dos modos). Me pareció la lectura correcta de esa
 decisión, pero cambia el modelo de datos.
 
+**4. Precio mínimo de publicación de $10.000** (D-29). Salió construyendo el pago:
+el piso de comisión de $2.500 implica un mínimo que nadie había nombrado. Sin él,
+un artículo de $3.000 pagaría 83% de comisión. En $10.000 el piso equivale al 25%,
+que sigue siendo alto pero es defendible para el tramo más barato. Deja fuera el
+accesorio muy barato, así que es una decisión de producto, no un detalle técnico.
+
 ## Cosas que hay que arreglar antes de lanzar
 
 **El código de verificación se guarda en texto plano.** Escribí en la
@@ -57,6 +63,18 @@ no es lo mismo en Android que en iOS. Hay que convertir a un formato único.
 **No hay migraciones.** El esquema se recrea entero al sembrar. Sirve mientras no
 haya un usuario real; después no.
 
+## El límite del proveedor de prueba, dicho claro
+
+Con el envío de mensajes y con la verificación de identidad, cambiar la
+implementación de prueba por la real no altera nada más: el flujo del producto es
+el mismo. **Con pagos no puedo prometer lo mismo.** Si R-02 resuelve que la
+retención no se puede condicionar a la confirmación del comprador, cambia el flujo
+y no solo la integración.
+
+Lo que queda listo pase lo que pase: el modelo de datos, la máquina de estados, la
+aritmética del dinero y el registro de auditoría. Lo que puede tener que rehacerse
+es el momento exacto de la liberación. Está escrito como D-30.
+
 ## Lo que quedó demostrado
 
 **R-01, el riesgo número uno, funciona.** Grabar con `getUserMedia` más
@@ -75,7 +93,7 @@ y móvil con la misma base) se sostiene.
 - `src/features/publish/VideoCapture.tsx` — la respuesta a R-01.
 - `src/features/kyc/provider.ts` — la interfaz por donde entrará el proveedor real
   cuando R-02 tenga respuesta.
-- `e2e/` — 48 pruebas. Si quieres saber qué se comprobó de verdad, están ahí.
+- `e2e/` — 62 pruebas de navegador, más 7 unitarias en `src/features/payments/money.test.ts`. Si quieres saber qué se comprobó de verdad, están ahí.
 
 ## Un problema de producto que salió construyendo
 
@@ -98,10 +116,10 @@ después de su propio recorrido. Si las encuentra sola, sabemos que su método s
 
 ## Lo que sigue
 
-S-05, comprar con pago retenido. Es la rebanada más delicada del proyecto y la
-única que sigue bloqueada de verdad: depende de R-02, que no tiene respuesta.
-Mientras Mercado Pago no confirme si la retención se puede condicionar a la
-confirmación del comprador, no sé si la D-11 sobrevive como está escrita.
+S-06, envío y guía. Es la última de la Fase 1 y la más fácil de las que quedan:
+escribe la fecha de entrega que la liberación automática ya está esperando.
 
-Con la Fase 1 del lado del comprador completa (buscar, ver, publicar), lo que falta
-para tener una transacción de punta a punta es exactamente eso.
+La Fase 1 ya está completa en lo esencial: **existe una transacción de punta a
+punta.** Alguien publica con video, otro lo encuentra buscando, paga con el dinero
+retenido, confirma y el pago se libera con la comisión descontada. Eso es lo que
+convierte el proyecto de una idea en algo que se puede probar con personas.
