@@ -6,6 +6,9 @@ import { formatCop } from "@/lib/money";
 import { AppHeader } from "@/components/AppHeader";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { BuyButton } from "@/features/payments/BuyButton";
+import { AskForm, AnswerForm, ChatButton } from "@/features/chat/QuestionForms";
+import { listQuestions } from "@/features/chat/queries";
+import { currentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -15,11 +18,14 @@ export default async function ListingPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const listing = await getListing(id);
+  const [listing, user] = await Promise.all([getListing(id), currentUser()]);
 
   // Un id inexistente o con formato inválido termina en 404, no en una
   // excepción ni en una pantalla en blanco.
   if (!listing) notFound();
+
+  const questions = await listQuestions(listing.id);
+  const isSeller = user?.id === listing.seller_id;
 
   return (
     <>
@@ -70,7 +76,33 @@ export default async function ListingPage({
             Guardamos tu plata hasta que confirmes que recibiste el producto.
           </p>
           <BuyButton listingId={listing.id} />
+          {!isSeller && <ChatButton listingId={listing.id} />}
         </div>
+
+        {/* D-21: preguntas públicas. Una pregunta respondida le ahorra la misma
+            duda al siguiente comprador, cosa que el chat privado no hace. */}
+        <section className="mt-8">
+          <h2 className="font-title text-lg font-semibold">Preguntas</h2>
+          {questions.length === 0 && (
+            <p className="mt-2 text-sm text-muted">Todavía nadie ha preguntado nada.</p>
+          )}
+          <ul className="mt-3 flex flex-col gap-4">
+            {questions.map((q) => (
+              <li key={q.id} className="rounded-2xl bg-white p-4 text-sm">
+                <p className="font-medium">{q.body}</p>
+                <p className="mt-0.5 text-xs text-muted">{q.asker_alias}</p>
+                {q.answer ? (
+                  <p className="mt-2 border-l-2 border-brand/30 pl-3 text-ink2">{q.answer}</p>
+                ) : isSeller ? (
+                  <AnswerForm questionId={q.id} />
+                ) : (
+                  <p className="mt-2 text-xs text-muted">Sin responder todavía.</p>
+                )}
+              </li>
+            ))}
+          </ul>
+          {user && !isSeller && <AskForm listingId={listing.id} />}
+        </section>
       </main>
     </>
   );

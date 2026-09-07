@@ -4,20 +4,14 @@
 
 ## En qué voy
 
-S-06 cerrada. **La Fase 1 está completa entera.** 77 pruebas de navegador y 10
-unitarias.
+S-08 cerrada. Primera de la Fase 2. 91 pruebas de navegador y 21 unitarias, y la
+corrida bajó de 2,7 a 1,3 minutos.
 
-Hecho: S-00 esqueleto · diseño de marca · categorías en tabla (D-05b) · S-01 cuenta
-con celular verificado · S-02 modo vendedor y KYC · S-03 publicar con video ·
-S-04 buscar y filtrar · S-05 comprar con pago retenido · S-06 envío y guía.
-Más los hallazgos de Luna cerrados.
+Hecho: la Fase 1 completa (S-00 a S-06) más S-08 chat, ofertas y preguntas.
+Los hallazgos de Luna de la primera ronda están cerrados.
 
-El circuito completo funciona: publicar con video, encontrar buscando, poner
-dirección, pagar producto más envío, despachar con guía, la transportadora reporta
-la entrega, y el pago se libera al confirmar o solo a los siete días.
-
-Siguiente: empieza la Fase 2. La primera es S-08, chat con ofertas y filtro
-anti-desvío, porque S-09 (entrega presencial con código) se coordina dentro del chat.
+Siguiente: S-09, entrega presencial con código. Ya se puede coordinar el punto y la
+hora dentro del chat, que era lo que faltaba.
 
 ## Qué quedó a medias
 
@@ -43,6 +37,12 @@ anti-desvío, porque S-09 (entrega presencial con código) se coordina dentro de
   propone un agregador logístico, pero no hay contrato.
 - No se puede elegir entre transportadoras ni ver opciones de precio.
 - No hay direcciones guardadas: hay que escribirla en cada compra.
+- Imágenes en el chat: no se pueden mandar. La D-22 pide que el filtro cubra las
+  capturas de pantalla con el número visible; mientras no haya imágenes no hay
+  hueco abierto, pero el filtro tiene que crecer cuando se agreguen.
+- Contraoferta como acción propia: hoy se rechaza y se ofrece otro precio.
+- Bandeja con todas las conversaciones: no existe, hay que entrar por el artículo.
+- Reportar una conversación o un usuario (RF-32): va con moderación.
 - El seguimiento del envío solo tiene dos estados, despachado y entregado. Falta el
   detalle intermedio que muestra el mockup.
 - Los archivos subidos van a disco local en `uploads/`, detrás de

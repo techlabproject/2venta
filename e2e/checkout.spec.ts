@@ -1,80 +1,16 @@
 import { test, expect, type Page } from "@playwright/test";
 import { createHmac, randomUUID } from "node:crypto";
-import { Client } from "pg";
-import { config } from "dotenv";
-
-config({ path: ".env.local" });
+import {
+  alertIn,
+  approveKycFor,
+  sellerWithListing,
+  signUpVerified,
+  withDb,
+} from "./helpers";
 
 // La prueba de punta a punta de la rebanada S-05.
 // Ver slices/05-comprar-con-pago-retenido.md
 
-const alertIn = (page: Page) => page.getByRole("main").getByRole("alert");
-
-function uniqueAccount(prefix: string) {
-  const n = Math.floor(Math.random() * 900_000_000) + 100_000_000;
-  return {
-    phoneDigits: `3${String(n).padStart(9, "0")}`.slice(0, 10),
-    email: `${prefix}.${Date.now()}.${n}@correo.com`,
-  };
-}
-
-async function withDb<T>(fn: (c: Client) => Promise<T>): Promise<T> {
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
-  try {
-    return await fn(client);
-  } finally {
-    await client.end();
-  }
-}
-
-async function signUpVerified(page: Page, prefix: string, name = "Andrés Molina") {
-  const { email, phoneDigits } = uniqueAccount(prefix);
-  await page.goto("/registro?rol=comprador");
-  await page.getByLabel("Nombre").fill(name);
-  await page.getByLabel("Correo").fill(email);
-  await page.getByLabel("Celular").fill(phoneDigits);
-  await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page).toHaveURL(/\/verificar/);
-
-  const code = await withDb(async (c) => {
-    const { rows } = await c.query<{ value: string }>(
-      `select value from verification where identifier = $1 order by "createdAt" desc limit 1`,
-      [`+57${phoneDigits}`]
-    );
-    return rows[0].value.split(":")[0];
-  });
-
-  await page.getByLabel("Código de seis dígitos").fill(code);
-  await page.getByRole("button", { name: "Confirmar celular" }).click();
-  await expect(page.getByTestId("usuario")).toBeVisible();
-  return { email };
-}
-
-async function approveKyc(page: Page) {
-  await page.goto("/vender");
-  await page.getByRole("button", { name: "Empezar verificación" }).click();
-  await expect(page).toHaveURL(/\/dev\/kyc\//);
-  await page.getByRole("button", { name: "Simular aprobación" }).click();
-  await expect(page.getByRole("heading", { name: "Identidad verificada" })).toBeVisible();
-}
-
-async function publish(page: Page, title: string, priceCop: number) {
-  await page.goto("/publicar");
-  await page.getByRole("button", { name: "Abrir cámara" }).click();
-  await page.getByRole("button", { name: /^Grabar/ }).click();
-  await page.getByRole("button", { name: "Terminar" }).click();
-  await expect(page.getByRole("status")).toContainText("Video listo");
-
-  await page.getByLabel("Título").fill(title);
-  await page.getByLabel("Precio").fill(String(priceCop));
-  await page.getByLabel("Descripción").fill("Descripción de prueba.");
-  await page.getByRole("button", { name: "Publicar" }).click();
-  await expect(page).toHaveURL(/\/producto\//);
-  return new URL(page.url()).pathname.split("/").pop()!;
-}
 
 /**
  * Recorre el paso de dirección y deja al comprador en la pantalla del proveedor.
@@ -93,20 +29,11 @@ async function goToPayment(page: Page, listingId: string) {
 }
 
 /** Un vendedor verificado con un artículo publicado, en su propio contexto. */
-async function makeSellerWithListing(browser: Page["context"] extends never ? never : import("@playwright/test").Browser, title: string, price: number) {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  await signUpVerified(page, "vendedor", "Camila Vendedora");
-  await approveKyc(page);
-  const listingId = await publish(page, title, price);
-  return { context, page, listingId };
-}
-
 test("un comprador paga, el dinero queda retenido y el artículo sale del catálogo", async ({
   browser,
 }) => {
   const titulo = `Monitor curvo ${Date.now()}`;
-  const seller = await makeSellerWithListing(browser, titulo, 800_000);
+  const seller = await sellerWithListing(browser, titulo, 800_000);
 
   const buyerContext = await browser.newContext();
   const buyer = await buyerContext.newPage();
@@ -136,7 +63,7 @@ test("el comprador confirma y el dinero se libera con la comisión correcta", as
 }) => {
   const titulo = `Portátil ${Date.now()}`;
   // 5% de 800.000 = 40.000, dentro del tramo normal.
-  const seller = await makeSellerWithListing(browser, titulo, 800_000);
+  const seller = await sellerWithListing(browser, titulo, 800_000);
 
   const buyerContext = await browser.newContext();
   const buyer = await buyerContext.newPage();
@@ -163,7 +90,7 @@ test("con la entrega registrada hace ocho días, el pago se libera solo", async 
   browser,
 }) => {
   const titulo = `Nevera ${Date.now()}`;
-  const seller = await makeSellerWithListing(browser, titulo, 500_000);
+  const seller = await sellerWithListing(browser, titulo, 500_000);
 
   const buyerContext = await browser.newContext();
   const buyer = await buyerContext.newPage();
@@ -196,7 +123,7 @@ test("con la entrega registrada hace ocho días, el pago se libera solo", async 
 
 test("un pago rechazado deja el artículo disponible otra vez", async ({ browser }) => {
   const titulo = `Guitarra ${Date.now()}`;
-  const seller = await makeSellerWithListing(browser, titulo, 300_000);
+  const seller = await sellerWithListing(browser, titulo, 300_000);
 
   const buyerContext = await browser.newContext();
   const buyer = await buyerContext.newPage();
@@ -219,7 +146,7 @@ test("un pago rechazado deja el artículo disponible otra vez", async ({ browser
 
 test("no se puede comprar el propio artículo", async ({ browser }) => {
   const titulo = `Escritorio ${Date.now()}`;
-  const seller = await makeSellerWithListing(browser, titulo, 200_000);
+  const seller = await sellerWithListing(browser, titulo, 200_000);
 
   await goToPayment(seller.page, seller.listingId);
   await expect(alertIn(seller.page)).toContainText("tu propio artículo");
@@ -230,8 +157,8 @@ test("no se puede comprar el propio artículo", async ({ browser }) => {
 test("no se puede publicar por debajo del precio mínimo", async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
-  await signUpVerified(page, "vendedor", "Camila Vendedora");
-  await approveKyc(page);
+  const { email } = await signUpVerified(page, "vendedor", "Camila Vendedora");
+  await approveKycFor(email);
 
   await page.goto("/publicar");
   await page.getByRole("button", { name: "Abrir cámara" }).click();
@@ -290,7 +217,7 @@ test("un webhook de un pedido que no existe se rechaza", async ({ request }) => 
 
 test("un webhook repetido no libera ni cobra dos veces", async ({ browser }) => {
   const titulo = `Cámara ${Date.now()}`;
-  const seller = await makeSellerWithListing(browser, titulo, 400_000);
+  const seller = await sellerWithListing(browser, titulo, 400_000);
 
   const buyerContext = await browser.newContext();
   const buyer = await buyerContext.newPage();
@@ -338,7 +265,7 @@ test("un webhook fuera de orden no retrocede un estado más avanzado", async ({
   browser,
 }) => {
   const titulo = `Bafle ${Date.now()}`;
-  const seller = await makeSellerWithListing(browser, titulo, 250_000);
+  const seller = await sellerWithListing(browser, titulo, 250_000);
 
   const buyerContext = await browser.newContext();
   const buyer = await buyerContext.newPage();
@@ -378,7 +305,7 @@ test("nadie más que el comprador puede liberar el pago, ni ver el pedido", asyn
   browser,
 }) => {
   const titulo = `Impresora ${Date.now()}`;
-  const seller = await makeSellerWithListing(browser, titulo, 350_000);
+  const seller = await sellerWithListing(browser, titulo, 350_000);
 
   const buyerContext = await browser.newContext();
   const buyer = await buyerContext.newPage();

@@ -9,7 +9,11 @@ Marketplace de segunda mano para Colombia. Bogotá, tres categorías, pago prote
 - Migraciones: `npm run db:push`
 - Datos de prueba: `npm run db:seed`
 - Verificación completa antes de confirmar cambios: `npm run verify`
-  (tipos + linter + pruebas de punta a punta)
+  (tipos + linter + pruebas unitarias + siembra + pruebas de punta a punta)
+
+`verify` vuelve a sembrar la base a propósito. Las pruebas crean artículos y
+cuentas que se acumulan, y sin reiniciar, cualquier aserción sobre rangos de precio
+o sobre resultados de búsqueda empieza a fallar de forma intermitente.
 
 # Método de trabajo
 

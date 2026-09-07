@@ -178,3 +178,65 @@ create table if not exists shipping_addresses (
   notes          text,
   created_at     timestamptz not null default now()
 );
+
+-- ---------------------------------------------------------------------------
+-- Conversación y ofertas (S-08). D-21 y D-22.
+-- ---------------------------------------------------------------------------
+
+create table if not exists conversations (
+  id         uuid primary key default gen_random_uuid(),
+  listing_id uuid not null references listings(id) on delete cascade,
+  buyer_id   text not null references "user"(id) on delete cascade,
+  seller_id  text not null references "user"(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  -- Una sola conversación por artículo y comprador: si no, cada visita abriría un
+  -- hilo nuevo y el vendedor no sabría con quién está hablando.
+  unique (listing_id, buyer_id),
+  constraint no_se_escribe_a_si_mismo check (buyer_id <> seller_id)
+);
+
+create index if not exists conversations_buyer_idx  on conversations (buyer_id, created_at desc);
+create index if not exists conversations_seller_idx on conversations (seller_id, created_at desc);
+
+create table if not exists messages (
+  id              bigserial primary key,
+  conversation_id uuid not null references conversations(id) on delete cascade,
+  sender_id       text not null references "user"(id) on delete cascade,
+  -- Se guarda el texto ya filtrado, nunca el original. Guardar el número tachado
+  -- en la base sería dejarlo disponible para quien tenga acceso a ella, que es
+  -- justo lo que el filtro pretende evitar.
+  body            text not null,
+  redactions      text[] not null default '{}',
+  created_at      timestamptz not null default now()
+);
+
+create index if not exists messages_conversation_idx on messages (conversation_id, created_at);
+
+-- Oferta formal (D-21). Lleva precio y vencimiento, y aceptarla lleva al pago.
+create table if not exists offers (
+  id              uuid primary key default gen_random_uuid(),
+  conversation_id uuid not null references conversations(id) on delete cascade,
+  listing_id      uuid not null references listings(id) on delete cascade,
+  offered_by      text not null references "user"(id) on delete cascade,
+  price_cop       integer not null check (price_cop > 0),
+  status          text not null default 'pendiente'
+                  check (status in ('pendiente','aceptada','rechazada','vencida')),
+  expires_at      timestamptz not null,
+  created_at      timestamptz not null default now()
+);
+
+create index if not exists offers_conversation_idx on offers (conversation_id, created_at desc);
+
+-- Preguntas públicas en la ficha (D-21). A diferencia del chat, las ve cualquiera:
+-- una pregunta respondida le ahorra la misma duda al siguiente comprador.
+create table if not exists questions (
+  id          bigserial primary key,
+  listing_id  uuid not null references listings(id) on delete cascade,
+  asker_id    text not null references "user"(id) on delete cascade,
+  body        text not null,
+  answer      text,
+  answered_at timestamptz,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists questions_listing_idx on questions (listing_id, created_at desc);

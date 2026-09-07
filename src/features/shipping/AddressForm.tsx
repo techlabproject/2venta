@@ -10,11 +10,13 @@ export function AddressForm({
   priceCop,
   shippingCop,
   zones,
+  offerId,
 }: {
   listingId: string;
   priceCop: number;
   shippingCop: number;
   zones: string[];
+  offerId?: string;
 }) {
   const [result, submit, pending] = useActionState<BuyResult | null, FormData>(
     buyListing,
@@ -25,6 +27,7 @@ export function AddressForm({
     <form action={submit} className="flex flex-col gap-4">
       {result?.error && <ErrorNote>{result.error}</ErrorNote>}
       <input type="hidden" name="listingId" value={listingId} />
+      {offerId && <input type="hidden" name="offerId" value={offerId} />}
 
       <Field id="recipient" name="recipient" label="Quién recibe" required
         autoComplete="name" placeholder="Laura Torres" />

@@ -58,7 +58,10 @@ test("filtra por estado del artículo", async ({ page }) => {
 });
 
 test("filtra por vendedor con identidad verificada", async ({ page }) => {
-  await page.goto("/buscar?verificados=1");
+  // Se acota a Chapinero para que solo entren los artículos sembrados: la
+  // búsqueda corta en 60 resultados y las otras pruebas dejan artículos más
+  // recientes que empujarían a estos fuera de la página.
+  await page.goto("/buscar?verificados=1&zona=Chapinero");
   await expect(card(page, "iPhone")).toHaveCount(1);
   await expect(card(page, "Coche Chicco")).toHaveCount(1);
   // La chaqueta es del taller, que no está verificado.

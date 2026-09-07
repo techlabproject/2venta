@@ -6,12 +6,19 @@ import { listZones } from "@/features/catalog/search";
 import { shippingProvider } from "@/features/shipping/provider";
 import { AddressForm } from "@/features/shipping/AddressForm";
 import { AppHeader } from "@/components/AppHeader";
+import { getOffer } from "@/features/chat/queries";
 
 // Paso previo al pago: a dónde llega y cuánto cuesta llevarlo. El comprador ve el
 // total completo antes de que le cobren nada.
 export const dynamic = "force-dynamic";
 
-export default async function Comprar({ params }: { params: Promise<{ id: string }> }) {
+export default async function Comprar({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ oferta?: string }>;
+}) {
   const user = await currentUser();
   if (!user) redirect("/ingresar");
   if (!user.phoneNumberVerified) redirect("/verificar");
@@ -20,8 +27,17 @@ export default async function Comprar({ params }: { params: Promise<{ id: string
   const listing = await getListing(id);
   if (!listing) notFound();
 
+  // Si viene de una oferta aceptada, el precio es el de la oferta. La comprobación
+  // de que sea válida vuelve a hacerse en el servidor al pagar.
+  const { oferta } = await searchParams;
+  const offer = oferta ? await getOffer(oferta) : null;
+  const priceCop =
+    offer && offer.listing_id === listing.id && offer.status === "aceptada"
+      ? offer.price_cop
+      : listing.price_cop;
+
   const [quote, zones] = await Promise.all([
-    shippingProvider.quote({ zone: listing.seller_zone, priceCop: listing.price_cop }),
+    shippingProvider.quote({ zone: listing.seller_zone, priceCop }),
     listZones(),
   ]);
 
@@ -41,7 +57,8 @@ export default async function Comprar({ params }: { params: Promise<{ id: string
 
         <AddressForm
           listingId={listing.id}
-          priceCop={listing.price_cop}
+          priceCop={priceCop}
+          offerId={offer && offer.status === "aceptada" ? offer.id : undefined}
           shippingCop={quote.costCop}
           zones={zoneNames}
         />

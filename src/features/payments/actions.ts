@@ -10,6 +10,7 @@ import { createOrder, getOrder, transition } from "./orders";
 import { MIN_PRICE_COP, breakdown } from "./money";
 import { shippingProvider } from "@/features/shipping/provider";
 import { saveAddress } from "@/features/shipping/queries";
+import { getOffer } from "@/features/chat/queries";
 
 export type BuyResult = { error: string };
 
@@ -48,7 +49,20 @@ export async function buyListing(
   if (listing.seller_id === user.id) {
     return { error: "No puedes comprar tu propio artículo." };
   }
-  if (listing.price_cop < MIN_PRICE_COP) {
+  // D-21: si hay una oferta aceptada, el precio es el de la oferta, no el de la
+  // publicación. Se comprueba en el servidor que sea de este comprador, de este
+  // artículo, y que siga aceptada: si no, cualquiera pagaría lo que quisiera.
+  let priceCop = listing.price_cop;
+  const offerId = String(form.get("offerId") ?? "");
+  if (offerId) {
+    const offer = await getOffer(offerId);
+    if (!offer || offer.listing_id !== listing.id || offer.status !== "aceptada") {
+      return { error: "Esa oferta ya no está en pie." };
+    }
+    priceCop = offer.price_cop;
+  }
+
+  if (priceCop < MIN_PRICE_COP) {
     return { error: "Ese artículo está por debajo del precio mínimo." };
   }
 
@@ -71,7 +85,7 @@ export async function buyListing(
 
   const quote = await shippingProvider.quote({
     zone: address.zone,
-    priceCop: listing.price_cop,
+    priceCop,
   });
 
   const order = await createOrder({
@@ -79,7 +93,7 @@ export async function buyListing(
     sellerId: listing.seller_id,
     listingId: listing.id,
     title: listing.title,
-    priceCop: listing.price_cop,
+    priceCop,
     shippingCop: quote.costCop,
     provider: paymentProvider.name,
     idempotencyKey,

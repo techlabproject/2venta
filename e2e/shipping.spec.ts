@@ -1,82 +1,18 @@
-import { test, expect, type Page, type Browser } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { createHmac, randomUUID } from "node:crypto";
-import { Client } from "pg";
-import { config } from "dotenv";
-
-config({ path: ".env.local" });
+import {
+  alertIn,
+  sellerWithListing,
+  signUpVerified,
+  withDb,
+} from "./helpers";
 
 // La prueba de punta a punta de la rebanada S-06.
 // Ver slices/06-envio-y-guia.md
 
-const alertIn = (page: Page) => page.getByRole("main").getByRole("alert");
 
 const DIRECCION = "Calle 72 #10-34";
 const QUIEN_RECIBE = "Laura Torres";
-
-function uniqueAccount(prefix: string) {
-  const n = Math.floor(Math.random() * 900_000_000) + 100_000_000;
-  return {
-    phoneDigits: `3${String(n).padStart(9, "0")}`.slice(0, 10),
-    email: `${prefix}.${Date.now()}.${n}@correo.com`,
-  };
-}
-
-async function withDb<T>(fn: (c: Client) => Promise<T>): Promise<T> {
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
-  try {
-    return await fn(client);
-  } finally {
-    await client.end();
-  }
-}
-
-async function signUpVerified(page: Page, prefix: string, name: string) {
-  const { email, phoneDigits } = uniqueAccount(prefix);
-  await page.goto("/registro?rol=comprador");
-  await page.getByLabel("Nombre").fill(name);
-  await page.getByLabel("Correo").fill(email);
-  await page.getByLabel("Celular").fill(phoneDigits);
-  await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page).toHaveURL(/\/verificar/);
-
-  const code = await withDb(async (c) => {
-    const { rows } = await c.query<{ value: string }>(
-      `select value from verification where identifier = $1 order by "createdAt" desc limit 1`,
-      [`+57${phoneDigits}`]
-    );
-    return rows[0].value.split(":")[0];
-  });
-  await page.getByLabel("Código de seis dígitos").fill(code);
-  await page.getByRole("button", { name: "Confirmar celular" }).click();
-  await expect(page.getByTestId("usuario")).toBeVisible();
-}
-
-async function sellerWithListing(browser: Browser, title: string, price: number) {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  await signUpVerified(page, "vendedor", "Camila Vendedora");
-
-  await page.goto("/vender");
-  await page.getByRole("button", { name: "Empezar verificación" }).click();
-  await expect(page).toHaveURL(/\/dev\/kyc\//);
-  await page.getByRole("button", { name: "Simular aprobación" }).click();
-
-  await page.goto("/publicar");
-  await page.getByRole("button", { name: "Abrir cámara" }).click();
-  await page.getByRole("button", { name: /^Grabar/ }).click();
-  await page.getByRole("button", { name: "Terminar" }).click();
-  await expect(page.getByRole("status")).toContainText("Video listo");
-  await page.getByLabel("Título").fill(title);
-  await page.getByLabel("Precio").fill(String(price));
-  await page.getByLabel("Descripción").fill("Descripción de prueba.");
-  await page.getByRole("button", { name: "Publicar" }).click();
-  await expect(page).toHaveURL(/\/producto\//);
-
-  return { context, page, listingId: new URL(page.url()).pathname.split("/").pop()! };
-}
 
 async function payFor(page: Page, listingId: string) {
   await page.goto(`/comprar/${listingId}`);
