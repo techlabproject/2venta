@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { buyListing, type BuyResult } from "@/features/payments/actions";
 import { Button, ErrorNote, Field } from "@/components/ui";
 import { formatCop } from "@/lib/money";
@@ -22,6 +22,10 @@ export function AddressForm({
     buyListing,
     null
   );
+  // D-19: en persona no se paga envío, y el pago se libera con un código en el
+  // momento del encuentro.
+  const [presencial, setPresencial] = useState(false);
+  const envio = presencial ? 0 : shippingCop;
 
   return (
     <form action={submit} className="flex flex-col gap-4">
@@ -29,6 +33,49 @@ export function AddressForm({
       <input type="hidden" name="listingId" value={listingId} />
       {offerId && <input type="hidden" name="offerId" value={offerId} />}
 
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1 text-sm font-medium">¿Cómo lo recibes?</legend>
+        <label className="flex items-start gap-2.5 rounded-xl bg-white p-3 text-sm">
+          <input type="radio" name="metodo" value="envio" className="mt-0.5"
+            checked={!presencial} onChange={() => setPresencial(false)} />
+          <span>
+            <span className="font-medium">Te lo enviamos</span>
+            <span className="block text-muted">
+              Llega con guía. Confirmas al recibirlo y ahí le pagamos al vendedor.
+            </span>
+          </span>
+        </label>
+        <label className="flex items-start gap-2.5 rounded-xl bg-white p-3 text-sm">
+          <input type="radio" name="metodo" value="presencial" className="mt-0.5"
+            checked={presencial} onChange={() => setPresencial(true)} />
+          <span>
+            <span className="font-medium">Nos vemos en persona</span>
+            <span className="block text-muted">
+              Sin costo de envío. Revisas el producto y le dictas un código que
+              libera el pago ahí mismo. Nunca entregas efectivo.
+            </span>
+          </span>
+        </label>
+      </fieldset>
+
+      {presencial ? (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="meetingZone" className="text-sm font-medium">
+            ¿En qué zona se ven?
+          </label>
+          <select id="meetingZone" name="meetingZone" required defaultValue=""
+            className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm">
+            <option value="" disabled>Elige una zona</option>
+            {zones.map((z) => (
+              <option key={z} value={z}>{z}</option>
+            ))}
+          </select>
+          <p className="text-xs text-muted">
+            El punto y la hora los acuerdan por el chat.
+          </p>
+        </div>
+      ) : (
+      <>
       <Field id="recipient" name="recipient" label="Quién recibe" required
         autoComplete="name" placeholder="Laura Torres" />
       <Field id="phone" name="phone" label="Celular de quien recibe" type="tel" required
@@ -52,6 +99,8 @@ export function AddressForm({
 
       <Field id="notes" name="notes" label="Nota para la entrega"
         placeholder="Dejar en portería si no estoy" />
+      </>
+      )}
 
       <dl className="mt-2 flex flex-col gap-1.5 rounded-2xl bg-white p-4 text-sm">
         <div className="flex justify-between">
@@ -60,18 +109,20 @@ export function AddressForm({
         </div>
         <div className="flex justify-between">
           <dt className="text-muted">Envío</dt>
-          <dd data-testid="envio">{formatCop(shippingCop)}</dd>
+          <dd data-testid="envio">{presencial ? "Sin costo" : formatCop(envio)}</dd>
         </div>
         <div className="mt-1 flex justify-between border-t border-line pt-2 font-medium">
           <dt>Total</dt>
-          <dd data-testid="total-checkout">{formatCop(priceCop + shippingCop)}</dd>
+          <dd data-testid="total-checkout">{formatCop(priceCop + envio)}</dd>
         </div>
       </dl>
 
-      <p className="text-xs text-muted">
-        Tu dirección la ven la transportadora y el vendedor solo dentro de la guía.
-        No aparece en tu perfil ni en ninguna parte pública.
-      </p>
+      {!presencial && (
+        <p className="text-xs text-muted">
+          Tu dirección la ven la transportadora y el vendedor solo dentro de la
+          guía. No aparece en tu perfil ni en ninguna parte pública.
+        </p>
+      )}
 
       <Button type="submit" disabled={pending}>
         {pending ? "Preparando el pago…" : "Ir a pagar"}

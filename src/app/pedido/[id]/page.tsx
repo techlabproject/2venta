@@ -8,6 +8,8 @@ import { AppHeader } from "@/components/AppHeader";
 import { ShipButton } from "@/features/shipping/ShipButton";
 import { getAddress } from "@/features/shipping/queries";
 import { breakdown } from "@/features/payments/money";
+import { issueCode, getCodeState } from "@/features/pickup/queries";
+import { RedeemForm } from "@/features/pickup/RedeemForm";
 import { formatCop } from "@/lib/money";
 
 // Pantalla 1j del mockup: seguimiento y liberación del pago.
@@ -41,6 +43,17 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
   // una de las dos partes. Nunca llega arrastrada por la consulta del pedido.
   const address = await getAddress(order.id);
   const money = breakdown(order.subtotal_cop, order.shipping_cop);
+
+  // D-19: el código lo ve solo el comprador, y solo mientras haga falta. Se emite
+  // la primera vez que abre el pedido pagado; después se muestra el mismo.
+  const presencial = order.delivery_method === "presencial";
+  const codeState = presencial ? await getCodeState(order.id) : null;
+  // El comprador ve el mismo código cada vez que abre el pedido: lo necesita en el
+  // encuentro, no solo el día que pagó.
+  const code =
+    presencial && isBuyer && order.status === "pagado" && !codeState?.used_at
+      ? await issueCode(order.id)
+      : null;
   const events = await query<{ to_status: string; detail: string | null; created_at: Date }>(
     `select to_status, detail, created_at from order_events
       where order_id = $1 order by created_at`,
@@ -96,6 +109,39 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
           )}
         </dl>
 
+        {presencial && (
+          <p className="mt-4 rounded-2xl bg-white p-4 text-sm">
+            Entrega en persona en {order.meeting_zone}. El punto y la hora los
+            acuerdan por el chat.
+          </p>
+        )}
+
+        {code && (
+          <div className="mt-5 rounded-2xl bg-brand p-5 text-cream">
+            <p className="text-sm">Tu código de entrega</p>
+            <p data-testid="codigo" className="mt-1 font-title text-4xl tracking-[0.25em]">
+              {code}
+            </p>
+            <p className="mt-3 text-sm text-cream/85">
+              Dícteselo al vendedor <strong>solo después</strong> de revisar el
+              producto. En cuanto lo escriba, el pago es suyo.
+            </p>
+          </div>
+        )}
+
+        {presencial && !isBuyer && order.status === "pagado" && (
+          <div className="mt-6 rounded-2xl bg-brand/10 p-4">
+            <p className="text-sm font-medium text-brand">
+              Te pagaron. Cobra en el encuentro.
+            </p>
+            <p className="mt-1 text-sm text-ink2">
+              Cuando el comprador revise el producto te va a dictar un código de seis
+              dígitos. Escríbelo aquí y el dinero pasa a tu cuenta.
+            </p>
+            <RedeemForm orderId={order.id} />
+          </div>
+        )}
+
         {order.tracking_number && (
           <div className="mt-5 rounded-2xl bg-white p-4 text-sm">
             <p className="font-medium">Guía {order.tracking_number}</p>
@@ -103,7 +149,7 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
           </div>
         )}
 
-        {!isBuyer && order.status === "pagado" && (
+        {!isBuyer && !presencial && order.status === "pagado" && (
           <div className="mt-6 rounded-2xl bg-brand/10 p-4">
             <p className="text-sm font-medium text-brand">Te pagaron. Ya puedes despachar.</p>
             <p className="mt-1 text-sm text-ink2">

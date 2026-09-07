@@ -106,6 +106,12 @@ create table if not exists orders (
 
   -- El envío se cobra al comprador y no entra en el cálculo de la comisión: 2venta
   -- no gana sobre la plata de la transportadora.
+  -- D-19: envío a domicilio o encuentro en persona. En persona no hay envío que
+  -- cobrar, y el pago se libera con un código en el momento.
+  delivery_method   text not null default 'envio'
+                    check (delivery_method in ('envio','presencial')),
+  meeting_zone      text,
+
   shipping_cop      integer not null default 0 check (shipping_cop >= 0),
   carrier           text,
   tracking_number   text,
@@ -240,3 +246,18 @@ create table if not exists questions (
 );
 
 create index if not exists questions_listing_idx on questions (listing_id, created_at desc);
+
+-- Código de entrega presencial (S-09). Libera dinero, así que es una credencial.
+--
+-- Se guarda cifrado con un secreto del servidor, nunca en claro. Cifrado y no
+-- hasheado a propósito: el comprador necesita volver a ver su código al llegar al
+-- encuentro, y de un hash no se recupera nada. Quien tenga la base sin el secreto
+-- sigue sin poder leerlo, que es la propiedad que importa.
+create table if not exists pickup_codes (
+  order_id   uuid primary key references orders(id) on delete cascade,
+  code_enc   text not null,
+  attempts   integer not null default 0,
+  expires_at timestamptz not null,
+  used_at    timestamptz,
+  created_at timestamptz not null default now()
+);

@@ -29,6 +29,13 @@ export async function buyListing(
 
   const listingId = String(form.get("listingId") ?? "");
 
+  // D-19: envío a domicilio o encuentro en persona.
+  const presencial = String(form.get("metodo") ?? "envio") === "presencial";
+  const meetingZone = String(form.get("meetingZone") ?? "").trim();
+  if (presencial && !meetingZone) {
+    return { error: "Elige en qué zona se van a encontrar." };
+  }
+
   // S-06: sin dirección no hay envío y sin envío no hay total que cobrar.
   const address = {
     recipient: String(form.get("recipient") ?? "").trim(),
@@ -39,7 +46,7 @@ export async function buyListing(
     zone: String(form.get("zone") ?? "").trim(),
     notes: String(form.get("notes") ?? "").trim() || null,
   };
-  if (!address.recipient || !address.phone || !address.line1 || !address.zone) {
+  if (!presencial && (!address.recipient || !address.phone || !address.line1 || !address.zone)) {
     return { error: "Completa la dirección de entrega para poder pagar." };
   }
 
@@ -83,10 +90,10 @@ export async function buyListing(
   // impide que un reintento por timeout cobre dos veces.
   const idempotencyKey = newIdempotencyKey();
 
-  const quote = await shippingProvider.quote({
-    zone: address.zone,
-    priceCop,
-  });
+  // En persona no hay envío que cobrar.
+  const shippingCop = presencial
+    ? 0
+    : (await shippingProvider.quote({ zone: address.zone, priceCop })).costCop;
 
   const order = await createOrder({
     buyerId: user.id,
@@ -94,16 +101,23 @@ export async function buyListing(
     listingId: listing.id,
     title: listing.title,
     priceCop,
-    shippingCop: quote.costCop,
+    shippingCop,
     provider: paymentProvider.name,
     idempotencyKey,
   });
 
-  await saveAddress(order.id, address);
+  if (presencial) {
+    await query(
+      `update orders set delivery_method = 'presencial', meeting_zone = $2 where id = $1`,
+      [order.id, meetingZone]
+    );
+  } else {
+    await saveAddress(order.id, address);
+  }
 
   const checkout = await paymentProvider.createCheckout({
     orderId: order.id,
-    amountCop: breakdown(order.subtotal_cop, order.shipping_cop).buyerTotalCop,
+    amountCop: breakdown(order.subtotal_cop, shippingCop).buyerTotalCop,
     commissionCop: order.commission_cop,
     sellerId: listing.seller_id,
     idempotencyKey,

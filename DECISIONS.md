@@ -222,3 +222,17 @@ resulta que la retención no se puede condicionar a un evento nuestro, cambia el
 flujo del producto y no solo la integración. Lo que queda listo pase lo que pase es
 el modelo de datos, la máquina de estados, la aritmética y el registro de
 auditoría. Lo que puede tener que rehacerse es el momento exacto de la liberación.
+
+### D-31 — El código de entrega se cifra, no se hashea
+Se guarda con cifrado reversible (AES-256-GCM) y un secreto del servidor.
+**Por qué.** La primera versión usaba un hash, que es más fuerte, y estaba mal: el
+comprador necesita volver a ver su código cuando llega al encuentro, y de un hash
+no se recupera nada. Un código que solo se puede ver una vez no sirve para lo que
+existe.
+**Qué se conserva.** La propiedad que importa aquí: quien tenga la base de datos
+pero no el secreto del servidor no puede leer ningún código, y por lo tanto no
+puede liberar pagos ajenos. Eso es exactamente lo que la D-27 no logra con el
+código por SMS, y aquí sí, porque el código es nuestro.
+**Consecuencia.** El secreto pasa a ser crítico: si se filtra, se filtran todos los
+códigos vigentes. Rotarlo invalida los códigos en curso, así que hay que hacerlo
+con la plataforma sin pedidos presenciales abiertos.

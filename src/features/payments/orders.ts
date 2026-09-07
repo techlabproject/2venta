@@ -17,6 +17,8 @@ export type Order = {
   status: OrderStatus;
   subtotal_cop: number;
   shipping_cop: number;
+  delivery_method: "envio" | "presencial";
+  meeting_zone: string | null;
   carrier: string | null;
   tracking_number: string | null;
   commission_cop: number;

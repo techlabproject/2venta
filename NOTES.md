@@ -4,14 +4,14 @@
 
 ## En qué voy
 
-S-08 cerrada. Primera de la Fase 2. 91 pruebas de navegador y 21 unitarias, y la
-corrida bajó de 2,7 a 1,3 minutos.
+S-09 cerrada. 103 pruebas de navegador y 31 unitarias.
 
-Hecho: la Fase 1 completa (S-00 a S-06) más S-08 chat, ofertas y preguntas.
-Los hallazgos de Luna de la primera ronda están cerrados.
+Hecho: la Fase 1 completa (S-00 a S-06), S-08 chat y ofertas, S-09 entrega
+presencial con código. Los hallazgos de Luna de la primera ronda, cerrados.
 
-Siguiente: S-09, entrega presencial con código. Ya se puede coordinar el punto y la
-hora dentro del chat, que era lo que faltaba.
+Siguiente: S-10, IMEI y moderación automática. Depende de R-03, cuya respuesta
+propuesta es el modelo híbrido: automática para ropa y niños, humana para
+electrónica, guardando el IMEI desde ya.
 
 ## Qué quedó a medias
 
@@ -37,6 +37,10 @@ hora dentro del chat, que era lo que faltaba.
   propone un agregador logístico, pero no hay contrato.
 - No se puede elegir entre transportadoras ni ver opciones de precio.
 - No hay direcciones guardadas: hay que escribirla en cada compra.
+- No hay forma de reemitir el código si el comprador lo pierde. Sin una manera de
+  comprobar quién lo pide, sería un camino para liberar sin entregar.
+- No hay devolución si el encuentro nunca ocurre: va con S-11.
+- No hay puntos de encuentro sugeridos; se acuerdan por chat.
 - Imágenes en el chat: no se pueden mandar. La D-22 pide que el filtro cubra las
   capturas de pantalla con el número visible; mientras no haya imágenes no hay
   hueco abierto, pero el filtro tiene que crecer cuando se agreguen.
