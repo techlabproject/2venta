@@ -19,6 +19,7 @@ export type Listing = {
   /** Solo es cierto cuando el proveedor externo reportó "aprobado" (D-02). */
   seller_verified: boolean;
   seller_is_store: boolean;
+  promoted: boolean;
   status: string;
 };
 
@@ -33,12 +34,18 @@ export const LISTING_SELECT = `
          coalesce(u.alias, u.name) as seller_alias,
          coalesce(u.zone, 'Bogotá') as seller_zone,
          (k.status = 'aprobado') as seller_verified,
-         (st.user_id is not null) as seller_is_store
+         (st.user_id is not null) as seller_is_store,
+         (pr.id is not null) as promoted
   from listings l
   join "user" u          on u.id = l.seller_id
   join categories c      on c.slug = l.category
   left join kyc_verifications k on k.user_id = l.seller_id
   left join stores st on st.user_id = l.seller_id
+  left join lateral (
+    select p.id from promotions p
+     where p.listing_id = l.id and p.status = 'activa' and p.ends_at > now()
+     limit 1
+  ) pr on true
 `;
 
 export function listCategories(): Promise<Category[]> {
@@ -50,13 +57,16 @@ export function listCategories(): Promise<Category[]> {
 // Solo lo activo sale al público: lo que está en revisión, rechazado o vendido no
 // tiene por qué verse.
 export function listListings(category?: string): Promise<Listing[]> {
+  // D-10: los destacados van primero, pero marcados. Nadie tiene que adivinar por
+  // qué ese artículo está arriba.
+  const order = `order by (pr.id is not null) desc, l.created_at desc`;
   if (category) {
     return query<Listing>(
-      `${LISTING_SELECT} where l.status = 'activa' and l.category = $1 order by l.created_at desc`,
+      `${LISTING_SELECT} where l.status = 'activa' and l.category = $1 ${order}`,
       [category]
     );
   }
-  return query<Listing>(`${LISTING_SELECT} where l.status = 'activa' order by l.created_at desc`);
+  return query<Listing>(`${LISTING_SELECT} where l.status = 'activa' ${order}`);
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

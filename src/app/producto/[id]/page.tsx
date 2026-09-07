@@ -9,6 +9,8 @@ import { BuyButton } from "@/features/payments/BuyButton";
 import { AskForm, AnswerForm, ChatButton } from "@/features/chat/QuestionForms";
 import { listQuestions } from "@/features/chat/queries";
 import { ReportForm } from "@/features/moderation/Forms";
+import { PromoteButton } from "@/features/promotions/PromoteButton";
+import { getActivePromotion } from "@/features/promotions/queries";
 import { currentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +29,7 @@ export default async function ListingPage({
 
   const questions = await listQuestions(listing.id);
   const isSeller = user?.id === listing.seller_id;
+  const promotion = isSeller ? await getActivePromotion(listing.id) : null;
 
   return (
     <>
@@ -108,6 +111,27 @@ export default async function ListingPage({
         {/* RF-32 y D-16: la moderación automática filtra lo evidente; esto es lo
             que trae a revisión lo que se le escapó. */}
         {user && !isSeller && <ReportForm listingId={listing.id} />}
+
+        {isSeller && listing.status === "activa" && (
+          <section className="mt-8 rounded-2xl bg-white p-4 text-sm">
+            <h2 className="font-medium">Tu publicación</h2>
+            {promotion && (
+              <p className="mt-1 text-muted">
+                Destacada hasta el{" "}
+                {new Intl.DateTimeFormat("es-CO", {
+                  day: "numeric",
+                  month: "long",
+                  timeZone: "America/Bogota",
+                }).format(promotion.ends_at!)}
+                .
+              </p>
+            )}
+            {/* Se deja extender mientras está destacada: un vendedor cuyo periodo
+                vence mañana quiere renovarlo hoy, no acordarse pasado mañana. El
+                periodo nuevo empieza donde termina el anterior, no en paralelo. */}
+            <PromoteButton listingId={listing.id} extending={Boolean(promotion)} />
+          </section>
+        )}
       </main>
     </>
   );

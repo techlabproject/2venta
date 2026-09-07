@@ -28,6 +28,13 @@ export function ListingCard({ listing }: { listing: Listing }) {
           </p>
           <p className="text-xs text-muted">{listing.seller_zone}</p>
           <span className="mt-1.5 flex flex-wrap items-center gap-2">
+            {/* D-10: el destacado se marca. Nadie tiene que adivinar por qué ese
+                artículo está arriba. */}
+            {listing.promoted && (
+              <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand">
+                Destacado
+              </span>
+            )}
             {listing.seller_verified && <VerifiedBadge />}
             {listing.seller_is_store && (
               <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-medium text-accent-text">

@@ -4,12 +4,13 @@
 
 ## En qué voy
 
-S-13 cerrada. Primera de la Fase 3. 152 pruebas de navegador y 64 unitarias.
+S-14 cerrada. 161 pruebas de navegador y 64 unitarias.
 
-Hecho: Fase 1 (S-00 a S-06), Fase 2 (S-08 a S-12), S-13 cuenta de tienda. Google
-implementado. Hallazgos de Luna cerrados.
+Hecho: Fase 1 (S-00 a S-06), Fase 2 (S-08 a S-12), S-13 tienda, S-14 destacados.
+Google implementado. Hallazgos de Luna cerrados.
 
-Siguiente: S-14 destacados, S-15 alertas y métricas, S-16 favoritos.
+Siguiente: S-15 alertas y métricas, S-16 favoritos y filtros avanzados. Con esas dos
+queda completo todo lo planeado.
 
 ## Qué quedó a medias
 
@@ -35,6 +36,10 @@ Siguiente: S-14 destacados, S-15 alertas y métricas, S-16 favoritos.
   propone un agregador logístico, pero no hay contrato.
 - No se puede elegir entre transportadoras ni ver opciones de precio.
 - No hay direcciones guardadas: hay que escribirla en cada compra.
+- El precio del destacado ($8.000 por 7 días) es un número de partida sin datos
+  detrás. Revisar con tráfico real.
+- Los destacados no se renuevan solos al vencer.
+- No hay métricas de rendimiento del destacado; van con S-15.
 - El NIT no se valida contra la DIAN: no hay acceso. Solo se comprueba el dígito
   de verificación.
 - No hay facturación electrónica, que es un requisito real para una tienda formal.

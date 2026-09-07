@@ -277,3 +277,19 @@ volumen.
 **Consecuencia.** Es más lento de lo que pediría una tienda con cincuenta equipos, y
 es a propósito. Si el volumen resulta ser la barrera real para traer casas de
 empeño, la conversación no es relajar el video sino ayudarles a grabarlo.
+
+### D-36 — Cuánto puede alterar el orden un destacado
+Los destacados van primero pero marcados, con tope de tres por página, y sin
+saltarse los filtros del comprador.
+**Por qué.** Un destacado que empuje demasiado convierte el catálogo en un tablón de
+quien más paga, y eso destruye la razón por la que alguien vuelve.
+**La regla que más importa** es la tercera: el destacado se aplica sobre el conjunto
+que el comprador ya filtró. Uno que ignora el filtro es publicidad disfrazada de
+resultado, y el comprador lo nota una vez y ya no confía en el orden nunca más.
+**Consecuencia.** El destacado vale menos de lo que valdría sin tope, y por lo tanto
+se puede cobrar menos. Es el precio de que el catálogo siga siendo creíble.
+
+### D-37 — Precio del destacado
+$8.000 COP por siete días.
+**Estado.** Número de partida, no una decisión con fundamento: no hay datos de
+cuánto vale un clic aquí. Revisar con tráfico real.

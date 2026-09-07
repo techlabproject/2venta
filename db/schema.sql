@@ -343,3 +343,25 @@ create table if not exists stores (
   nit         text not null unique,
   created_at  timestamptz not null default now()
 );
+
+-- Publicaciones destacadas (S-14, D-10). Segunda fuente de ingreso.
+--
+-- Es pago del vendedor por su propio artículo: no se vende espacio a terceros.
+create table if not exists promotions (
+  id              uuid primary key default gen_random_uuid(),
+  listing_id      uuid not null references listings(id) on delete cascade,
+  seller_id       text not null references "user"(id) on delete cascade,
+  price_cop       integer not null check (price_cop > 0),
+  status          text not null default 'pendiente_pago'
+                  check (status in ('pendiente_pago','activa','cancelada')),
+  provider        text not null,
+  provider_ref    text unique,
+  idempotency_key text not null unique,
+  starts_at       timestamptz,
+  ends_at         timestamptz,
+  created_at      timestamptz not null default now()
+);
+
+create index if not exists promotions_listing_idx on promotions (listing_id);
+-- Para ordenar el catálogo: solo importan las vigentes.
+create index if not exists promotions_active_idx on promotions (status, ends_at);

@@ -1,6 +1,7 @@
 import { query } from "@/lib/db";
 import { CONDITION_LABEL, type Condition } from "./labels";
 import { LISTING_SELECT, type Listing } from "./queries";
+import { MAX_PROMOTED_PER_PAGE } from "@/features/promotions/config";
 
 export type SortKey = "recientes" | "precio_asc" | "precio_desc";
 
@@ -20,6 +21,25 @@ const SORT_SQL: Record<SortKey, string> = {
   precio_asc: "l.price_cop asc",
   precio_desc: "l.price_cop desc",
 };
+
+/**
+ * Sube los destacados al principio, con tope.
+ *
+ * Dos reglas que salieron de la D-10 y que importan más que el orden en sí:
+ *
+ * El destacado NO altera los filtros. Se aplica sobre el conjunto que el comprador
+ * ya filtró, así que un destacado que no cumpla el rango de precio o la categoría
+ * no se cuela. Un destacado que ignora el filtro es publicidad disfrazada de
+ * resultado, y el comprador lo nota una vez y ya no confía en el orden nunca más.
+ *
+ * Y el tope: como máximo tres arriba. El resto del listado sigue el orden que pidió
+ * el comprador, no el de quien más paga.
+ */
+function reorderWithPromoted(rows: Listing[], max: number): Listing[] {
+  const promoted = rows.filter((r) => r.promoted).slice(0, max);
+  const ids = new Set(promoted.map((r) => r.id));
+  return [...promoted, ...rows.filter((r) => !ids.has(r.id))];
+}
 
 /**
  * Lee los filtros de la dirección.
@@ -88,10 +108,11 @@ export async function searchListings(f: SearchFilters): Promise<Listing[]> {
 
   where.push("l.status = 'activa'");
 
-  return query<Listing>(
+  const rows = await query<Listing>(
     `${LISTING_SELECT} where ${where.join(" and ")} order by ${SORT_SQL[f.sort]} limit 60`,
     values
   );
+  return reorderWithPromoted(rows, MAX_PROMOTED_PER_PAGE);
 }
 
 export function listZones(): Promise<{ zone: string }[]> {
