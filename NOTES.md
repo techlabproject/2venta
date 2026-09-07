@@ -4,13 +4,9 @@
 
 ## En qué voy
 
-S-14 cerrada. 161 pruebas de navegador y 64 unitarias.
+S-15 cerrada. 169 pruebas de navegador y 64 unitarias.
 
-Hecho: Fase 1 (S-00 a S-06), Fase 2 (S-08 a S-12), S-13 tienda, S-14 destacados.
-Google implementado. Hallazgos de Luna cerrados.
-
-Siguiente: S-15 alertas y métricas, S-16 favoritos y filtros avanzados. Con esas dos
-queda completo todo lo planeado.
+Siguiente y última: S-16, favoritos y filtros avanzados.
 
 ## Qué quedó a medias
 
@@ -36,6 +32,10 @@ queda completo todo lo planeado.
   propone un agregador logístico, pero no hay contrato.
 - No se puede elegir entre transportadoras ni ver opciones de precio.
 - No hay direcciones guardadas: hay que escribirla en cada compra.
+- LAS ALERTAS NO SE ENVÍAN: no hay proveedor de correo ni de push conectado. Se
+  generan y se guardan, y el usuario las ve al entrar. Una alerta que hay que
+  entrar a ver no sirve para lo que existe, que es traer a la persona de vuelta.
+  Conectar un canal es escribir la función de envío, igual que con los SMS.
 - El precio del destacado ($8.000 por 7 días) es un número de partida sin datos
   detrás. Revisar con tráfico real.
 - Los destacados no se renuevan solos al vencer.

@@ -365,3 +365,51 @@ create table if not exists promotions (
 create index if not exists promotions_listing_idx on promotions (listing_id);
 -- Para ordenar el catálogo: solo importan las vigentes.
 create index if not exists promotions_active_idx on promotions (status, ends_at);
+
+-- Alertas y métricas (S-15, D-24).
+
+create table if not exists saved_searches (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    text not null references "user"(id) on delete cascade,
+  label      text not null,
+  -- La búsqueda se guarda tal cual venía en la dirección: los filtros ya viven
+  -- ahí (S-04), así que no hay que inventar otra representación.
+  params     text not null,
+  created_at timestamptz not null default now(),
+  unique (user_id, params)
+);
+
+create table if not exists notifications (
+  id         bigserial primary key,
+  user_id    text not null references "user"(id) on delete cascade,
+  kind       text not null,
+  title      text not null,
+  href       text not null,
+  -- Sirve para no avisar dos veces de lo mismo.
+  subject_id text,
+  read_at    timestamptz,
+  created_at timestamptz not null default now(),
+  unique (user_id, kind, subject_id)
+);
+
+create index if not exists notifications_user_idx on notifications (user_id, created_at desc);
+
+-- Una fila por vista, no un contador: permite no contar las del propio vendedor y
+-- deduplicar por persona sin rehacer nada.
+create table if not exists listing_views (
+  id         bigserial primary key,
+  listing_id uuid not null references listings(id) on delete cascade,
+  viewer_id  text references "user"(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists listing_views_idx on listing_views (listing_id);
+
+create table if not exists favorites (
+  user_id    text not null references "user"(id) on delete cascade,
+  listing_id uuid not null references listings(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, listing_id)
+);
+
+create index if not exists favorites_listing_idx on favorites (listing_id);

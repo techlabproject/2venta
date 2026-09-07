@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
+import { SaveSearchForm } from "@/features/alerts/Forms";
+import { currentUser } from "@/lib/session";
 import { ListingCard } from "@/features/catalog/ListingCard";
 import { SearchFilters } from "@/features/catalog/SearchFilters";
 import { listCategories } from "@/features/catalog/queries";
@@ -24,6 +26,7 @@ export default async function Buscar({
   }
 
   const filters = parseFilters(params);
+  const user = await currentUser();
   const [listings, categories, zones] = await Promise.all([
     searchListings(filters),
     listCategories(),
@@ -43,6 +46,8 @@ export default async function Buscar({
         </h1>
 
         <SearchFilters filters={filters} categories={categories} zones={zones.map((z) => z.zone)} />
+
+        {user && <SaveSearchForm params={params.toString()} />}
 
         <p data-testid="conteo" className="mt-6 text-sm text-muted">
           {listings.length === 1 ? "1 resultado" : `${listings.length} resultados`}

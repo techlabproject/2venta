@@ -7,6 +7,8 @@ import { VideoCapture } from "./VideoCapture";
 import { Button, ErrorNote, Field } from "@/components/ui";
 import { CONDITION_LABEL } from "@/features/catalog/labels";
 import type { Category } from "@/features/catalog/queries";
+import type { SuggestionMap } from "@/features/pricing/suggest";
+import { formatCop } from "@/lib/money";
 
 const EXTENSION: Record<string, string> = {
   "video/webm": "webm",
@@ -23,7 +25,13 @@ function asFile(blob: Blob, base: string): File {
   return new File([blob], `${base}.${EXTENSION[type] ?? "bin"}`, { type });
 }
 
-export function PublishForm({ categories }: { categories: Category[] }) {
+export function PublishForm({
+  categories,
+  suggestions,
+}: {
+  categories: Category[];
+  suggestions: SuggestionMap;
+}) {
   const router = useRouter();
   const [media, setMedia] = useState<{ video: Blob; poster: Blob } | null>(null);
   // D-15: el IMEI solo se pide en electrónica.
@@ -79,6 +87,19 @@ export function PublishForm({ categories }: { categories: Category[] }) {
 
       <Field id="price" name="price" label="Precio" inputMode="numeric" required
         placeholder="260000" hint="En pesos, sin puntos ni comas. Mínimo $10.000." />
+
+      {/* D-24: el rango sale de lo que se ha vendido de verdad en 2venta. Si no
+          hay suficientes ventas no aparece nada, porque un promedio de dos ventas
+          es ruido presentado como consejo, y quien fija su precio por un dato
+          inventado se lleva la peor parte. */}
+      {suggestions[category] && (
+        <p data-testid="precio-sugerido" className="-mt-2 rounded-xl bg-brand/10 px-4 py-3 text-xs text-brand">
+          En esta categoría, lo usado en buen estado se ha vendido entre{" "}
+          {formatCop(suggestions[category]!.low)} y {formatCop(suggestions[category]!.high)}.
+          Es lo que dicen {suggestions[category]!.sales} ventas de 2venta, no una
+          estimación.
+        </p>
+      )}
 
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-medium">Estado del artículo</legend>

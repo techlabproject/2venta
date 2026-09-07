@@ -9,6 +9,7 @@ import { query } from "@/lib/db";
 import { MIN_PRICE_COP, parseCop } from "@/features/payments/money";
 import { isValidImei, normalizeImei } from "@/features/moderation/imei";
 import { initialStatus, moderateListing } from "@/features/moderation/rules";
+import { notifyMatchingSearches } from "@/features/alerts/queries";
 
 export type PublishResult = { error: string } | { id: string };
 
@@ -108,6 +109,13 @@ export async function publishListing(
     throw err;
   }
 
+  // S-15: avisar a quien guardó una búsqueda que coincide. Solo si quedó visible;
+  // avisar de algo que está en revisión sería mandar a la gente a una pantalla que
+  // no existe.
+  if (initialStatus(category) === "activa") {
+    await notifyMatchingSearches({ id: rows[0].id, title, seller_id: user.id });
+  }
+
   revalidatePath("/");
   return { id: rows[0].id };
 }
@@ -159,6 +167,18 @@ export async function publishDraft(
       where id = $1 and status = 'borrador'`,
     [draft.id, videoPath, posterPath, initialStatus(draft.category)]
   );
+
+  if (initialStatus(draft.category) === "activa") {
+    const titles = await query<{ title: string }>(
+      `select title from listings where id = $1`,
+      [draft.id]
+    );
+    await notifyMatchingSearches({
+      id: draft.id,
+      title: titles[0].title,
+      seller_id: user.id,
+    });
+  }
 
   revalidatePath("/");
   revalidatePath("/tienda");

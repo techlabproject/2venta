@@ -11,6 +11,7 @@ import { listQuestions } from "@/features/chat/queries";
 import { ReportForm } from "@/features/moderation/Forms";
 import { PromoteButton } from "@/features/promotions/PromoteButton";
 import { getActivePromotion } from "@/features/promotions/queries";
+import { recordView } from "@/features/metrics/queries";
 import { currentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,9 @@ export default async function ListingPage({
   const questions = await listQuestions(listing.id);
   const isSeller = user?.id === listing.seller_id;
   const promotion = isSeller ? await getActivePromotion(listing.id) : null;
+  // S-15: no cuenta las vistas del propio vendedor, que si no vería su publicación
+  // llena de visitas suyas y creería que interesa.
+  await recordView(listing.id, user?.id ?? null, listing.seller_id);
 
   return (
     <>

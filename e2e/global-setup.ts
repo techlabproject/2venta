@@ -20,6 +20,8 @@ const ROUTES = [
   "/vender",
   "/publicar",
   "/tienda",
+  "/avisos",
+  "/vender/metricas",
   "/dev/destacar/00000000-0000-4000-8000-000000000000",
   "/publicar/00000000-0000-4000-8000-000000000000",
   "/admin",

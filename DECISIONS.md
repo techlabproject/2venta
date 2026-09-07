@@ -293,3 +293,12 @@ se puede cobrar menos. Es el precio de que el catálogo siga siendo creíble.
 $8.000 COP por siete días.
 **Estado.** Número de partida, no una decisión con fundamento: no hay datos de
 cuánto vale un clic aquí. Revisar con tráfico real.
+
+### D-38 — El precio sugerido no es un modelo
+El rango sale de lo que se ha vendido de verdad en 2venta en esa categoría y ese
+estado, y no se muestra nada si hay menos de cinco ventas.
+**Por qué.** La D-24 habla de un modelo predictivo. No hay con qué entrenarlo: la
+plataforma no tiene histórico. Un promedio de dos ventas es ruido presentado como
+consejo, y quien fija su precio por un dato inventado se lleva la peor parte.
+**Consecuencia.** Al principio no se sugiere nada, que es correcto. Cuando haya
+volumen, este es el lugar donde entra un modelo de verdad.
