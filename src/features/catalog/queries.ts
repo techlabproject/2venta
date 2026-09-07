@@ -37,7 +37,8 @@ export const LISTING_SELECT = `
          (st.user_id is not null) as seller_is_store,
          (pr.id is not null) as promoted
   from listings l
-  join "user" u          on u.id = l.seller_id
+  -- Las publicaciones de una cuenta suspendida no se ven (RF-41).
+  join "user" u          on u.id = l.seller_id and u.suspended_at is null
   join categories c      on c.slug = l.category
   left join kyc_verifications k on k.user_id = l.seller_id
   left join stores st on st.user_id = l.seller_id

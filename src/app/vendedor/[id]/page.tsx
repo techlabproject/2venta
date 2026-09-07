@@ -6,6 +6,9 @@ import { AppHeader } from "@/components/AppHeader";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { formatMonthYear } from "@/lib/money";
 import { getReputation, listReviews } from "@/features/ratings/queries";
+import { ReportUserForm } from "@/features/profile/Forms";
+import { currentUser } from "@/lib/session";
+import { query } from "@/lib/db";
 
 // Pantalla 1g del mockup: perfil público del vendedor.
 // D-04: solo alias y zona. Nombre completo, correo, celular y dirección no salen
@@ -21,6 +24,8 @@ export default async function PerfilVendedor({
   const seller = await getPublicSeller(id);
   if (!seller) notFound();
 
+  const viewer = await currentUser();
+  const bios = await query<{ bio: string | null }>(`select bio from "user" where id = $1`, [id]);
   const [listings, reputation, reviews] = await Promise.all([
     listSellerListings(id),
     getReputation(id),
@@ -52,6 +57,7 @@ export default async function PerfilVendedor({
           <span>· {seller.zone}</span>
         </p>
         <p className="mt-1 text-sm text-muted">Miembro desde {formatMonthYear(seller.member_since)}</p>
+        {bios[0]?.bio && <p className="mt-3 text-sm text-ink2">{bios[0].bio}</p>}
 
         {/* D-17: un vendedor sin ventas no muestra cifras en cero. "0 ventas, 0
             estrellas" parece mal desempeño cuando en realidad es ausencia de
@@ -120,6 +126,7 @@ export default async function PerfilVendedor({
             <ListingCard key={l.id} listing={l} />
           ))}
         </ul>
+        {viewer && viewer.id !== id && <ReportUserForm userId={id} />}
       </main>
     </>
   );

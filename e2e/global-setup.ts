@@ -24,6 +24,8 @@ const ROUTES = [
   "/favoritos",
   "/actividad",
   "/cuenta",
+  "/cuenta/editar",
+  "/admin/usuarios",
   "/recuperar",
   "/vender/metricas",
   "/dev/destacar/00000000-0000-4000-8000-000000000000",

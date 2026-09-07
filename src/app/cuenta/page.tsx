@@ -92,7 +92,12 @@ export default async function Cuenta() {
           })}
         </ul>
 
-        <p className="mt-8 text-sm">
+        <p className="mt-6 text-sm">
+          <Link href="/cuenta/editar" className="text-brand underline">
+            Editar mi perfil
+          </Link>
+        </p>
+        <p className="mt-3 text-sm">
           <Link href="/recuperar" className="text-brand underline">
             Cambiar mi contraseña
           </Link>

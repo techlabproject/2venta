@@ -4,16 +4,16 @@
 
 ## En qué voy
 
-Las tres fases completas, más S-17 (D-27 cerrada), migraciones, S-18 (actividad),
-S-19 (editar y retirar) y S-20 (recuperar contraseña y sesiones). 199 pruebas de
-navegador y 70 unitarias.
+Las tres fases del plan, más seis rebanadas que salieron de repasar los requisitos
+originales contra lo construido: S-17 (D-27 cerrada), migraciones, S-18 (actividad),
+S-19 (editar y retirar), S-20 (recuperar contraseña y sesiones) y S-21 (perfil,
+reportar usuario y suspender cuenta).
 
-Las tres últimas salieron de revisar los requisitos originales contra lo
-construido, no de una prueba: RF-04, RF-05, RF-16 y RF-17 estaban sin hacer, y no
-había forma de volver a un pedido ni a una conversación.
+208 pruebas de navegador y 70 unitarias.
 
-Lo que queda es la lista de abajo, y lo más urgente ya no es código nuestro sino
-conectar proveedores reales.
+De los requisitos funcionales originales quedan sin construir: RF-15 en su parte de
+fotos adicionales, RF-26 en su parte de carrito con varios artículos, RF-38 en su
+parte de envío real, y RF-42 (reportes de ventas y comisiones, prioridad baja).
 
 ## Qué quedó a medias
 
@@ -66,7 +66,7 @@ conectar proveedores reales.
   cuando existen las dos variables.
 - El panel de administración solo tiene la cola de revisión y reportes. Faltan
   verificaciones de identidad, disputas, usuarios y métricas del mockup.
-- No se puede suspender una cuenta (RF-41).
+- (RESUELTO en S-21) Suspender cuentas, reportar usuarios y editar perfil.
 - Al vendedor no se le avisa cuando aprueban o rechazan su publicación; lo ve al
   entrar.
 - Nadie mira el video automáticamente.

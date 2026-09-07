@@ -48,9 +48,10 @@ export default async function Admin() {
       <main className="mx-auto max-w-3xl px-5 py-6">
         <div className="flex items-baseline justify-between gap-4">
           <h1 className="font-title text-2xl font-semibold">Moderación</h1>
-          <Link href="/admin/disputas" className="text-sm text-brand underline">
-            Disputas
-          </Link>
+          <span className="flex gap-4 text-sm">
+            <Link href="/admin/disputas" className="text-brand underline">Disputas</Link>
+            <Link href="/admin/usuarios" className="text-brand underline">Cuentas</Link>
+          </span>
         </div>
         <p data-testid="cola" className="mt-1 text-sm text-muted">
           {pending.length === 1

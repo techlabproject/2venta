@@ -332,3 +332,18 @@ evita.
 **Por qué.** Si alguien entró a la cuenta, recuperar la contraseña tiene que
 echarlo. No hacerlo dejaría al intruso adentro mientras el dueño cree que ya lo
 resolvió, que es el peor de los dos mundos.
+
+### D-42 — Suspender una cuenta no borra nada
+La cuenta deja de poder entrar y sus publicaciones dejan de verse, pero sus pedidos,
+conversaciones y calificaciones siguen existiendo.
+**Por qué.** Al otro lado de cada pedido hay alguien que no hizo nada malo. Si
+suspender borrara, suspender a un estafador dejaría a sus víctimas sin evidencia
+justo cuando más la necesitan. Es el mismo razonamiento que retirar una publicación
+en vez de borrarla.
+**Consecuencia.** Los pedidos en curso de una cuenta suspendida quedan intactos,
+incluidos los que tienen dinero retenido. Ese dinero se resuelve por la vía normal:
+reclamo y arbitraje.
+
+### D-43 — El alias se puede cambiar, pero queda el anterior
+**Por qué.** Un vendedor que acumula malas reseñas no puede limpiar su rastro
+cambiándose el nombre, que es lo primero que intentaría.
