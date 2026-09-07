@@ -106,7 +106,7 @@ create table if not exists orders (
 
   status            text not null default 'pendiente_pago'
                     check (status in ('pendiente_pago','pagado','despachado','entregado',
-                                      'liberado','cancelado','reembolsado')),
+                                      'en_disputa','liberado','cancelado','reembolsado')),
 
   -- Todo entero en pesos. Se guardan las tres cifras, no solo el total: cuando
   -- alguien cuadre las cuentas del mes tiene que poder ver el desglose exacto
@@ -289,3 +289,28 @@ create table if not exists reports (
 );
 
 create index if not exists reports_pending_idx on reports (resolved_at, created_at);
+
+-- Reclamos y disputas (S-11, D-12 y D-13).
+--
+-- Mientras un reclamo está abierto el dinero no se mueve, ni al vendedor ni de
+-- vuelta al comprador. Eso es lo que lo hace creíble para ambos lados.
+create table if not exists claims (
+  id            uuid primary key default gen_random_uuid(),
+  order_id      uuid not null references orders(id) on delete cascade,
+  opened_by     text not null references "user"(id),
+  kind          text not null check (kind in ('no_coincide','no_llego')),
+  detail        text not null,
+  seller_reply  text,
+  replied_at    timestamptz,
+  -- 'comprador' o 'vendedor': a favor de quién se resolvió.
+  resolution    text check (resolution in ('comprador','vendedor')),
+  resolution_note text,
+  resolved_at   timestamptz,
+  resolved_by   text references "user"(id),
+  created_at    timestamptz not null default now(),
+  -- Un reclamo por pedido. Dos reclamos abiertos sobre el mismo dinero no tienen
+  -- forma de resolverse coherentemente.
+  unique (order_id)
+);
+
+create index if not exists claims_open_idx on claims (resolved_at, created_at);

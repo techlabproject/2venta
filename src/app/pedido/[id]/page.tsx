@@ -10,6 +10,8 @@ import { getAddress } from "@/features/shipping/queries";
 import { breakdown } from "@/features/payments/money";
 import { issueCode, getCodeState } from "@/features/pickup/queries";
 import { RedeemForm } from "@/features/pickup/RedeemForm";
+import { getClaim, KIND_LABEL } from "@/features/claims/queries";
+import { OpenClaimForm, ReplyClaimForm } from "@/features/claims/Forms";
 import { formatCop } from "@/lib/money";
 
 // Pantalla 1j del mockup: seguimiento y liberación del pago.
@@ -18,6 +20,7 @@ export const dynamic = "force-dynamic";
 const LABEL: Record<string, string> = {
   pendiente_pago: "Esperando el pago",
   pagado: "Pago recibido y guardado",
+  en_disputa: "Con un reclamo abierto",
   despachado: "El vendedor despachó",
   entregado: "Entregado",
   liberado: "Pago liberado al vendedor",
@@ -43,6 +46,7 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
   // una de las dos partes. Nunca llega arrastrada por la consulta del pedido.
   const address = await getAddress(order.id);
   const money = breakdown(order.subtotal_cop, order.shipping_cop);
+  const claim = await getClaim(order.id);
 
   // D-19: el código lo ve solo el comprador, y solo mientras haga falta. Se emite
   // la primera vez que abre el pedido pagado; después se muestra el mismo.
@@ -189,6 +193,48 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
             <ConfirmReceiptButton orderId={order.id} />
           </div>
         )}
+
+        {claim && (
+          <section className="mt-6 rounded-2xl bg-warn/10 p-4 text-sm">
+            <h2 className="font-medium text-warn">Reclamo: {KIND_LABEL[claim.kind]}</h2>
+            {/* D-13: mientras se decide, el dinero no se mueve. Decirlo aquí es lo
+                que hace el reclamo creíble para los dos lados. */}
+            {!claim.resolved_at && (
+              <p className="mt-1 text-ink2">
+                Estamos revisando. Tu dinero no se mueve hasta que alguien compare
+                las dos versiones con el video de la publicación.
+              </p>
+            )}
+            <p className="mt-3 font-medium">Dice quien compró</p>
+            <p className="mt-0.5 text-ink2">{claim.detail}</p>
+
+            {claim.seller_reply ? (
+              <>
+                <p className="mt-3 font-medium">Dice quien vendió</p>
+                <p className="mt-0.5 text-ink2">{claim.seller_reply}</p>
+              </>
+            ) : !isBuyer && !claim.resolved_at ? (
+              <ReplyClaimForm orderId={order.id} />
+            ) : (
+              <p className="mt-3 text-muted">
+                {isBuyer ? "El vendedor todavía no ha respondido." : ""}
+              </p>
+            )}
+
+            {claim.resolved_at && (
+              <p data-testid="resolucion" className="mt-3 font-medium">
+                Resuelto a favor {claim.resolution === "comprador" ? "de quien compró" : "de quien vendió"}
+                {claim.resolution_note ? `: ${claim.resolution_note}` : "."}
+              </p>
+            )}
+          </section>
+        )}
+
+        {/* La D-12 no cubre arrepentimiento: solo lo que no coincide o no llegó. */}
+        {isBuyer && !claim &&
+          ["pagado", "despachado", "entregado"].includes(order.status) && (
+            <OpenClaimForm orderId={order.id} />
+          )}
 
         <h2 className="mt-8 font-title text-sm font-semibold">Movimientos</h2>
         <ol className="mt-3 flex flex-col gap-2 text-sm">

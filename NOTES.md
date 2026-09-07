@@ -4,14 +4,13 @@
 
 ## En qué voy
 
-S-10 cerrada, más entrar con Google. 118 pruebas de navegador y 44 unitarias, con
-dos corridas seguidas estables.
+S-11 cerrada. 130 pruebas de navegador y 47 unitarias.
 
-Hecho: Fase 1 completa (S-00 a S-06), S-08 chat, S-09 entrega presencial, S-10 IMEI
-y moderación. Los hallazgos de Luna de la primera ronda, cerrados.
+Hecho: Fase 1 completa (S-00 a S-06), S-08 chat, S-09 presencial, S-10 IMEI y
+moderación, S-11 reclamos y disputas. Google implementado (faltan credenciales).
+Los hallazgos de Luna de la primera ronda, cerrados, incluido el precio negativo.
 
-Siguiente: S-11, reclamos y disputas. Es la que hace cumplible la D-13, que hoy es
-una promesa sin panel detrás.
+Siguiente: S-12, calificaciones. Cierra la Fase 2.
 
 ## Qué quedó a medias
 
@@ -37,6 +36,13 @@ una promesa sin panel detrás.
   propone un agregador logístico, pero no hay contrato.
 - No se puede elegir entre transportadoras ni ver opciones de precio.
 - No hay direcciones guardadas: hay que escribirla en cada compra.
+- El reembolso real no mueve dinero: el proveedor de pagos es de prueba. Se llama
+  a su método de devolución y queda en el registro, igual que la liberación.
+- Quién paga el envío de retorno en una disputa: la D-12 dice que la parte
+  responsable, pero calcularlo necesita la transportadora real.
+- No se pueden subir fotos como evidencia de un reclamo; hoy es solo texto. Es lo
+  primero que hay que agregar cuando haya almacenamiento de verdad.
+- No se puede apelar una decisión de disputa.
 - Google: falta pegar las credenciales, ver GOOGLE.md. El botón solo aparece
   cuando existen las dos variables.
 - El panel de administración solo tiene la cola de revisión y reportes. Faltan

@@ -14,9 +14,15 @@ export const AUTO_RELEASE_DAYS = 7;
 export async function releaseExpiredOrders(): Promise<number> {
   const pending = await query<{ id: string }>(
     `select id from orders
-      where status in ('pagado','entregado')
+      where status in ('pagado','despachado','entregado')
         and delivered_at is not null
         and delivered_at < now() - ($1 || ' days')::interval
+        -- Un pedido en disputa no se libera solo. Sin esto, un reclamo del día
+        -- seis se resolvería al día siete a favor del vendedor por vencimiento.
+        and not exists (
+          select 1 from claims c
+           where c.order_id = orders.id and c.resolved_at is null
+        )
       order by delivered_at
       limit 200`,
     [String(AUTO_RELEASE_DAYS)]

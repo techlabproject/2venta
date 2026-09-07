@@ -6,6 +6,7 @@ export type OrderStatus =
   | "pagado"
   | "despachado"
   | "entregado"
+  | "en_disputa"
   | "liberado"
   | "cancelado"
   | "reembolsado";
@@ -39,9 +40,11 @@ export type Order = {
  */
 const ALLOWED: Record<OrderStatus, OrderStatus[]> = {
   pendiente_pago: ["pagado", "cancelado"],
-  pagado: ["despachado", "entregado", "liberado", "reembolsado"],
-  despachado: ["entregado", "liberado", "reembolsado"],
-  entregado: ["liberado", "reembolsado"],
+  pagado: ["despachado", "entregado", "en_disputa", "liberado", "reembolsado"],
+  despachado: ["entregado", "en_disputa", "liberado", "reembolsado"],
+  entregado: ["en_disputa", "liberado", "reembolsado"],
+  // Una disputa solo sale hacia una de las dos partes, nunca vuelve atrás.
+  en_disputa: ["liberado", "reembolsado"],
   liberado: [],
   cancelado: [],
   reembolsado: [],

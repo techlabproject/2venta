@@ -46,7 +46,12 @@ export default async function Admin() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-3xl px-5 py-6">
-        <h1 className="font-title text-2xl font-semibold">Moderación</h1>
+        <div className="flex items-baseline justify-between gap-4">
+          <h1 className="font-title text-2xl font-semibold">Moderación</h1>
+          <Link href="/admin/disputas" className="text-sm text-brand underline">
+            Disputas
+          </Link>
+        </div>
         <p data-testid="cola" className="mt-1 text-sm text-muted">
           {pending.length === 1
             ? "1 publicación por revisar"
