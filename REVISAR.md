@@ -85,8 +85,23 @@ legítimos, y el sexto registro del día los bloquearía a todos. Pasó a contar
 número de celular. No lo habíamos hablado y me pareció claro, pero es una decisión
 de producto, no solo técnica.
 
+## Agente de pruebas
+
+`AGENTE-QA.md` tiene el prompt para Luna, un agente verificador independiente. Está
+escrito para que trabaje sin sesgo: le digo cómo levantar el proyecto y qué probar,
+pero le pido explícitamente que no lea las pruebas automáticas antes de hacer su
+propia pasada, porque si las lee hereda los mismos puntos ciegos de quien las
+escribió.
+
+Las brechas ya conocidas están al final del documento, plegadas, para que las lea
+después de su propio recorrido. Si las encuentra sola, sabemos que su método sirve.
+
 ## Lo que sigue
 
-S-04, buscar y filtrar. Es la única rebanada de la Fase 1 que no toca dinero ni
-identidad, así que es buena para retomar sin tener que recargar todo el contexto de
-seguridad.
+S-05, comprar con pago retenido. Es la rebanada más delicada del proyecto y la
+única que sigue bloqueada de verdad: depende de R-02, que no tiene respuesta.
+Mientras Mercado Pago no confirme si la retención se puede condicionar a la
+confirmación del comprador, no sé si la D-11 sobrevive como está escrita.
+
+Con la Fase 1 del lado del comprador completa (buscar, ver, publicar), lo que falta
+para tener una transacción de punta a punta es exactamente eso.
