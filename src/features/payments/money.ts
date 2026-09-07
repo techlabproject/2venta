@@ -69,3 +69,23 @@ function assertMoney(value: number): void {
     throw new Error(`Monto inválido: ${value}. Los montos son enteros en pesos.`);
   }
 }
+
+/**
+ * Lee un monto en pesos escrito por una persona.
+ *
+ * Devuelve null si no es un monto válido, en vez de arreglarlo por su cuenta.
+ *
+ * Esto salió de un hallazgo de Luna, la verificadora: quitar todo lo que no fuera
+ * dígito antes de validar se comía el signo, así que "-10000" se publicaba como
+ * "10000". Corregir en silencio lo que alguien escribió es peor que rechazarlo:
+ * publica un precio que el vendedor nunca puso.
+ */
+export function parseCop(raw: string): number | null {
+  const text = raw.trim();
+  if (!text) return null;
+  // Solo dígitos y separadores de miles. Un signo, una letra o un decimal hacen
+  // que el monto sea inválido, no que se limpie.
+  if (!/^\d{1,3}(?:[.,]\d{3})*$|^\d+$/.test(text)) return null;
+  const value = Number(text.replace(/[.,]/g, ""));
+  return Number.isSafeInteger(value) && value > 0 ? value : null;
+}

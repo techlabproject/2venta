@@ -7,6 +7,7 @@ import { query } from "@/lib/db";
 import { getListing } from "@/features/catalog/queries";
 import { redact } from "./redact";
 import { getConversation, getOffer, openConversation } from "./queries";
+import { parseCop } from "@/features/payments/money";
 
 export type ChatResult = { error: string };
 
@@ -70,9 +71,9 @@ export async function makeOffer(_prev: ChatResult | null, form: FormData) {
   const ctx = await assertParticipant(conversationId);
   if (!ctx) return { error: "Esa conversación no existe o no es tuya." };
 
-  const price = Number(String(form.get("price") ?? "").replace(/\D/g, ""));
-  if (!Number.isInteger(price) || price <= 0) {
-    return { error: "Escribe cuánto ofreces, en pesos." };
+  const price = parseCop(String(form.get("price") ?? ""));
+  if (price === null) {
+    return { error: "Escribe cuánto ofreces, en pesos y sin centavos." };
   }
 
   // Una oferta que no vence se queda ahí para siempre y el vendedor nunca sabe si

@@ -308,3 +308,24 @@ test("sin sesión no se puede reportar", async ({ browser }) => {
   await seller.context.close();
   await anonCtx.close();
 });
+
+test("un precio negativo se rechaza en vez de volverse positivo", async ({ browser }) => {
+  // Hallazgo de Luna, la verificadora: el servidor quitaba todo lo que no fuera
+  // dígito antes de validar, así que "-10000" se publicaba como "10000". Corregir
+  // en silencio lo que alguien escribió publica un precio que nunca puso.
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await verifiedSeller(page);
+
+  const titulo = `Precio negativo ${Date.now()}`;
+  await fillPublishForm(page, { title: titulo, price: -10_000, category: "ropa" });
+  await expect(alertIn(page)).toContainText("mayor que cero");
+
+  const filas = await withDb(async (c) => {
+    const { rows } = await c.query(`select 1 from listings where title = $1`, [titulo]);
+    return rows.length;
+  });
+  expect(filas).toBe(0);
+
+  await ctx.close();
+});

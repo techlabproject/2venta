@@ -6,7 +6,7 @@ import { currentUser } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
 import { isAllowedType, MAX_BYTES, store } from "@/lib/storage";
 import { query } from "@/lib/db";
-import { MIN_PRICE_COP } from "@/features/payments/money";
+import { MIN_PRICE_COP, parseCop } from "@/features/payments/money";
 import { isValidImei, normalizeImei } from "@/features/moderation/imei";
 import { initialStatus, moderateListing } from "@/features/moderation/rules";
 
@@ -36,11 +36,11 @@ export async function publishListing(
   const description = String(form.get("description") ?? "").trim();
   const category = String(form.get("category") ?? "");
   const condition = String(form.get("condition") ?? "");
-  const price = Number(String(form.get("price") ?? "").replace(/\D/g, ""));
+  const price = parseCop(String(form.get("price") ?? ""));
 
   if (!title || !description) return { error: "Falta el título o la descripción." };
-  if (!Number.isInteger(price) || price <= 0) {
-    return { error: "El precio tiene que ser un número mayor que cero." };
+  if (price === null) {
+    return { error: "El precio tiene que ser un número mayor que cero, sin centavos." };
   }
   // D-29: consecuencia del piso de comisión. Por debajo de este precio, el piso se
   // come una parte absurda de la venta.

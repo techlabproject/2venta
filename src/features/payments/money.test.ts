@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   breakdown,
   commissionCop,
+  parseCop,
   COMMISSION_MAX_COP,
   COMMISSION_MIN_COP,
   sellerPayoutCop,
@@ -86,4 +87,26 @@ test("sin envío el total del comprador es el subtotal", () => {
 test("rechaza un costo de envío que no sea entero", () => {
   assert.throws(() => breakdown(200_000, 15_000.5), /Monto inválido/);
   assert.throws(() => breakdown(200_000, -1), /Monto inválido/);
+});
+
+test("lee montos escritos como los escribe la gente", () => {
+  assert.equal(parseCop("10000"), 10_000);
+  assert.equal(parseCop("1.700.000"), 1_700_000);
+  assert.equal(parseCop("1,700,000"), 1_700_000);
+  assert.equal(parseCop(" 260000 "), 260_000);
+});
+
+test("rechaza un precio negativo en vez de volverlo positivo", () => {
+  // Hallazgo de Luna: quitar lo que no fuera dígito se comía el signo, así que
+  // "-10000" se publicaba como "10000". Corregir en silencio lo que alguien
+  // escribió publica un precio que el vendedor nunca puso.
+  assert.equal(parseCop("-10000"), null);
+  assert.equal(parseCop("- 10000"), null);
+  assert.equal(parseCop("−10000"), null); // signo menos tipográfico
+});
+
+test("rechaza lo que no es un monto", () => {
+  for (const raw of ["", "  ", "0", "abc", "10 mil", "1e5", "10.5", "10,5", "$10000", "10000a"]) {
+    assert.equal(parseCop(raw), null, `aceptó de más: ${JSON.stringify(raw)}`);
+  }
 });
