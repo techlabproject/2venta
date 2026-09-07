@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { Pool } from "pg";
 
 // Next carga .env.local por su cuenta; dotenv no, hay que decírselo.
@@ -17,11 +17,22 @@ async function main() {
     throw new Error(`Este script borra todo y solo corre contra una base local. Recibió: ${url}`);
   }
 
+  // Se vacía y se vuelve a migrar desde cero. En desarrollo eso es lo que uno
+  // quiere; en producción nunca se llama esto, sino `npm run db:migrate`.
   await pool.query("drop schema public cascade; create schema public;");
 
-  // El esquema de autenticación lo genera la biblioteca; el de dominio es nuestro.
-  await pool.query(readFileSync("db/auth-schema.sql", "utf8"));
-  await pool.query(readFileSync("db/schema.sql", "utf8"));
+  const dir = "db/migrations";
+  for (const file of readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()) {
+    await pool.query(readFileSync(`${dir}/${file}`, "utf8"));
+  }
+  await pool.query(`
+    create table if not exists migrations (
+      name text primary key, applied_at timestamptz not null default now())
+  `);
+  await pool.query(
+    `insert into migrations (name) select unnest($1::text[]) on conflict do nothing`,
+    [readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()]
+  );
   await pool.query('truncate listings, categories, kyc_verifications, "user" restart identity cascade');
 
   // D-05b: las tres categorías de la versión 1 salen de los mockups. Cambiar el

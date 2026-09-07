@@ -72,9 +72,10 @@ test("un NIT inválido se rechaza", async ({ browser }) => {
 
   await page.goto("/tienda");
   await page.getByLabel("Razón social").fill("Tienda Falsa S.A.S.");
-  const [base] = freshNit().split("-");
-  // Dígito de verificación deliberadamente equivocado.
-  await page.getByLabel("NIT").fill(`${base}-${(Number(freshNit().split("-")[1]) + 5) % 10}`);
+  // Dígito de verificación deliberadamente equivocado: el correcto más uno. Sacarlo
+  // al azar lo hacía coincidir una de cada diez veces.
+  const [base, dv] = freshNit().split("-");
+  await page.getByLabel("NIT").fill(`${base}-${(Number(dv) + 1) % 10}`);
   await page.getByRole("button", { name: "Registrar la tienda" }).click();
   await expect(alertIn(page)).toContainText("NIT no es válido");
 

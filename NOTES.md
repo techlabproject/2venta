@@ -12,7 +12,7 @@ complemento de la biblioteca y se maneja con el mismo patrón del código de ent
 presencial: cifrado con un secreto del servidor.
 
 Lo que queda es la lista de abajo. Lo más urgente ahora es conectar un proveedor de
-SMS y resolver las migraciones.
+SMS y los proveedores reales de pagos y envíos, que dependen de R-02 y R-04.
 
 ## Qué quedó a medias
 

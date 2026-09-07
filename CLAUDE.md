@@ -6,7 +6,7 @@ Marketplace de segunda mano para Colombia. Bogotá, tres categorías, pago prote
 
 - Desarrollo: `npm run dev`
 - Base de datos local: `docker compose up -d` (Postgres en 5433)
-- Migraciones: `npm run db:push`
+- Migraciones: `npm run db:migrate`
 - Datos de prueba: `npm run db:seed`
 - Verificación completa antes de confirmar cambios: `npm run verify`
   (tipos + linter + pruebas unitarias + siembra + pruebas de punta a punta)
@@ -73,7 +73,9 @@ el número y se le manda el código antes de dejarlo comprar o escribir.
   corrida. Cuando agregues una ruta, agrégala a esa lista.
 - Regenerar el esquema de autenticación (`@better-auth/cli generate`) emite solo el
   diff contra la base que encuentre. Para obtener el esquema completo hay que vaciar
-  el esquema público primero.
+  el esquema público primero. Ver `db/LEEME.md`.
+- El esquema se cambia con migraciones numeradas en `db/migrations/`. Nunca se edita
+  una ya aplicada.
 - El contenedor de Postgres corre con configuración regional en inglés. Cualquier
   fecha con nombre de mes se formatea en la aplicación con `Intl`, nunca con
   `to_char` en SQL.
