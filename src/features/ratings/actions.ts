@@ -1,8 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { getOrder } from "@/features/payments/orders";
 import { redact } from "@/features/chat/redact";
@@ -14,8 +13,7 @@ export async function rateCounterpart(
   _prev: RatingResult | null,
   form: FormData
 ): Promise<RatingResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const order = await getOrder(String(form.get("orderId") ?? ""));
   if (!order) return { error: "Ese pedido no existe." };

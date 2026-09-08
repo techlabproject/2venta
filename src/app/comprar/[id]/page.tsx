@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { getListing } from "@/features/catalog/queries";
 import { listZones } from "@/features/catalog/search";
 import { shippingProvider } from "@/features/shipping/provider";
@@ -20,8 +20,8 @@ export default async function Comprar({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ oferta?: string }>;
 }) {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  // Una cuenta suspendida no llega a las pantallas que escriben.
+  const user = await activeUser();
   if (!user.phoneNumberVerified) redirect("/verificar");
 
   const { id } = await params;

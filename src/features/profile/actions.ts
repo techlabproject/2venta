@@ -1,8 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { redact } from "@/features/chat/redact";
 
@@ -13,8 +12,7 @@ export async function updateProfile(
   _prev: ProfileResult | null,
   form: FormData
 ): Promise<ProfileResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const alias = String(form.get("alias") ?? "").trim();
   if (alias.length < 2 || alias.length > 40) {
@@ -52,8 +50,7 @@ export async function reportUser(
   _prev: ProfileResult | null,
   form: FormData
 ): Promise<ProfileResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const reportedId = String(form.get("userId") ?? "");
   if (reportedId === user.id) return { error: "No puedes reportarte a ti mismo." };

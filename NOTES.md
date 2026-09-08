@@ -4,16 +4,16 @@
 
 ## En qué voy
 
-Las tres fases del plan, más ocho rebanadas que salieron de repasar los requisitos
-originales contra lo construido: S-17 (D-27 cerrada), migraciones, S-18 (actividad),
-S-19 (editar y retirar), S-20 (recuperar y sesiones), S-21 (perfil, reportes y
-suspensión), S-22 (carrito) y S-23 (fotos).
+Las tres fases del plan, más nueve rebanadas posteriores. 228 pruebas de navegador
+y 70 unitarias.
 
-221 pruebas de navegador y 70 unitarias.
+La última, S-24, salió de escribir el prompt de Luna: al listar qué cruces entre
+funciones valía la pena atacar, dos me parecieron sospechosos, los probé yo, y los
+dos eran reales. Una cuenta suspendida podía seguir comprando y escribiendo, y el
+precio del carrito se recalculaba en silencio al pagar.
 
-De los requisitos funcionales originales solo queda sin construir el RF-42
-(reportes de ventas y comisiones, prioridad baja) y el envío real de notificaciones
-del RF-38, que depende de conectar un proveedor.
+De los requisitos funcionales originales solo queda el RF-42 (reportes de ventas y
+comisiones, prioridad baja) y el envío real de notificaciones del RF-38.
 
 ## Qué quedó a medias
 

@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { listCart } from "@/features/cart/queries";
 import { ClearCartButton, RemoveFromCartButton } from "@/features/cart/Forms";
 import { AppHeader } from "@/components/AppHeader";
@@ -11,8 +10,8 @@ import { commissionCop } from "@/features/payments/money";
 export const dynamic = "force-dynamic";
 
 export default async function Carrito() {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  // Una cuenta suspendida no llega a las pantallas que escriben.
+  const user = await activeUser();
 
   const items = await listCart(user.id);
   const subtotal = items.reduce((sum, i) => sum + i.price_cop, 0);

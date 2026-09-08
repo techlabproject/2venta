@@ -35,6 +35,9 @@ export function AddressForm({
       <input type="hidden" name="listingId" value={listingId} />
       {offerId && <input type="hidden" name="offerId" value={offerId} />}
       {fromCart && <input type="hidden" name="desdeCarrito" value="1" />}
+      {/* El total que el comprador está viendo. Si cambia antes de confirmar, no
+          se cobra: ver más arriba en buyListing. */}
+      <input type="hidden" name="totalEsperado" value={priceCop} />
 
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-medium">¿Cómo lo recibes?</legend>

@@ -1,8 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 
 export type AlertResult = { error: string };
@@ -11,8 +10,7 @@ export async function saveSearch(
   _prev: AlertResult | null,
   form: FormData
 ): Promise<AlertResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const params = String(form.get("params") ?? "").slice(0, 500);
   const label = String(form.get("label") ?? "").trim().slice(0, 80);
@@ -32,8 +30,7 @@ export async function deleteSearch(
   _prev: AlertResult | null,
   form: FormData
 ): Promise<AlertResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   // El identificador del dueño va en la consulta: sin eso, cualquiera borraría
   // búsquedas ajenas con solo tener el identificador.
@@ -47,8 +44,7 @@ export async function deleteSearch(
 }
 
 export async function markAllRead(): Promise<void> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
   await query(
     `update notifications set read_at = now() where user_id = $1 and read_at is null`,
     [user.id]

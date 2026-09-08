@@ -1,8 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
 import { isAllowedType, MAX_BYTES, store } from "@/lib/storage";
 import { MAX_PHOTOS } from "./photos";
@@ -18,8 +17,7 @@ export async function publishListing(
   _prev: PublishResult | null,
   form: FormData
 ): Promise<PublishResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   // D-01: sin celular confirmado no se publica. La comprobación de la pantalla no
   // basta: alguien puede llamar esta acción directamente.
@@ -146,8 +144,7 @@ export async function publishDraft(
   _prev: PublishResult | null,
   form: FormData
 ): Promise<PublishResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
   if (!user.phoneNumberVerified) {
     return { error: "Confirma tu celular antes de publicar." };
   }

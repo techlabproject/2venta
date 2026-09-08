@@ -25,9 +25,11 @@ export function LoginForm() {
       // No se distingue entre "ese correo no existe" y "esa contraseña no es":
       // hacerlo le confirma a un atacante qué correos están registrados.
       setError(
-        res.error.code === "TOO_MANY_REQUESTS"
-          ? "Demasiados intentos. Espera un momento y vuelve a probar."
-          : "Correo o contraseña incorrectos."
+        res.error.code === "ACCOUNT_SUSPENDED"
+          ? "Esta cuenta está suspendida. Escríbenos si crees que es un error."
+          : res.error.code === "TOO_MANY_REQUESTS"
+            ? "Demasiados intentos. Espera un momento y vuelve a probar."
+            : "Correo o contraseña incorrectos."
       );
       setBusy(false);
       return;

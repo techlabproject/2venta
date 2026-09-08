@@ -1,8 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { getOrder } from "@/features/payments/orders";
 import { getAddress } from "./queries";
@@ -15,8 +14,7 @@ export async function createShipment(
   _prev: ShipResult | null,
   form: FormData
 ): Promise<ShipResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const orderId = String(form.get("orderId") ?? "");
   const order = await getOrder(orderId);

@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { parseCop, MIN_PRICE_COP } from "@/features/payments/money";
 import { moderateListing } from "@/features/moderation/rules";
@@ -25,8 +25,7 @@ export async function editListing(
   _prev: EditResult | null,
   form: FormData
 ): Promise<EditResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const id = String(form.get("listingId") ?? "");
   const owned = await query<{ status: string }>(
@@ -81,8 +80,7 @@ export async function setListingStatus(
   _prev: EditResult | null,
   form: FormData
 ): Promise<EditResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const id = String(form.get("listingId") ?? "");
   const to = String(form.get("status") ?? "");

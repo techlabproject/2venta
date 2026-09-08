@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
 import { beginVerification } from "@/features/kyc/actions";
 import { AppHeader } from "@/components/AppHeader";
@@ -11,8 +11,8 @@ import { Button } from "@/components/ui";
 export const dynamic = "force-dynamic";
 
 export default async function Vender() {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  // Una cuenta suspendida no llega a las pantallas que escriben.
+  const user = await activeUser();
   // D-01: sin celular confirmado no se entra al circuito de vendedor.
   if (!user.phoneNumberVerified) redirect("/verificar");
 

@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { getListing } from "@/features/catalog/queries";
 import { redact } from "./redact";
@@ -13,8 +13,7 @@ export type ChatResult = { error: string };
 
 /** Empieza (o retoma) la conversación con el vendedor de un artículo. */
 export async function startConversation(_prev: ChatResult | null, form: FormData) {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
   // D-01: sin celular confirmado no se escribe.
   if (!user.phoneNumberVerified) redirect("/verificar");
 
@@ -29,8 +28,7 @@ export async function startConversation(_prev: ChatResult | null, form: FormData
 }
 
 async function assertParticipant(conversationId: string) {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const conversation = await getConversation(conversationId);
   if (!conversation) return null;
@@ -89,8 +87,7 @@ export async function makeOffer(_prev: ChatResult | null, form: FormData) {
 }
 
 export async function respondToOffer(_prev: ChatResult | null, form: FormData) {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const offer = await getOffer(String(form.get("offerId") ?? ""));
   if (!offer) return { error: "Esa oferta no existe." };
@@ -124,8 +121,7 @@ export async function respondToOffer(_prev: ChatResult | null, form: FormData) {
 }
 
 export async function askQuestion(_prev: ChatResult | null, form: FormData) {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
   if (!user.phoneNumberVerified) redirect("/verificar");
 
   const listingId = String(form.get("listingId") ?? "");
@@ -150,8 +146,7 @@ export async function askQuestion(_prev: ChatResult | null, form: FormData) {
 }
 
 export async function answerQuestion(_prev: ChatResult | null, form: FormData) {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const questionId = String(form.get("questionId") ?? "");
   const raw = String(form.get("answer") ?? "").trim().slice(0, 500);

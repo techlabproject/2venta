@@ -356,3 +356,21 @@ detalle, sirve para vender, y exigir que se tomen dentro de la app solo las har�
 peores sin agregar ninguna garantía.
 **El razonamiento completo:** si alguien pone fotos de un producto que no tiene, el
 video lo delata. Y si el video coincide, las fotos no engañan a nadie.
+
+### D-45 — Una cuenta suspendida puede leer, no escribir
+No puede comprar, escribir, ofertar, publicar, reportar ni volver a entrar. Sí puede
+ver su cuenta y sus pedidos.
+**Por qué la mitad de lectura.** Si tiene dinero retenido en una disputa, dejarla
+ciega sería quitarle la única forma de defenderse. Suspender es una medida contra lo
+que alguien puede hacer, no contra lo que puede saber de lo suyo.
+**Cómo.** La comprobación vive en un solo punto, `activeUser()`, que usan todas las
+acciones y todas las pantallas que escriben. Antes no existía y suspender no servía
+para nada más que esconder el catálogo del suspendido.
+
+### D-46 — No se cobra un precio distinto al que el comprador vio
+La pantalla manda el total que se mostró. Si al confirmar no coincide, no se cobra:
+se explica el cambio y se le muestra el nuevo.
+**Por qué.** Antes se recalculaba en silencio con los precios del momento de
+confirmar. No hace falta mala fe para que ocurra: basta que el vendedor esté
+ajustando precios mientras alguien compra. Cobrar un precio distinto al que alguien
+aceptó no es un detalle técnico.

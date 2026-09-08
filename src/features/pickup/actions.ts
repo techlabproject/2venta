@@ -1,8 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { getOrder, transition } from "@/features/payments/orders";
 import { paymentProvider } from "@/features/payments/provider";
 import { query } from "@/lib/db";
@@ -37,8 +36,7 @@ export async function redeemCode(
   _prev: PickupResult | null,
   form: FormData
 ): Promise<PickupResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const orderId = String(form.get("orderId") ?? "");
   const order = await getOrder(orderId);

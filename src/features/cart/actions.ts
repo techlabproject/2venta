@@ -1,8 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { getListing } from "@/features/catalog/queries";
 import { listCart } from "./queries";
@@ -20,8 +19,7 @@ export async function addToCart(
   _prev: CartResult | null,
   form: FormData
 ): Promise<CartResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const listing = await getListing(String(form.get("listingId") ?? ""));
   if (!listing || listing.status !== "activa") {
@@ -52,8 +50,7 @@ export async function addToCart(
 }
 
 export async function removeFromCart(_prev: CartResult | null, form: FormData) {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   await query(`delete from cart_items where user_id = $1 and listing_id = $2`, [
     user.id,
@@ -65,8 +62,7 @@ export async function removeFromCart(_prev: CartResult | null, form: FormData) {
 }
 
 export async function clearCart(): Promise<void> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
   await query(`delete from cart_items where user_id = $1`, [user.id]);
   revalidatePath("/carrito");
 }

@@ -1,8 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { getVerification } from "@/features/kyc/queries";
 import { listCategories } from "@/features/catalog/queries";
@@ -17,8 +16,7 @@ export async function registerStore(
   _prev: StoreResult | null,
   form: FormData
 ): Promise<StoreResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   // Una tienda es un vendedor: la identidad de quien la representa se verifica
   // igual que la de cualquiera (D-02).
@@ -63,8 +61,7 @@ export async function uploadBulk(
   _prev: StoreResult | null,
   form: FormData
 ): Promise<StoreResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const store = await getStore(user.id);
   if (!store) return { error: "La carga en lote es para cuentas de tienda." };

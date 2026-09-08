@@ -76,6 +76,9 @@ export const auth = betterAuth({
       // El rol NO es escribible desde el cliente: si lo fuera, cualquiera se
       // haría administrador al registrarse.
       role: { type: "string", required: false, input: false, defaultValue: "usuario" },
+      // Se expone en la sesión para que activeUser() pueda comprobarlo sin una
+      // consulta extra en cada acción.
+      suspendedAt: { type: "date", required: false, input: false, fieldName: "suspended_at" },
     },
   },
 
@@ -84,6 +87,26 @@ export const auth = betterAuth({
     // espacios) le parece válida. Se rechaza aquí, en el servidor, porque la
     // comprobación en la pantalla no es control de nada.
     before: createAuthMiddleware(async (ctx) => {
+      // Una cuenta suspendida no vuelve a entrar. Sin esto, suspender solo cerraba
+      // las sesiones abiertas y bastaba con volver a iniciar sesión.
+      if (ctx.path === "/sign-in/email") {
+        const email = ctx.body?.email;
+        if (typeof email === "string") {
+          const { query } = await import("./db");
+          const rows = await query<{ suspended_at: Date | null }>(
+            `select suspended_at from "user" where email = $1`,
+            [email.trim().toLowerCase()]
+          );
+          if (rows[0]?.suspended_at) {
+            throw new APIError("FORBIDDEN", {
+              code: "ACCOUNT_SUSPENDED",
+              message: "Esta cuenta está suspendida. Escríbenos si crees que es un error.",
+            });
+          }
+        }
+        return;
+      }
+
       if (ctx.path !== "/sign-up/email") return;
       const password = ctx.body?.password;
       if (typeof password === "string" && password.trim().length < 8) {

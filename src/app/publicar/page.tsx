@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
 import { listCategories } from "@/features/catalog/queries";
 import { suggestAll } from "@/features/pricing/suggest";
@@ -11,8 +11,8 @@ import { AppHeader } from "@/components/AppHeader";
 export const dynamic = "force-dynamic";
 
 export default async function Publicar() {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  // Una cuenta suspendida no llega a las pantallas que escriben.
+  const user = await activeUser();
   if (!user.phoneNumberVerified) redirect("/verificar");
 
   // D-02: el vendedor verifica antes de publicar. Esta comprobación es de

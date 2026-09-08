@@ -1,8 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentAdmin, currentUser } from "@/lib/session";
+import { activeUser, currentAdmin } from "@/lib/session";
 import { query } from "@/lib/db";
 import { getOrder, transition } from "@/features/payments/orders";
 import { paymentProvider } from "@/features/payments/provider";
@@ -17,8 +16,7 @@ export async function openClaim(
   _prev: ClaimResult | null,
   form: FormData
 ): Promise<ClaimResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const order = await getOrder(String(form.get("orderId") ?? ""));
   if (!order) return { error: "Ese pedido no existe." };
@@ -79,8 +77,7 @@ export async function replyToClaim(
   _prev: ClaimResult | null,
   form: FormData
 ): Promise<ClaimResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const order = await getOrder(String(form.get("orderId") ?? ""));
   if (!order) return { error: "Ese pedido no existe." };

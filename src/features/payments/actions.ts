@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { getListing } from "@/features/catalog/queries";
 import { paymentProvider, newIdempotencyKey } from "./provider";
@@ -21,8 +21,7 @@ export async function buyListing(
   _prev: BuyResult | null,
   form: FormData
 ): Promise<BuyResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   // D-01: sin celular verificado no se compra. La comprobación va en el servidor.
   if (!user.phoneNumberVerified) {
@@ -73,6 +72,23 @@ export async function buyListing(
   let priceCop = fromCart
     ? cart.reduce((sum, i) => sum + i.price_cop, 0)
     : listing.price_cop;
+
+  /*
+   * El comprador manda el total que vio en pantalla. Si no coincide con el de
+   * ahora, no se cobra.
+   *
+   * Antes se recalculaba en silencio con los precios del momento de confirmar, así
+   * que si el vendedor subía el precio en el medio se cobraba el nuevo. No hace
+   * falta mala fe para que ocurra: basta que esté ajustando precios mientras
+   * alguien compra. Cobrar un precio distinto al que alguien aceptó no es un
+   * detalle técnico.
+   */
+  const expected = Number(String(form.get("totalEsperado") ?? "").replace(/\D/g, ""));
+  if (Number.isSafeInteger(expected) && expected > 0 && expected !== priceCop) {
+    return {
+      error: `El precio cambió mientras comprabas: ahora son $${priceCop.toLocaleString("es-CO")} en vez de $${expected.toLocaleString("es-CO")}. Vuelve a revisar antes de pagar.`,
+    };
+  }
   const offerId = String(form.get("offerId") ?? "");
   if (offerId) {
     const offer = await getOffer(offerId);
@@ -163,8 +179,7 @@ export async function confirmReceipt(
   _prev: BuyResult | null,
   form: FormData
 ): Promise<BuyResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const orderId = String(form.get("orderId") ?? "");
   const order = await getOrder(orderId);

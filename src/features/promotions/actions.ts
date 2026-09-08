@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentUser } from "@/lib/session";
+import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { newIdempotencyKey, paymentProvider } from "@/features/payments/provider";
 import { PROMOTION_DAYS, PROMOTION_PRICE_COP } from "./config";
@@ -14,8 +14,7 @@ export async function promoteListing(
   _prev: PromotionResult | null,
   form: FormData
 ): Promise<PromotionResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  const user = await activeUser();
 
   const listingId = String(form.get("listingId") ?? "");
   // La comprobación de dueño y de estado va en la misma consulta: no hay ventana
