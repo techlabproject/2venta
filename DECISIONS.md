@@ -347,3 +347,12 @@ reclamo y arbitraje.
 ### D-43 — El alias se puede cambiar, pero queda el anterior
 **Por qué.** Un vendedor que acumula malas reseñas no puede limpiar su rastro
 cambiándose el nombre, que es lo primero que intentaría.
+
+### D-44 — Las fotos sí se pueden subir de la galería; el video no
+**Por qué no es una inconsistencia.** Son dos cosas distintas. El video prueba que
+el artículo existe y está en manos del vendedor, y por eso se graba en vivo. Las
+fotos son presentación: una foto buena, con luz y desde el ángulo que muestra el
+detalle, sirve para vender, y exigir que se tomen dentro de la app solo las haría
+peores sin agregar ninguna garantía.
+**El razonamiento completo:** si alguien pone fotos de un producto que no tiene, el
+video lo delata. Y si el video coincide, las fotos no engañan a nadie.

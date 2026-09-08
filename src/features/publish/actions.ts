@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { currentUser } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
 import { isAllowedType, MAX_BYTES, store } from "@/lib/storage";
+import { MAX_PHOTOS } from "./photos";
 import { query } from "@/lib/db";
 import { MIN_PRICE_COP, parseCop } from "@/features/payments/money";
 import { isValidImei, normalizeImei } from "@/features/moderation/imei";
@@ -87,6 +88,18 @@ export async function publishListing(
   const videoPath = await store(await video.arrayBuffer(), video.type);
   const posterPath = await store(await poster.arrayBuffer(), poster.type);
 
+  // RF-15: hasta seis fotos. A diferencia del video, sí pueden venir de la galería:
+  // el video ya prueba que el artículo existe, y las fotos son presentación. Exigir
+  // que se tomen dentro de la app solo las haría peores sin agregar garantía.
+  const photos = form.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
+  if (photos.length > MAX_PHOTOS) {
+    return { error: `Máximo ${MAX_PHOTOS} fotos.` };
+  }
+  for (const photo of photos) {
+    if (!isAllowedType(photo.type)) return { error: "Alguno de los archivos no es una imagen." };
+    if (photo.size > MAX_BYTES) return { error: "Alguna foto pesa demasiado." };
+  }
+
   // Un mismo IMEI publicado dos veces no es coincidencia. La base tiene el índice
   // único; aquí se traduce el choque a un mensaje que se entienda.
   let rows: { id: string }[];
@@ -107,6 +120,14 @@ export async function publishListing(
       return { error: "Ese IMEI ya está publicado. Si es tuyo, escríbenos." };
     }
     throw err;
+  }
+
+  for (const [index, photo] of photos.entries()) {
+    const path = await store(await photo.arrayBuffer(), photo.type);
+    await query(
+      `insert into listing_photos (listing_id, path, position) values ($1, $2, $3)`,
+      [rows[0].id, path, index]
+    );
   }
 
   // S-15: avisar a quien guardó una búsqueda que coincide. Solo si quedó visible;

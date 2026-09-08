@@ -8,6 +8,7 @@ import { Button, ErrorNote, Field } from "@/components/ui";
 import { CONDITION_LABEL } from "@/features/catalog/labels";
 import type { Category } from "@/features/catalog/queries";
 import type { SuggestionMap } from "@/features/pricing/suggest";
+import { MAX_PHOTOS } from "./photos";
 import { formatCop } from "@/lib/money";
 
 const EXTENSION: Record<string, string> = {
@@ -63,6 +64,18 @@ export function PublishForm({
         <h2 className="text-sm font-medium">Video del artículo</h2>
         <p className="mt-1 mb-3 text-xs text-muted">Obligatorio, máximo 30 segundos.</p>
         <VideoCapture onCaptured={(video, poster) => setMedia({ video, poster })} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="photos" className="text-sm font-medium">
+          Fotos <span className="font-normal text-muted">(opcional)</span>
+        </label>
+        <input id="photos" name="photos" type="file" accept="image/*" multiple
+          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm" />
+        <p className="text-xs text-muted">
+          Hasta {MAX_PHOTOS}. Estas sí las puedes subir de la galería: el video ya
+          prueba que el artículo existe, las fotos son para que se vea bien.
+        </p>
       </div>
 
       <Field id="title" name="title" label="Título" required

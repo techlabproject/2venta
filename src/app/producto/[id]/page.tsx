@@ -17,6 +17,7 @@ import { FavoriteButton } from "@/features/favorites/FavoriteButton";
 import { isFavorite } from "@/features/favorites/queries";
 import { AddToCartButton } from "@/features/cart/Forms";
 import { isInCart } from "@/features/cart/queries";
+import { listPhotos } from "@/features/publish/photo-queries";
 import { currentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +42,7 @@ export default async function ListingPage({
   await recordView(listing.id, user?.id ?? null, listing.seller_id);
   const favorited = user ? await isFavorite(user.id, listing.id) : false;
   const inCart = user ? await isInCart(user.id, listing.id) : false;
+  const photos = await listPhotos(listing.id);
 
   return (
     <>
@@ -52,6 +54,19 @@ export default async function ListingPage({
 
         {/* D-14: el video es la prueba de que el artículo existe y está como
             dice. Va primero, antes que cualquier otra cosa. */}
+        {photos.length > 0 && (
+          // Las fotos van después del video a propósito: el video es la prueba, y
+          // lo que da la confianza va primero.
+          <ul data-testid="fotos" className="mt-4 flex gap-2 overflow-x-auto pb-1">
+            {photos.map((p) => (
+              <li key={p.id} className="shrink-0">
+                <img src={`/api/media/${p.path}`} alt=""
+                  className="h-40 w-40 rounded-xl bg-ph object-cover" />
+              </li>
+            ))}
+          </ul>
+        )}
+
         <video
           data-testid="video-articulo"
           className="mt-4 aspect-[4/3] w-full rounded-2xl bg-ph object-cover"

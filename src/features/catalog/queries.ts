@@ -28,7 +28,14 @@ export type Listing = {
 // distintivo.
 export const LISTING_SELECT = `
   select l.id, l.title, l.description, l.category, l.condition, l.price_cop,
-         l.video_path, l.poster_path, l.status,
+         l.video_path,
+         -- La portada es la primera foto si la hay; si no, el cuadro del video.
+         coalesce(
+           (select p.path from listing_photos p
+             where p.listing_id = l.id order by p.position, p.id limit 1),
+           l.poster_path
+         ) as poster_path,
+         l.status,
          c.label as category_label,
          l.seller_id,
          coalesce(u.alias, u.name) as seller_alias,

@@ -4,16 +4,16 @@
 
 ## En qué voy
 
-Las tres fases del plan, más siete rebanadas que salieron de repasar los requisitos
+Las tres fases del plan, más ocho rebanadas que salieron de repasar los requisitos
 originales contra lo construido: S-17 (D-27 cerrada), migraciones, S-18 (actividad),
 S-19 (editar y retirar), S-20 (recuperar y sesiones), S-21 (perfil, reportes y
-suspensión) y S-22 (carrito).
+suspensión), S-22 (carrito) y S-23 (fotos).
 
-216 pruebas de navegador y 70 unitarias.
+221 pruebas de navegador y 70 unitarias.
 
-De los requisitos funcionales originales queda sin construir: RF-15 en su parte de
-fotos adicionales, RF-38 en su parte de envío real de notificaciones, y RF-42
-(reportes de ventas y comisiones, prioridad baja).
+De los requisitos funcionales originales solo queda sin construir el RF-42
+(reportes de ventas y comisiones, prioridad baja) y el envío real de notificaciones
+del RF-38, que depende de conectar un proveedor.
 
 ## Qué quedó a medias
 
@@ -86,7 +86,7 @@ fotos adicionales, RF-38 en su parte de envío real de notificaciones, y RF-42
   `src/lib/storage.ts`. Mover a almacenamiento en la nube es reescribir esas tres
   funciones. Falta transcodificar a un formato único: hoy se guarda lo que grabe
   cada navegador, que no es lo mismo en Android que en iOS.
-- Fotos adicionales al cuadro de portada: el mockup las muestra, no están.
+- (RESUELTO en S-23) Fotos del artículo, hasta seis.
 - Filtro por distancia en kilómetros: el mockup lo muestra, pero no hay coordenadas
   de nada. Se filtra por zona. La distancia entra cuando exista el dato.
 - Paginación de resultados: la búsqueda corta en 60. Con una sola ciudad alcanza

@@ -71,6 +71,11 @@ el número y se le manda el código antes de dejarlo comprar o escribir.
   eso, la primera prueba que toca una ruta nueva paga la compilación dentro de su
   presupuesto de tiempo, y el resultado son fallos intermitentes distintos en cada
   corrida. Cuando agregues una ruta, agrégala a esa lista.
+- IMPORTANT: un componente de cliente no puede importar, ni indirectamente, nada
+  que llegue a `src/lib/db.ts`. Arrastra el cliente de Postgres al navegador y
+  rompe toda la aplicación, con un error que solo aparece en el registro del
+  servidor. Las constantes que comparten cliente y servidor van en un archivo que
+  no importa nada del servidor.
 - Regenerar el esquema de autenticación (`@better-auth/cli generate`) emite solo el
   diff contra la base que encuentre. Para obtener el esquema completo hay que vaciar
   el esquema público primero. Ver `db/LEEME.md`.
