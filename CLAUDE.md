@@ -87,6 +87,13 @@ el número y se le manda el código antes de dejarlo comprar o escribir.
 - `dotenv` no lee `.env.local`, eso solo lo hace Next. Los scripts fuera de Next
   tienen que pasarle la ruta explícita.
 
+# Configuración
+
+La aplicación comprueba sus variables de entorno al arrancar (`src/lib/config.ts`).
+Si falta alguna, se detiene diciendo cuáles y para qué sirve cada una. Al agregar
+una variable nueva, agrégala también a `REQUIREMENTS`: si no, su ausencia se va a
+descubrir en producción y de la peor forma.
+
 # Entorno
 
 - Docker Desktop debe estar corriendo antes de `docker compose up`.

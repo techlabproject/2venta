@@ -374,3 +374,17 @@ se explica el cambio y se le muestra el nuevo.
 confirmar. No hace falta mala fe para que ocurra: basta que el vendedor esté
 ajustando precios mientras alguien compra. Cobrar un precio distinto al que alguien
 aceptó no es un detalle técnico.
+
+### D-47 — La configuración se comprueba entera al arrancar
+Si falta una variable de entorno, la aplicación se detiene diciendo cuáles faltan y
+para qué sirve cada una. Todas de una vez, no la primera.
+**Por qué.** Sin esto, una variable que falta se descubre tarde y mal:
+`PICKUP_CODE_SECRET` revienta la primera vez que alguien compra en persona, y un
+secreto de webhook ausente hace que ninguna firma valide, con el síntoma de que los
+pagos no se confirman y ninguna pista de por qué. Eso muerde el día del despliegue,
+que es el peor día para descubrirlo.
+**Por qué todas de una vez.** Detenerse en la primera obliga a un ciclo de prueba y
+error: se agrega una, se reinicia, falla la siguiente.
+**Consecuencia.** La lista de obligatorias depende del entorno: en desarrollo no se
+exige el proveedor de SMS ni el dominio, porque exigirlos ahí haría imposible
+trabajar.

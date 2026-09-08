@@ -4,16 +4,14 @@
 
 ## En qué voy
 
-Las tres fases del plan, más nueve rebanadas posteriores. 228 pruebas de navegador
-y 70 unitarias.
+Las tres fases del plan más diez rebanadas posteriores. 236 pruebas de navegador y
+79 unitarias.
 
-La última, S-24, salió de escribir el prompt de Luna: al listar qué cruces entre
-funciones valía la pena atacar, dos me parecieron sospechosos, los probé yo, y los
-dos eran reales. Una cuenta suspendida podía seguir comprando y escribiendo, y el
-precio del carrito se recalculaba en silencio al pagar.
+**Todos los requisitos funcionales originales están construidos.** El último era el
+RF-42, reportes de negocio.
 
-De los requisitos funcionales originales solo queda el RF-42 (reportes de ventas y
-comisiones, prioridad baja) y el envío real de notificaciones del RF-38.
+De lo que queda a medias, ya casi nada es código propio: son proveedores por
+conectar y cuentas por crear.
 
 ## Qué quedó a medias
 

@@ -51,6 +51,7 @@ export default async function Admin() {
           <span className="flex gap-4 text-sm">
             <Link href="/admin/disputas" className="text-brand underline">Disputas</Link>
             <Link href="/admin/usuarios" className="text-brand underline">Cuentas</Link>
+            <Link href="/admin/reportes" className="text-brand underline">Reportes</Link>
           </span>
         </div>
         <p data-testid="cola" className="mt-1 text-sm text-muted">
