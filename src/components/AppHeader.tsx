@@ -13,7 +13,7 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
       {/* En un celular los seis enlaces no caben en una fila junto al logo: la
           barra se desbordaba y la página quedaba más ancha que la pantalla
           (prueba visual, 2026-09-13). Se dejan bajar a una segunda fila. */}
-      <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-x-3 gap-y-2 px-5 py-4">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-5 py-4">
         <Link href="/" aria-label="Ir al inicio de 2venta">
           <Logo className="h-8 w-auto" />
         </Link>
@@ -21,6 +21,15 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
         <div className="ml-auto flex w-full flex-wrap items-center gap-x-4 gap-y-1 text-sm sm:w-auto">
           {user ? (
             <>
+              {/* «Vender» va primero y en mostaza: es la acción que hace crecer el
+                  catálogo, y sin ella un vendedor no encontraba ni dónde publicar
+                  ni sus propias publicaciones. */}
+              <Link
+                href="/vender"
+                className="rounded-full bg-accent px-3 py-1 font-medium text-on-accent"
+              >
+                Vender
+              </Link>
               <Link href="/carrito" className="text-cream/85 underline">
                 Carrito
               </Link>

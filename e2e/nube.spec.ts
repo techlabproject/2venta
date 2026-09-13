@@ -71,7 +71,7 @@ test("el circuito completo funciona contra la nube", async ({ browser }) => {
   await seller.getByRole("button", { name: "Empezar verificación" }).click();
   await expect(seller).toHaveURL(/\/dev\/kyc\//);
   await seller.getByRole("button", { name: "Simular aprobación" }).click();
-  await expect(seller.getByRole("heading", { name: "Identidad verificada" })).toBeVisible();
+  await expect(seller.getByRole("heading", { name: "Tu espacio de vendedor" })).toBeVisible();
 
   await seller.goto(`${URL}/publicar`);
   await seller.getByRole("button", { name: "Abrir cámara" }).click();

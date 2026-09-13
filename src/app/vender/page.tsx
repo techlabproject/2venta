@@ -4,7 +4,8 @@ import { activeUser } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
 import { beginVerification } from "@/features/kyc/actions";
 import { AppHeader } from "@/components/AppHeader";
-import { Button } from "@/components/ui";
+import { Button, ButtonLink } from "@/components/ui";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 // Pantalla 1c del mockup. D-02: el vendedor verifica identidad al crear la cuenta,
 // antes de publicar, no antes de cobrar.
@@ -24,15 +25,36 @@ export default async function Vender() {
       <main className="mx-auto max-w-md px-5 py-8">
         {v?.status === "aprobado" ? (
           <>
-            <h1 className="font-title text-2xl font-semibold">Identidad verificada</h1>
-            <p className="mt-2 text-ink2">
-              Ya puedes publicar. Tu perfil muestra el distintivo de identidad
-              verificada, que es lo que hace que un comprador se anime a pagarle a
-              alguien que no conoce.
+            <h1 className="font-title text-2xl font-semibold">Tu espacio de vendedor</h1>
+            <p className="mt-2 flex items-center gap-2 text-ink2">
+              <VerifiedBadge label="Identidad verificada" />
             </p>
-            <Link href="/" className="mt-6 inline-block text-brand underline">
-              Ir al catálogo
-            </Link>
+            <p className="mt-2 text-ink2">
+              Tu perfil muestra el distintivo de identidad verificada, que es lo que
+              hace que un comprador se anime a pagarle a alguien que no conoce.
+            </p>
+
+            {/* Antes esta pantalla decía «ya puedes publicar» y el único enlace
+                llevaba al catálogo: quien llegaba aquí a vender se quedaba sin
+                salida, y sus publicaciones no se podían encontrar desde ninguna
+                parte de la interfaz. */}
+            <div className="mt-7 flex flex-col gap-3">
+              <ButtonLink href="/publicar">Publicar un artículo</ButtonLink>
+              <ButtonLink href="/vender/metricas" variant="outline">
+                Mis publicaciones
+              </ButtonLink>
+              <ButtonLink href="/actividad" variant="ghost">
+                Mis ventas y conversaciones
+              </ButtonLink>
+            </div>
+
+            <p className="mt-6 text-sm text-muted">
+              ¿Vendes con frecuencia?{" "}
+              <Link href="/tienda" className="text-brand underline">
+                Registra tu tienda con NIT
+              </Link>{" "}
+              y publica varios artículos de una vez.
+            </p>
           </>
         ) : v?.status === "pendiente" ? (
           <>

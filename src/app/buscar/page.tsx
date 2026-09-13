@@ -36,7 +36,7 @@ export default async function Buscar({
   return (
     <>
       <AppHeader />
-      <main className="mx-auto max-w-3xl px-5 py-6">
+      <main className="mx-auto max-w-6xl px-5 py-6">
         <Link href="/" className="text-sm text-ink2 underline">
           Volver
         </Link>
@@ -66,7 +66,7 @@ export default async function Buscar({
             </p>
           </div>
         ) : (
-          <ul className="mt-4 grid grid-cols-2 gap-3">
+          <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">
             {listings.map((l) => (
               <ListingCard key={l.id} listing={l} />
             ))}

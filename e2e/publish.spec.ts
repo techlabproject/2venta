@@ -10,7 +10,7 @@ async function approveKyc(page: Page) {
   await page.getByRole("button", { name: "Empezar verificación" }).click();
   await expect(page).toHaveURL(/\/dev\/kyc\//);
   await page.getByRole("button", { name: "Simular aprobación" }).click();
-  await expect(page.getByRole("heading", { name: "Identidad verificada" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tu espacio de vendedor" })).toBeVisible();
 }
 
 // R-01, el riesgo número uno del proyecto, comprobado de punta a punta: la cámara

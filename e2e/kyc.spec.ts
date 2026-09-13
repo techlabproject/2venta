@@ -27,7 +27,7 @@ test("cuando el proveedor aprueba, el perfil muestra el distintivo", async ({ pa
   await page.getByRole("button", { name: "Simular aprobación" }).click();
 
   await expect(
-    page.getByRole("heading", { name: "Identidad verificada" })
+    page.getByRole("heading", { name: "Tu espacio de vendedor" })
   ).toBeVisible();
 });
 
@@ -126,7 +126,7 @@ test("un webhook repetido no revierte ni duplica el estado", async ({ page, requ
   }
 
   await page.goto("/vender");
-  await expect(page.getByRole("heading", { name: "Identidad verificada" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tu espacio de vendedor" })).toBeVisible();
 });
 
 test("un webhook para una referencia desconocida no crea nada", async ({ request }) => {
@@ -145,4 +145,32 @@ test("un webhook para una referencia desconocida no crea nada", async ({ request
 test("sin sesión no se puede iniciar una verificación", async ({ page }) => {
   await page.goto("/vender");
   await expect(page).toHaveURL(/\/ingresar/);
+});
+
+// Hallazgos de Nicolás (2026-09-13): un vendedor verificado no encontraba dónde
+// publicar ni sus propias publicaciones. La pantalla decía «ya puedes publicar» y
+// su único enlace llevaba al catálogo.
+test("un vendedor verificado llega a publicar y a sus publicaciones desde /vender", async ({
+  page,
+}) => {
+  await signUpVerified(page, "vendedor", "Andrés Molina");
+  await page.goto("/vender");
+  await page.getByRole("button", { name: "Empezar verificación" }).click();
+  await page.getByRole("button", { name: "Simular aprobación" }).click();
+
+  await expect(page.getByRole("main")).toContainText("Identidad verificada");
+  await page.getByRole("link", { name: "Mis publicaciones" }).click();
+  await expect(page).toHaveURL(/\/vender\/metricas/);
+  await expect(page.getByRole("heading", { name: "Tus publicaciones" })).toBeVisible();
+
+  await page.goto("/vender");
+  await page.getByRole("link", { name: "Publicar un artículo" }).click();
+  await expect(page).toHaveURL(/\/publicar/);
+});
+
+test("la cabecera lleva a vender desde cualquier pantalla", async ({ page }) => {
+  await signUpVerified(page, "vendedor", "Andrés Molina");
+  await page.goto("/favoritos");
+  await page.getByRole("link", { name: "Vender" }).click();
+  await expect(page).toHaveURL(/\/vender/);
 });

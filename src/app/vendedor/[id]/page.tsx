@@ -121,7 +121,20 @@ export default async function PerfilVendedor({
             ? "1 publicación activa"
             : `${seller.listing_count} publicaciones activas`}
         </h2>
-        <ul className="mt-4 grid grid-cols-2 gap-3">
+        {/* Las conversaciones son por artículo, así que desde el perfil no hay un
+            hilo que abrir. Quien llega aquí buscando escribirle se quedaba sin
+            saber dónde hacerlo; esta línea lo dice. */}
+        {listings.length > 0 ? (
+          <p className="mt-1 text-sm text-muted">
+            ¿Quieres escribirle? Abre el artículo que te interesa: la conversación
+            va por artículo, para que los dos sepan de qué están hablando.
+          </p>
+        ) : (
+          <p className="mt-3 rounded-2xl bg-white p-4 text-sm text-ink2">
+            No tiene nada publicado en este momento.
+          </p>
+        )}
+        <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {listings.map((l) => (
             <ListingCard key={l.id} listing={l} />
           ))}
