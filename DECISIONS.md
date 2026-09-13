@@ -388,3 +388,58 @@ error: se agrega una, se reinicia, falla la siguiente.
 **Consecuencia.** La lista de obligatorias depende del entorno: en desarrollo no se
 exige el proveedor de SMS ni el dominio, porque exigirlos ahí haría imposible
 trabajar.
+
+### D-48 — Monolito modular, no microservicios
+Un solo servicio en contenedor, Postgres administrado y un worker aparte para el
+trabajo en segundo plano. El detalle completo está en `ARQUITECTURA.md`.
+**Por qué.** `transition()` mueve el estado de un pedido dentro de una transacción
+con `for update` sobre la fila, y eso es lo que impide que dos avisos simultáneos
+del proveedor de pagos liberen el mismo dinero dos veces. Separar pagos, pedidos y
+envíos convierte esa transacción en una saga distribuida con compensaciones: se
+cambia un problema que la base ya resolvió por uno nuevo, y el modo de falla es
+plata de un comprador real.
+**El otro motivo.** Los microservicios resuelven un problema de organización,
+equipos que necesitan desplegar sin coordinarse. Aquí no hay dos equipos.
+**Cuándo se revisa.** No cuando crezca el tráfico, sino cuando haya dos equipos que
+se pisen al desplegar. El primer candidato a salir sería medios, que ya vive detrás
+de `storage.ts`. Nunca el dinero: `payments`, `orders` y `claims` se quedan juntos.
+
+### D-49 — Contenedor, no funciones sin servidor
+ECS Fargate detrás de un balanceador, no Lambda por ruta.
+**Por qué.** `src/lib/db.ts` abre una piscina con `max: 10` por proceso. En un
+modelo por función, cada invocación fría abre la suya y las conexiones se
+multiplican hasta tumbar Postgres. Se podría poner un intermediario de conexiones
+delante, pero su modo transacción pelea con los bloqueos de sesión que usa
+`transition()`.
+**Consecuencia.** App Runner es una forma válida de arrancar mientras no haya
+tráfico; es el mismo contenedor con menos piezas. Migrar después es recrear
+infraestructura, no cambiar código.
+
+### D-50 — Los archivos se suben directo al almacenamiento, no a través de la aplicación
+El navegador sube a S3 con una URL prefirmada que firma el servidor.
+**Por qué.** Un video puede pesar hasta 60 MB (`MAX_BYTES`). Atravesar el
+contenedor ocupa memoria y tiempo de una tarea que debería estar atendiendo
+peticiones, y no aporta nada: el archivo no se inspecciona al pasar.
+**Qué se conserva.** La validación de tipo que hoy hace `isAllowedType` se hace al
+firmar, del lado del servidor. El `content-type` que declara el cliente no es
+prueba de nada.
+**Consecuencia.** `src/app/api/media/[...path]` deja de existir en producción; los
+archivos los sirve la red de distribución directamente desde el almacenamiento.
+
+### D-51 — La liberación automática se encola, no se llama por HTTP
+Un programador pone un mensaje en la cola cada hora y el worker llama
+`releaseExpiredOrders()` directamente.
+**Por qué.** La ruta `POST /api/tareas/liberar` con `CRON_SECRET` funciona, pero
+deja un secreto y una llamada pública en el camino crítico del dinero. Encolar lo
+quita de la superficie expuesta.
+**Qué se conserva.** La ruta sigue existiendo como palanca manual de emergencia.
+**Consecuencia.** Un temporizador dentro de la aplicación no sirve: con dos tareas
+corriendo, se dispara dos veces.
+
+### D-52 — Dos secretos no se rotan como los demás
+`PHONE_CODE_SECRET` y `PICKUP_CODE_SECRET` cifran datos que están guardados en la
+base (D-31). Rotar uno sin descifrar y volver a cifrar deja códigos de entrega
+ilegibles, y un código ilegible es una entrega presencial que no se puede
+completar.
+**Los que sí rotan libremente:** `BETTER_AUTH_SECRET`, que solo cierra sesiones;
+los tres de webhook, coordinando con el proveedor; y `CRON_SECRET`.
