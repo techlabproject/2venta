@@ -4,8 +4,16 @@
 
 ## En qué voy
 
-Las tres fases del plan más catorce rebanadas posteriores. 253 pruebas de navegador
-y 103 unitarias (seis de ellas contra MinIO).
+Las tres fases del plan más catorce rebanadas posteriores. 257 pruebas de navegador
+y 103 unitarias (seis de ellas contra MinIO), más 50 comparaciones visuales.
+
+**Ronda de diseño y flujos (2026-09-13):** informes en `qa/ronda-diseno/` y la
+respuesta en `respuesta.md`. Nicolás reportó que el diseño se veía plano y que un
+vendedor no encontraba sus productos; tres agentes (arte, flujo del vendedor,
+flujo del comprador) lo confirmaron y ampliaron. Cerrados: el panel del vendedor,
+el escritorio a cuatro columnas, el video anunciado en el feed, el pago protegido
+con superficie propia, los avisos de interés nuevo y el regreso al artículo tras
+iniciar sesión.
 
 **Ronda de QA con tres agentes (2026-09-13):** informes en `qa/agentes-2026-09-13/`
 y la respuesta en `respuesta.md`. Cinco hallazgos críticos o altos reales, todos
@@ -153,6 +161,9 @@ conectar y cuentas por crear.
 - El runner de GitHub tarda ~13 min en la suite (3 en el portátil). Con 5 s por
   aserción falla una prueba por corrida; en CI hay 15 s y un reintento.
 
+- Seis agentes en paralelo agotan la cuota de la sesión y mueren todos a la vez.
+  De dos en dos funciona. Y hay que confirmar el árbol antes de lanzarlos: uno
+  encontró cambios sin confirmar a mitad de su revisión.
 - Las pruebas corren en paralelo y comparten la cola: el `--una-vez` de una
   prueba puede tomar el mensaje de otra. `runWorkerOnce()` espera a que no quede
   nada visible ni en vuelo antes de devolver; sin eso, los avisos fallan a veces.
@@ -219,6 +230,19 @@ conectar y cuentas por crear.
 | Correo (SES) | las alertas se guardan, no se envían | un dominio propio: sin él, el remitente no pasa DMARC |
 | `prod` | definido, plan válido, sin aplicar | SMS real + pasar la cuenta a plan de pago |
 | Dominio propio | no hay; CloudFront da `*.cloudfront.net` con HTTPS | comprarlo (Route 53) |
+
+## Pendientes que dejó la ronda de diseño (2026-09-13)
+
+- Fotos como evidencia de un reclamo: la D-13 dice que se arbitra con la
+  evidencia de las dos partes y no se puede subir ninguna. Con S-27 ya es barato
+  (`uploadBlob` + `claim`). Debería ser la próxima rebanada.
+- Los plazos del reclamo (48 h / 7 días) desaparecen una vez abierto.
+- Una pregunta pública con teléfono se oculta sin explicar por qué, a diferencia
+  del chat.
+- Confirmar con Nicolás si el chat debía abrirse desde el perfil del vendedor
+  (hoy se explica que va por artículo, D-69).
+- De arte: segunda superficie para contenido no accionable, el arco del logo como
+  recurso gráfico, personalidad en los estados vacíos.
 
 ## Pendientes de diseño que dejó la ronda de QA
 
