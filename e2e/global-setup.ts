@@ -45,6 +45,7 @@ const ROUTES = [
   "/vendedor/no-existe",
   "/api/auth/get-session",
   "/api/salud",
+  "/api/tareas/liberar",
 ];
 
 export default async function globalSetup() {

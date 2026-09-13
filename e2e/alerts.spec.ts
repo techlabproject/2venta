@@ -1,5 +1,5 @@
 import { test, expect, type Browser } from "@playwright/test";
-import { approveKycFor, sellerWithListing, signUpVerified, withDb } from "./helpers";
+import { approveKycFor, runWorkerOnce, sellerWithListing, signUpVerified, withDb } from "./helpers";
 
 // La prueba de punta a punta de la rebanada S-15.
 // Ver slices/15-alertas-metricas-precio.md
@@ -47,6 +47,8 @@ test("una búsqueda guardada avisa cuando aparece algo que coincide", async ({
   const buyer = await buyerWithSavedSearch(browser, "categoria=ropa", `Ropa ${marca}`);
   const seller = await publish(browser, `Camisa avisada ${marca}`, 70_000);
 
+  // El aviso lo produce el worker, no la acción de publicar (D-51).
+  await runWorkerOnce();
   await buyer.page.goto("/avisos");
   await expect(buyer.page.getByTestId("avisos")).toContainText(`Camisa avisada ${marca}`);
 
@@ -63,10 +65,12 @@ test("el aviso respeta los filtros de la búsqueda guardada", async ({ browser }
   );
 
   const caro = await publish(browser, `Abrigo caro ${marca}`, 800_000);
+  await runWorkerOnce();
   await buyer.page.goto("/avisos");
   await expect(buyer.page.getByRole("main")).not.toContainText(`Abrigo caro ${marca}`);
 
   const barato = await publish(browser, `Camisa barata ${marca}`, 60_000);
+  await runWorkerOnce();
   await buyer.page.goto("/avisos");
   await expect(buyer.page.getByTestId("avisos")).toContainText(`Camisa barata ${marca}`);
 
@@ -117,6 +121,7 @@ test("no se avisa dos veces de la misma publicación", async ({ browser }) => {
   await expect(buyer.page.getByRole("status")).toContainText("Guardada");
 
   const seller = await publish(browser, `Coche avisado ${marca}`, 200_000, "ninos");
+  await runWorkerOnce();
 
   await buyer.page.goto("/avisos");
   const avisos = buyer.page.getByTestId("avisos").getByRole("listitem");

@@ -5,7 +5,8 @@ Marketplace de segunda mano para Colombia. Bogotá, tres categorías, pago prote
 # Comandos
 
 - Desarrollo: `npm run dev`
-- Base de datos y bucket locales: `docker compose up -d` (Postgres en 5433, MinIO en 9000)
+- Base, bucket y cola locales: `docker compose up -d` (Postgres 5433, MinIO 9000, ElasticMQ 9324)
+- Worker en desarrollo: `npm run worker` (o `-- --una-vez` para vaciar la cola y salir)
 - Migraciones: `npm run db:migrate`
 - Datos de prueba: `npm run db:seed`
 - Verificación completa antes de confirmar cambios: `npm run verify`
@@ -47,6 +48,11 @@ cerrado.
 - Los identificadores públicos son UUID, no enteros secuenciales. Un id secuencial
   en una URL deja contar cuántos productos existen.
 - Todo texto visible va en español de Colombia.
+- El trabajo en segundo plano (liberación automática, avisos) va por la cola
+  (`src/lib/queue.ts`) y lo ejecuta `src/worker/`, que solo llama funciones de
+  `src/features/*`. Todo trabajo que entre a la cola tiene que tolerar repetirse.
+  En las pruebas, después de publicar hay que `await runWorkerOnce()` para que
+  aparezcan los avisos.
 - Los archivos (video, fotos) van directo del navegador al bucket con URL prefirmada
   (D-50). La acción de servidor recibe claves y las comprueba con `claim()` contra
   S3; nunca confía en el tipo o tamaño que declara el cliente. Las pantallas arman

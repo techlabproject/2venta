@@ -4,8 +4,8 @@
 
 ## En qué voy
 
-Las tres fases del plan más doce rebanadas posteriores. 236 pruebas de navegador y
-94 unitarias (seis de ellas contra MinIO).
+Las tres fases del plan más trece rebanadas posteriores. 239 pruebas de navegador y
+96 unitarias (seis de ellas contra MinIO).
 
 **Todos los requisitos funcionales originales están construidos.** Ahora se está
 llevando a AWS siguiendo `ARQUITECTURA.md`:
@@ -14,8 +14,10 @@ llevando a AWS siguiendo `ARQUITECTURA.md`:
   misma. `APP_ENV` separa "qué proveedores son reales" de "cómo se compiló" (D-54).
 - S-27 archivos en S3 con URL prefirmada (D-50, D-57): HECHA. MinIO en el
   portátil, bucket real en S-29.
-- S-28 worker y cola SQS (D-51): siguiente.
-- S-29 Terraform con `dev` y `prod` en la misma cuenta (D-53) + GitHub Actions.
+- S-28 worker y cola SQS (D-51, D-58, D-59): HECHA. ElasticMQ en el portátil.
+- S-29 Terraform con `dev` y `prod` en la misma cuenta (D-53) + GitHub Actions:
+  siguiente. Es el primer despliegue real.
+- Después: transcodificar el video con MediaConvert (necesita el bucket real).
 
 Cuenta de AWS `681842289811`, perfil de CLI `2venta` (usuario `nicolas-cli`,
 `AdministratorAccess`, región `us-east-1`). MFA en la raíz activa, presupuesto de
@@ -44,9 +46,9 @@ conectar y cuentas por crear.
   integración: depende de lo que conteste R-02.
 - El retiro del dinero por parte del vendedor no existe. El pedido llega a
   'liberado' y ahí se detiene.
-- La liberación automática necesita un programador de tareas que llame
-  `POST /api/tareas/liberar` con el secreto. En desarrollo se llama a mano. Con
-  S-28 pasa a SQS + worker (D-51).
+- (RESUELTO en S-28) La liberación automática va por la cola. Falta el
+  programador que encole `liberar` cada hora (EventBridge, S-29) y la alarma de
+  la cola de fallidos. La ruta manual con `CRON_SECRET` sigue existiendo.
 - Los archivos de publicaciones retiradas no se borran del bucket. Y no hay
   política de ciclo de vida todavía: es infraestructura, va en S-29.
 - La transportadora es de prueba: tarifa plana de $12.000 y una sola opción. R-04
@@ -98,7 +100,8 @@ conectar y cuentas por crear.
   detalle intermedio que muestra el mockup.
 - (RESUELTO en S-27) Archivos a disco local. Ahora van al bucket. Falta
   transcodificar a un formato único: hoy se guarda lo que grabe cada navegador,
-  que no es lo mismo en Android que en iOS. Va con el worker de S-28.
+  que no es lo mismo en Android que en iOS. Necesita MediaConvert, o sea AWS de
+  verdad; va después de S-29 como rebanada propia.
 - (RESUELTO en S-23) Fotos del artículo, hasta seis.
 - Filtro por distancia en kilómetros: el mockup lo muestra, pero no hay coordenadas
   de nada. Se filtra por zona. La distancia entra cuando exista el dato.
@@ -119,6 +122,15 @@ conectar y cuentas por crear.
   propia, y una prueba de punta a punta por rebanada en `e2e/`.
 
 ## Qué aprendí que no está en ningún otro archivo
+
+- Las pruebas corren en paralelo y comparten la cola: el `--una-vez` de una
+  prueba puede tomar el mensaje de otra. `runWorkerOnce()` espera a que no quede
+  nada visible ni en vuelo antes de devolver; sin eso, los avisos fallan a veces.
+- El worker del contenedor tiene que abortar la espera larga de SQS con SIGTERM;
+  si no, `docker stop` (y ECS) lo mata con 137 a los diez segundos.
+- `chat.spec.ts:19` falló una vez contra la imagen bajo carga (la respuesta del
+  vendedor no apareció a tiempo) y pasó 28/28 al repetirla. Intermitente a vigilar;
+  para Luna.
 
 - `instrumentation.ts` en la raíz no corre cuando el proyecto usa `src/`. Next solo
   lo busca en `src/`. Estuvo así desde S-25 y nadie lo notó porque la validación se
@@ -168,6 +180,8 @@ conectar y cuentas por crear.
 
 ## Siguiente paso concreto
 
-S-28: `src/worker/` que consume de SQS (ElasticMQ o LocalStack en el portátil),
-liberación automática por cola, `notifyMatchingSearches` fuera de la acción de
-publicar. Después S-29 y el primer despliegue a `dev`.
+S-29: Terraform en `infra/` con un módulo y dos entornos (`dev`, `prod`) en la
+cuenta `681842289811`: ECR, RDS, S3 + CloudFront, SQS + cola de fallidos,
+EventBridge Scheduler (`liberar` cada hora), Secrets Manager, App Runner para la
+web y ECS Fargate para el worker. Comprobar antes que App Runner ya esté activo
+en la cuenta. Luego GitHub Actions con OIDC.

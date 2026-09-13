@@ -49,6 +49,15 @@ services:
       mc anonymous set download local/2venta-media
       "
 
+  # La cola en el portátil: la misma API que SQS (D-51).
+  elasticmq:
+    image: softwaremill/elasticmq-native:latest
+    container_name: 2venta-cola
+    ports:
+      - "9324:9324"
+    volumes:
+      - ./db/elasticmq.conf:/opt/elasticmq.conf:ro
+
   # La imagen de producción corriendo contra la base local. No arranca con un
   # `docker compose up` normal: hay que pedirla con `--profile imagen`.
   # Toma los secretos de .env.local para que las pruebas puedan descifrar los
@@ -66,6 +75,8 @@ services:
       # en localhost. La firma lleva el host, así que hacen falta los dos.
       S3_ENDPOINT: http://minio:9000
       S3_PUBLIC_ENDPOINT: http://localhost:9000
+      SQS_ENDPOINT: http://elasticmq:9324
+      SQS_QUEUE_URL: http://elasticmq:9324/000000000000/2venta-trabajos
     ports:
       - "3200:3000"
     depends_on:
@@ -73,6 +84,29 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      elasticmq:
+        condition: service_started
+
+  # El worker, de la misma imagen, contra la misma cola.
+  worker:
+    build: .
+    container_name: 2venta-worker
+    profiles: ["imagen"]
+    command: ["node", "worker.cjs"]
+    env_file: .env.local
+    environment:
+      DATABASE_URL: postgres://2venta:local@db:5432/2venta
+      BETTER_AUTH_URL: http://localhost:3200
+      APP_ENV: desarrollo
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: http://localhost:9000
+      SQS_ENDPOINT: http://elasticmq:9324
+      SQS_QUEUE_URL: http://elasticmq:9324/000000000000/2venta-trabajos
+    depends_on:
+      db:
+        condition: service_healthy
+      elasticmq:
+        condition: service_started
 
 volumes:
   dbdata:

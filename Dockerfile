@@ -1,9 +1,9 @@
 # Imagen de la aplicación. Tres etapas: dependencias, compilación y ejecución.
 # La última lleva solo lo que `output: "standalone"` decide que hace falta.
 #
-# La misma imagen sirve para el servidor web, para aplicar migraciones
-# (`node db/migrate.mts`) y, desde S-28, para el worker. Qué proveedores son reales
-# lo decide APP_ENV en tiempo de ejecución, no la imagen.
+# La misma imagen sirve para el servidor web (`node server.js`), para aplicar
+# migraciones (`node db/migrate.mts`) y para el worker (`node worker.cjs`). Qué
+# proveedores son reales lo decide APP_ENV en tiempo de ejecución, no la imagen.
 
 FROM node:26-alpine AS deps
 WORKDIR /app
@@ -33,6 +33,8 @@ COPY --from=build --chown=app:app /app/public ./public
 # dos tareas levantando a la vez, las dos intentarían migrar a la vez.
 COPY --from=build --chown=app:app /app/db/migrate.mts ./db/migrate.mts
 COPY --from=build --chown=app:app /app/db/migrations ./db/migrations
+# El worker: el mismo código, empaquetado en un archivo (D-51).
+COPY --from=build --chown=app:app /app/dist/worker.cjs ./worker.cjs
 
 USER app
 EXPOSE 3000

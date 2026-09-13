@@ -37,7 +37,8 @@ export async function countUnread(userId: string): Promise<number> {
 /**
  * Avisa a quien guardó una búsqueda que coincide con esta publicación.
  *
- * Se ejecuta al publicar. Con el volumen de una ciudad, recorrer las búsquedas
+ * La ejecuta el worker cuando llega el mensaje `avisar` que encola la acción de
+ * publicar (D-51). Con el volumen de una ciudad, recorrer las búsquedas
  * guardadas y correr cada una es más simple y más barato que mantener un índice
  * invertido, y se puede cambiar sin que nadie lo note cuando deje de serlo.
  */
@@ -75,4 +76,23 @@ export async function notifyMatchingSearches(listing: {
     if (inserted.length) sent++;
   }
   return sent;
+}
+
+/**
+ * Lo que llama el worker: carga la publicación por id y avisa.
+ *
+ * Solo si sigue activa. Entre encolar y procesar pudo entrar a revisión o
+ * retirarse, y avisar de algo que ya no se ve manda a la gente a una pantalla
+ * que no existe. Devuelve null si la publicación no existe: el mensaje se
+ * descarta, reintentarlo no la va a hacer aparecer.
+ */
+export async function notifyForListing(listingId: string): Promise<number | null> {
+  const rows = await query<{ id: string; title: string; seller_id: string; status: string }>(
+    `select id, title, seller_id, status from listings where id = $1`,
+    [listingId]
+  );
+  const listing = rows[0];
+  if (!listing) return null;
+  if (listing.status !== "activa") return 0;
+  return notifyMatchingSearches(listing);
 }

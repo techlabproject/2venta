@@ -16,7 +16,7 @@ function completo(isProduction = false): Record<string, string | undefined> {
           : "desarrollo"
         : r.name === "DATABASE_URL"
         ? "postgres://u:p@localhost:5433/db"
-        : r.name === "BETTER_AUTH_URL" || r.name === "MEDIA_BASE_URL"
+        : r.name === "BETTER_AUTH_URL" || r.name === "MEDIA_BASE_URL" || r.name === "SQS_QUEUE_URL"
           ? "https://2venta.co"
           : LARGO;
   }

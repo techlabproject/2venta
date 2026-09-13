@@ -499,3 +499,25 @@ publicar con el video de otro vendedor o con un objeto que nunca subió.
 el PUT. Así lo que `claim` lee es lo que se firmó.
 **Consecuencia.** No hay camino de disco local. En el portátil el bucket lo da
 MinIO; el código que se prueba es el que se despliega.
+
+### D-58 — Si encolar falla, lo que ya pasó sigue adelante
+La acción de publicar encola el aviso con `enqueueOrLog`: si la cola no responde,
+la publicación sale igual y el error queda en el registro.
+**Por qué.** El aviso es consecuencia de algo que ya ocurrió. Un aviso que no se
+manda es peor que nada, pero una publicación que no sale porque la cola estaba
+caída es peor que eso.
+**Dónde no aplica.** A lo que es causa y no consecuencia. La liberación no la
+encola la aplicación sino el programador; si ese mensaje no llega, lo detecta la
+alarma de "no corrió en 2 horas" (ARQUITECTURA.md 5.7), no un registro.
+
+### D-59 — El worker se ejecuta desde un solo archivo empaquetado
+`esbuild` junta `src/worker/index.ts` y todo lo que importa en `dist/worker.cjs`, y
+la imagen lo corre con `node worker.cjs`.
+**Por qué.** La salida `standalone` de Next solo lleva lo que las rutas usan; el
+worker importa `src/features/*` por alias de TypeScript, que Node no resuelve, y
+meter `tsx` en la imagen de producción es llevar un compilador a donde no hace
+falta. Un archivo empaquetado no depende de nada de eso.
+**Consecuencia.** El worker no puede importar nada que llegue a `next/*`
+(`session.ts`, acciones de servidor). Hoy no lo hace; si lo hiciera, el paquete
+crecería hasta incluir Next y sería la señal de que algo está en el sitio
+equivocado.

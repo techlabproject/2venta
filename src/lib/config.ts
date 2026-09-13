@@ -79,6 +79,12 @@ export const REQUIREMENTS: Requirement[] = [
     purpose: "el mismo endpoint como lo ve el navegador, para firmar las subidas",
     optional: true,
   },
+  { name: "SQS_QUEUE_URL", purpose: "cola del trabajo en segundo plano (liberaciones, avisos)" },
+  {
+    name: "SQS_ENDPOINT",
+    purpose: "endpoint de la cola cuando no es SQS de verdad (ElasticMQ en el portátil)",
+    optional: true,
+  },
   {
     name: "SMS_PROVIDER_TOKEN",
     purpose: "envío real de los códigos por SMS (en desarrollo salen por consola)",

@@ -1,7 +1,10 @@
 import { expect, type Browser, type Page } from "@playwright/test";
+import { execFileSync } from "node:child_process";
 import { Client } from "pg";
 import { config } from "dotenv";
 import { decryptCode } from "../src/features/auth/otp";
+import { GetQueueAttributesCommand } from "@aws-sdk/client-sqs";
+import { enqueue, queueUrl, sqsClient, type Job } from "../src/lib/queue";
 
 config({ path: ".env.local" });
 
@@ -144,4 +147,38 @@ export function freshNit(): string {
     .reduce((acc, d, i) => acc + Number(d) * WEIGHTS[i], 0);
   const rest = sum % 11;
   return `${base}-${rest > 1 ? 11 - rest : rest}`;
+}
+
+/**
+ * Corre el worker hasta vaciar la cola y sale (D-51). Los avisos y la liberación
+ * automática pasan por ahí; una prueba que los espera tiene que llamarlo.
+ */
+export async function runWorkerOnce(): Promise<string> {
+  const out = execFileSync("npx", ["tsx", "src/worker/index.ts", "--una-vez"], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  // Las pruebas corren en paralelo y comparten la cola: el worker de otra prueba
+  // pudo tomar nuestro mensaje y estar procesándolo todavía. Se espera a que no
+  // quede nada ni visible ni en vuelo antes de mirar el resultado.
+  const deadline = Date.now() + 20_000;
+  while (Date.now() < deadline) {
+    const res = await sqsClient().send(
+      new GetQueueAttributesCommand({
+        QueueUrl: queueUrl(),
+        AttributeNames: ["ApproximateNumberOfMessages", "ApproximateNumberOfMessagesNotVisible"],
+      })
+    );
+    const a = res.Attributes ?? {};
+    if (a.ApproximateNumberOfMessages === "0" && a.ApproximateNumberOfMessagesNotVisible === "0") {
+      return out;
+    }
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return out;
+}
+
+/** Encola como lo haría EventBridge o la acción de publicar. */
+export async function enqueueJob(job: Job): Promise<void> {
+  await enqueue(job);
 }

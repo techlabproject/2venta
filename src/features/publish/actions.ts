@@ -9,7 +9,7 @@ import { query } from "@/lib/db";
 import { MIN_PRICE_COP, parseCop } from "@/features/payments/money";
 import { isValidImei, normalizeImei } from "@/features/moderation/imei";
 import { initialStatus, moderateListing } from "@/features/moderation/rules";
-import { notifyMatchingSearches } from "@/features/alerts/queries";
+import { enqueueOrLog } from "@/lib/queue";
 
 export type PublishResult = { error: string } | { id: string };
 
@@ -123,9 +123,10 @@ export async function publishListing(
 
   // S-15: avisar a quien guardó una búsqueda que coincide. Solo si quedó visible;
   // avisar de algo que está en revisión sería mandar a la gente a una pantalla que
-  // no existe.
+  // no existe. Lo hace el worker (D-51): el vendedor no espera por un trabajo que
+  // no le importa.
   if (initialStatus(category) === "activa") {
-    await notifyMatchingSearches({ id: rows[0].id, title, seller_id: user.id });
+    await enqueueOrLog({ type: "avisar", listingId: rows[0].id });
   }
 
   revalidatePath("/");
@@ -172,15 +173,7 @@ export async function publishDraft(
   );
 
   if (initialStatus(draft.category) === "activa") {
-    const titles = await query<{ title: string }>(
-      `select title from listings where id = $1`,
-      [draft.id]
-    );
-    await notifyMatchingSearches({
-      id: draft.id,
-      title: titles[0].title,
-      seller_id: user.id,
-    });
+    await enqueueOrLog({ type: "avisar", listingId: draft.id });
   }
 
   revalidatePath("/");
