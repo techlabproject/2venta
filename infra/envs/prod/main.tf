@@ -52,10 +52,11 @@ module "entorno" {
   db_backup_days         = 14
   db_deletion_protection = true
 
-  web_cpu           = 512
-  web_memory        = 1024
-  web_desired_count = 2
-  waf               = true
+  web_cpu              = 512
+  web_memory           = 1024
+  web_desired_count    = 2
+  waf                  = true
+  video_transcodificar = true
 
   sms_provider_token = var.sms_provider_token
   correos_alertas    = ["catalinag0226@outlook.com", "nicolasdrr25@gmail.com"]

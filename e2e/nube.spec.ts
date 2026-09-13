@@ -99,7 +99,8 @@ test("el circuito completo funciona contra la nube", async ({ browser }) => {
   expect(media.headers()["content-type"]).toContain("video/");
 
   // S-30: en pocos minutos MediaConvert deja el MP4 y la ficha pasa a servirlo.
-  await expect
+  // Solo si el entorno tiene MediaConvert activo (video_transcodificar en Terraform).
+  if (process.env.NUBE_TRANSCODIFICA) await expect
     .poll(
       async () => {
         await seller.reload();
@@ -108,11 +109,13 @@ test("el circuito completo funciona contra la nube", async ({ browser }) => {
       { timeout: 240_000, intervals: [10_000] }
     )
     .toMatch(/\/transcodificado\/\d{4}-\d{2}\/.*\.mp4$/);
-  const mp4 = await seller.request.get(
-    (await seller.getByTestId("video-articulo").getAttribute("src"))!
-  );
-  expect(mp4.status()).toBe(200);
-  expect(mp4.headers()["content-type"]).toBe("video/mp4");
+  if (process.env.NUBE_TRANSCODIFICA) {
+    const mp4 = await seller.request.get(
+      (await seller.getByTestId("video-articulo").getAttribute("src"))!
+    );
+    expect(mp4.status()).toBe(200);
+    expect(mp4.headers()["content-type"]).toBe("video/mp4");
+  }
 
   // --- Comprador: registro y compra con el proveedor de prueba ---
   const buyerCtx = await browser.newContext();

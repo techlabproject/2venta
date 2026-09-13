@@ -19,8 +19,12 @@ llevando a AWS siguiendo `ARQUITECTURA.md`:
   AWS: https://d13g2bd9j8wj8k.cloudfront.net . La prueba de humo
   `e2e/nube.spec.ts` recorre registro → identidad → publicar con video → compra
   contra la nube. `prod` definido, sin aplicar.
-- S-30 transcodificación con MediaConvert por la cola (D-64): HECHA. Pendiente
-  de comprobar en la nube con la prueba de humo tras el despliegue automático.
+- S-30 transcodificación con MediaConvert por la cola (D-64): HECHA en código e
+  infraestructura. **MediaConvert también está bloqueado por el plan gratuito**
+  (`SubscriptionRequired`): el worker reintentó y habría mandado el mensaje a
+  fallidos con alarma, que es lo correcto. En `dev` queda apagado
+  (`video_transcodificar = false`) hasta pasar a plan de pago; en `prod`, encendido.
+  Comprobar entonces con `NUBE_TRANSCODIFICA=1` en la prueba de humo.
 - `prod`: `terraform plan` válido (84 recursos), sin aplicar (D-63).
 
 Cuenta de AWS `681842289811`, perfil de CLI `2venta` (usuario `nicolas-cli`,
@@ -136,6 +140,12 @@ conectar y cuentas por crear.
 - El primer `apply` de un entorno deja las tareas de ECS caídas porque el
   secreto no tiene valor hasta que RDS existe; se arregla con
   `aws ecs update-service --force-new-deployment` después de migrar.
+- El `sub` del token OIDC de GitHub trae los ids numéricos
+  (`repo:techlabproject@328214832/2venta@1366891746:environment:dev`), y con
+  `environment:` en el job cambia de `ref:` a `environment:`. CloudTrail
+  (`AssumeRoleWithWebIdentity`) es donde se ve el `sub` real.
+- El runner de GitHub tarda ~13 min en la suite (3 en el portátil). Con 5 s por
+  aserción falla una prueba por corrida; en CI hay 15 s y un reintento.
 
 - Las pruebas corren en paralelo y comparten la cola: el `--una-vez` de una
   prueba puede tomar el mensaje de otra. `runWorkerOnce()` espera a que no quede

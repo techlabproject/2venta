@@ -50,7 +50,10 @@ async function processBatch(): Promise<number> {
       // en este dominio, es un pago que no se liberó.
       await ack(m.ReceiptHandle!);
     } catch (err) {
-      console.error(`[worker] ${job.type} falló, se reintentará:`, err);
+      const e = err as { name?: string; message?: string; $metadata?: { httpStatusCode?: number } };
+      console.error(
+        `[worker] ${job.type} falló, se reintentará: ${e?.name ?? "Error"} ${e?.message ?? ""} (HTTP ${e?.$metadata?.httpStatusCode ?? "?"})`
+      );
     }
   }
   return messages.length;

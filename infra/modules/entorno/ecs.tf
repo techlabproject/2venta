@@ -13,8 +13,10 @@ locals {
     { name = "MEDIA_BASE_URL", value = "https://${aws_cloudfront_distribution.media.domain_name}" },
     { name = "SQS_QUEUE_URL", value = aws_sqs_queue.trabajos.url },
     { name = "BETTER_AUTH_URL", value = "https://${aws_cloudfront_distribution.app.domain_name}" },
-    { name = "MEDIACONVERT_ROLE_ARN", value = aws_iam_role.mediaconvert.arn },
   ]
+  # Sin la variable, el worker usa el proveedor de prueba (no convierte nada).
+  env_video = var.video_transcodificar ? [{ name = "MEDIACONVERT_ROLE_ARN", value = aws_iam_role.mediaconvert.arn }] : []
+  env_todo  = concat(local.env_comun, local.env_video)
 }
 
 resource "aws_ecs_cluster" "principal" {
@@ -134,7 +136,7 @@ resource "aws_ecs_task_definition" "web" {
     image        = local.imagen
     essential    = true
     portMappings = [{ containerPort = 3000, protocol = "tcp" }]
-    environment  = local.env_comun
+    environment  = local.env_todo
     secrets      = local.secrets_ecs
     logConfiguration = {
       logDriver = "awslogs"
@@ -164,7 +166,7 @@ resource "aws_ecs_task_definition" "worker" {
     image       = local.imagen
     essential   = true
     command     = ["node", "worker.cjs"]
-    environment = local.env_comun
+    environment = local.env_todo
     secrets     = local.secrets_ecs
     # ECS manda SIGTERM y espera esto antes de matar. El worker aborta la
     # espera larga de SQS al recibirlo.
@@ -199,7 +201,7 @@ resource "aws_ecs_task_definition" "migrar" {
     image       = local.imagen
     essential   = true
     command     = ["node", "db/migrate.mts"]
-    environment = local.env_comun
+    environment = local.env_todo
     secrets     = local.secrets_ecs
     logConfiguration = {
       logDriver = "awslogs"

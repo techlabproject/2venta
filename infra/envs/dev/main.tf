@@ -50,6 +50,8 @@ module "entorno" {
   web_memory        = 512
   web_desired_count = 1
   waf               = false
+  # El plan gratuito de AWS no incluye MediaConvert. Poner en true al pasar a plan de pago.
+  video_transcodificar = false
 
   correos_alertas = ["catalinag0226@outlook.com", "nicolasdrr25@gmail.com"]
 }

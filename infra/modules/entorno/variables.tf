@@ -89,3 +89,8 @@ variable "sms_provider_token" {
   sensitive   = true
   default     = ""
 }
+
+variable "video_transcodificar" {
+  description = "Usar MediaConvert de verdad. En una cuenta con plan gratuito no está disponible (SubscriptionRequired)."
+  type        = bool
+}
