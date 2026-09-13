@@ -96,3 +96,32 @@ export async function notifyForListing(listingId: string): Promise<number | null
   if (listing.status !== "activa") return 0;
   return notifyMatchingSearches(listing);
 }
+
+/**
+ * Avisa a alguien de algo que le pasó en su pedido, su publicación o su
+ * conversación (un mensaje, una oferta, una pregunta).
+ *
+ * Existe porque «Avisos» solo cubría las búsquedas guardadas: a un vendedor le
+ * podían llegar mensajes, ofertas y preguntas y su pantalla de avisos seguía
+ * diciendo «Nada nuevo» (hallazgo de la ronda de agentes, 2026-09-13). Un
+ * vendedor que no se entera de que le escribieron pierde la venta.
+ *
+ * La restricción única `(user_id, kind, subject_id)` evita repetir el mismo
+ * aviso. Para lo que sí se repite —varios mensajes en un mismo hilo— el sujeto
+ * lleva la marca de tiempo, que agrupa por minuto: avisa del hilo sin convertir
+ * una conversación viva en veinte avisos.
+ */
+export async function notifyUser(input: {
+  userId: string;
+  kind: string;
+  title: string;
+  href: string;
+  subjectId: string;
+}): Promise<void> {
+  await query(
+    `insert into notifications (user_id, kind, title, href, subject_id)
+     values ($1, $2, $3, $4, $5)
+     on conflict (user_id, kind, subject_id) do nothing`,
+    [input.userId, input.kind, input.title, input.href, input.subjectId]
+  );
+}

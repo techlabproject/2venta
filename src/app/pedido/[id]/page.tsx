@@ -200,6 +200,36 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
           </div>
         )}
 
+        {/* Al vendedor se le decía a medias y solo antes de despachar: justo
+            cuando el pedido lleva más tiempo en curso, la promesa desaparecía
+            (hallazgo de la ronda de agentes, 2026-09-13). */}
+        {!isBuyer &&
+          (order.status === "pagado" ||
+            order.status === "despachado" ||
+            order.status === "entregado") && (
+            <div className="mt-6 rounded-2xl bg-brand/10 p-4">
+              <p className="text-sm font-medium text-brand">
+                Te guardamos {formatCop(order.seller_payout_cop)}
+              </p>
+              <p className="mt-1 text-sm text-ink2">
+                El dinero es tuyo cuando el comprador confirme que recibió, o
+                automáticamente a los siete días de la entrega si no confirma.
+              </p>
+            </div>
+          )}
+
+        {!isBuyer && order.status === "liberado" && (
+          <div className="mt-6 rounded-2xl bg-brand/10 p-4">
+            <p className="text-sm font-medium text-brand">
+              {formatCop(order.seller_payout_cop)} ya son tuyos
+            </p>
+            <p className="mt-1 text-sm text-ink2">
+              Quedan a tu nombre en el proveedor de pagos. Retirarlos a tu cuenta
+              bancaria todavía no se puede desde la app; te avisamos apenas esté.
+            </p>
+          </div>
+        )}
+
         {claim && (
           <section className="mt-6 rounded-2xl bg-warn/10 p-4 text-sm">
             <h2 className="font-medium text-warn">Reclamo: {KIND_LABEL[claim.kind]}</h2>

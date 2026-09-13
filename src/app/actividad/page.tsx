@@ -63,7 +63,11 @@ export default async function Actividad() {
         >
           {conversations.map((c) => (
             <li key={c.id}>
-              <Link href={`/chat/${c.id}`} className="block rounded-2xl bg-white p-4 text-sm">
+              <Link
+                href={`/chat/${c.id}`}
+                aria-label={`Abrir conversación sobre ${c.listing_title}`}
+                className="block rounded-2xl bg-white p-4 text-sm"
+              >
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="font-medium">{c.listing_title}</span>
                   <span className="shrink-0 text-xs text-muted">{fecha.format(c.last_at)}</span>

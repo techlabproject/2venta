@@ -1,5 +1,6 @@
 "use server";
 
+import { notifyUser } from "@/features/alerts/queries";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { activeUser } from "@/lib/session";
@@ -8,6 +9,7 @@ import { getListing } from "@/features/catalog/queries";
 import { redact } from "./redact";
 import { getConversation, getOffer, openConversation } from "./queries";
 import { parseCop } from "@/features/payments/money";
+import { formatCop } from "@/lib/money";
 
 export type ChatResult = { error: string };
 
@@ -58,6 +60,20 @@ export async function sendMessage(_prev: ChatResult | null, form: FormData) {
     [conversationId, ctx.user.id, text, redactions]
   );
 
+  // Al otro se le avisa. Agrupado por minuto para que una conversación viva no
+  // se convierta en una lista de veinte avisos.
+  const otro =
+    ctx.conversation.buyer_id === ctx.user.id
+      ? ctx.conversation.seller_id
+      : ctx.conversation.buyer_id;
+  await notifyUser({
+    userId: otro,
+    kind: "mensaje",
+    title: `Mensaje nuevo sobre ${ctx.conversation.listing_title}`,
+    href: `/chat/${conversationId}`,
+    subjectId: `${conversationId}:${new Date().toISOString().slice(0, 16)}`,
+  });
+
   revalidatePath(`/chat/${conversationId}`);
   return { error: "" };
 }
@@ -81,6 +97,18 @@ export async function makeOffer(_prev: ChatResult | null, form: FormData) {
      values ($1, $2, $3, $4, now() + ($5 || ' hours')::interval)`,
     [conversationId, ctx.conversation.listing_id, ctx.user.id, price, String(OFFER_HOURS)]
   );
+
+  const destinatario =
+    ctx.conversation.buyer_id === ctx.user.id
+      ? ctx.conversation.seller_id
+      : ctx.conversation.buyer_id;
+  await notifyUser({
+    userId: destinatario,
+    kind: "oferta",
+    title: `Te ofrecieron ${formatCop(price)} por ${ctx.conversation.listing_title}`,
+    href: `/chat/${conversationId}`,
+    subjectId: `${conversationId}:${price}`,
+  });
 
   revalidatePath(`/chat/${conversationId}`);
   return { error: "" };
@@ -135,11 +163,20 @@ export async function askQuestion(_prev: ChatResult | null, form: FormData) {
   // número en una pregunta lo ve cualquiera que abra la ficha.
   const { text } = redact(raw);
 
-  await query(`insert into questions (listing_id, asker_id, body) values ($1, $2, $3)`, [
-    listingId,
-    user.id,
-    text,
-  ]);
+  const preguntas = await query<{ id: string }>(
+    `insert into questions (listing_id, asker_id, body) values ($1, $2, $3) returning id::text`,
+    [listingId, user.id, text]
+  );
+
+  // Una pregunta sin responder es una venta que no avanza: el vendedor tiene que
+  // enterarse sin entrar a mirar la ficha por reflejo.
+  await notifyUser({
+    userId: listing.seller_id,
+    kind: "pregunta",
+    title: `Te preguntaron algo sobre ${listing.title}`,
+    href: `/producto/${listingId}`,
+    subjectId: preguntas[0].id,
+  });
 
   revalidatePath(`/producto/${listingId}`);
   return { error: "" };

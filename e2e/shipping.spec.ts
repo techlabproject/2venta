@@ -341,3 +341,26 @@ test("el vendedor no puede despachar un pedido ajeno", async ({ browser }) => {
   await ctx.close();
   await otroCtx.close();
 });
+
+// Hallazgo de la ronda de agentes (2026-09-13): al vendedor se le explicaba el
+// plazo de cobro a medias y solo antes de despachar.
+test("al vendedor se le dice cuándo cobra, en todos los estados del pedido", async ({
+  browser,
+}) => {
+  const seller = await sellerWithListing(browser, `Plancha ${Date.now()}`, 180_000);
+  const ctx = await browser.newContext();
+  const buyer = await ctx.newPage();
+  await signUpVerified(buyer, "comprador", "Laura Compradora");
+  const orderId = await payFor(buyer, seller.listingId);
+
+  await seller.page.goto(`/pedido/${orderId}`);
+  await expect(seller.page.getByRole("main")).toContainText("siete días de la entrega");
+
+  await seller.page.getByRole("button", { name: "Generar guía y despachar" }).click();
+  await expect(seller.page.getByTestId("estado")).toHaveText("El vendedor despachó");
+  // Y sigue diciéndolo después de despachar, que es cuando más falta hace.
+  await expect(seller.page.getByRole("main")).toContainText("siete días de la entrega");
+
+  await seller.context.close();
+  await ctx.close();
+});

@@ -56,7 +56,17 @@ export default async function Metricas() {
                   </div>
                   <div>
                     <dt className="text-xs text-muted">Conversaciones</dt>
-                    <dd className="font-title text-lg font-semibold">{m.messages}</dd>
+                    {/* La cifra era un número muerto: quien veía «3» no tenía
+                        cómo llegar a esas tres conversaciones. */}
+                    <dd className="font-title text-lg font-semibold">
+                      {m.messages > 0 ? (
+                        <Link href="/actividad" className="underline">
+                          {m.messages}
+                        </Link>
+                      ) : (
+                        m.messages
+                      )}
+                    </dd>
                   </div>
                 </dl>
               </li>

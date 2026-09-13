@@ -203,3 +203,42 @@ test("sin sesión no se puede guardar una búsqueda", async ({ browser }) => {
   await expect(anon.getByText("Avísame cuando aparezca algo así")).toHaveCount(0);
   await anonCtx.close();
 });
+
+// Hallazgo de la ronda de agentes (2026-09-13): «Avisos» solo cubría búsquedas
+// guardadas. A un vendedor le llegaban mensajes, ofertas y preguntas y su
+// pantalla seguía diciendo «Nada nuevo».
+test("al vendedor le avisan de un mensaje, una oferta y una pregunta", async ({
+  browser,
+}) => {
+  const marca = Date.now();
+  const seller = await sellerWithListing(browser, `Bafle ${marca}`, 300_000, "ropa");
+
+  const ctx = await browser.newContext();
+  const buyer = await ctx.newPage();
+  await signUpVerified(buyer, "comprador", "Laura Compradora");
+
+  // Pregunta pública.
+  await buyer.goto(`/producto/${seller.listingId}`);
+  await buyer.getByLabel("Tu pregunta").fill("¿Lo tienes con la caja?");
+  await buyer.getByRole("button", { name: "Preguntar" }).click();
+  await expect(buyer.getByRole("main")).toContainText("¿Lo tienes con la caja?");
+
+  // Mensaje y oferta por el chat.
+  await buyer.getByRole("button", { name: "Escribirle al vendedor" }).click();
+  await expect(buyer).toHaveURL(/\/chat\//);
+  await buyer.getByLabel("Mensaje").fill("Hola, ¿sigue disponible?");
+  await buyer.getByRole("button", { name: "Enviar" }).click();
+  await expect(buyer.getByRole("main")).toContainText("¿sigue disponible?");
+  await buyer.getByLabel("Cuánto ofreces").fill("250000");
+  await buyer.getByRole("button", { name: "Ofertar" }).click();
+  await expect(buyer.getByTestId("oferta")).toContainText("250.000");
+
+  await seller.page.goto("/avisos");
+  const avisos = seller.page.getByTestId("avisos");
+  await expect(avisos).toContainText("Te preguntaron algo");
+  await expect(avisos).toContainText("Mensaje nuevo");
+  await expect(avisos).toContainText("Te ofrecieron");
+
+  await ctx.close();
+  await seller.context.close();
+});
