@@ -16,6 +16,12 @@ export default defineConfig({
   // video en cada uno. Treinta segundos les queda corto cuando corren en paralelo,
   // y el síntoma es un fallo intermitente que no dice nada.
   timeout: 60_000,
+  // El runner de GitHub es unas cuatro veces más lento que el portátil: con los
+  // mismos 5 s de espera por aserción, una de 239 falla por tiempo en cada
+  // corrida. Más margen y un reintento allá; en el portátil, ninguno, para que
+  // un intermitente se note.
+  expect: { timeout: process.env.CI ? 15_000 : 5_000 },
+  retries: process.env.CI ? 1 : 0,
   use: {
     baseURL,
     // Cámara y micrófono simulados: es lo que permite probar de verdad el video
