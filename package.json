@@ -9,7 +9,7 @@
     "worker": "tsx src/worker/index.ts",
     "start": "next start",
     "lint": "eslint",
-    "db:up": "docker compose up -d --wait",
+    "db:up": "docker compose up -d --wait db minio elasticmq && docker compose run --rm minio-init",
     "db:seed": "tsx db/seed.ts",
     "test:e2e": "playwright test",
     "verify": "tsc --noEmit && eslint && npm run test:unit && npm run db:seed && playwright test",

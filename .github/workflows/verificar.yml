@@ -20,8 +20,12 @@ jobs:
           node-version: 26
           cache: npm
 
+      # `--wait` toma el contenedor de un solo uso (minio-init sale con 0) como
+      # fallo, así que se espera a los tres de larga vida y se corre aparte.
       - name: Servicios locales
-        run: docker compose up -d --wait
+        run: |
+          docker compose up -d --wait db minio elasticmq
+          docker compose run --rm minio-init
 
       - name: Dependencias
         run: npm ci
