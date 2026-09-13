@@ -562,3 +562,16 @@ fuera del estado (Secrets Manager con rotación propia).
 **Por qué.** Sin proveedor de SMS la aplicación se niega a arrancar en
 `produccion` (D-47): serían ~170 USD/mes por un servicio que no puede recibir a
 nadie. Se aplica cuando R-02 tenga respuesta y exista `SMS_PROVIDER_TOKEN`.
+
+### D-64 — La transcodificación va por el worker, sin Lambda
+La acción de publicar encola `transcodificar`; el worker crea el trabajo de
+MediaConvert; al terminar, EventBridge encola `video_listo` y el worker actualiza
+la publicación. No hay función Lambda en el camino.
+**Por qué.** La forma obvia (S3 → Lambda → CreateJob) mete un segundo runtime
+con su propio despliegue, sus registros y su versión del SDK para veinte líneas.
+El worker ya existe, ya tiene rol, registros y reintentos.
+**Quién dispara.** La acción de publicar, no un evento del bucket: al bucket
+también llegan portadas y fotos, y quien sabe que hay un video nuevo es quien
+lo acaba de publicar. Funciona igual en el portátil con el proveedor de prueba.
+**Qué se sirve mientras tanto.** El original. Quien tenga el mismo tipo de
+teléfono que el vendedor lo ve igual que antes; el resto, en pocos minutos.

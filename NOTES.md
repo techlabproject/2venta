@@ -19,7 +19,9 @@ llevando a AWS siguiendo `ARQUITECTURA.md`:
   AWS: https://d13g2bd9j8wj8k.cloudfront.net . La prueba de humo
   `e2e/nube.spec.ts` recorre registro → identidad → publicar con video → compra
   contra la nube. `prod` definido, sin aplicar.
-- Siguiente: transcodificar el video con MediaConvert (ya hay bucket real).
+- S-30 transcodificación con MediaConvert por la cola (D-64): HECHA. Pendiente
+  de comprobar en la nube con la prueba de humo tras el despliegue automático.
+- `prod`: `terraform plan` válido (84 recursos), sin aplicar (D-63).
 
 Cuenta de AWS `681842289811`, perfil de CLI `2venta` (usuario `nicolas-cli`,
 `AdministratorAccess`, región `us-east-1`). MFA en la raíz activa, presupuesto de
@@ -102,10 +104,7 @@ conectar y cuentas por crear.
 - Reportar una conversación o un usuario (RF-32): va con moderación.
 - El seguimiento del envío solo tiene dos estados, despachado y entregado. Falta el
   detalle intermedio que muestra el mockup.
-- (RESUELTO en S-27) Archivos a disco local. Ahora van al bucket. Falta
-  transcodificar a un formato único: hoy se guarda lo que grabe cada navegador,
-  que no es lo mismo en Android que en iOS. Necesita MediaConvert, o sea AWS de
-  verdad; va después de S-29 como rebanada propia.
+- (RESUELTO en S-27 y S-30) Archivos al bucket y video transcodificado a MP4.
 - (RESUELTO en S-23) Fotos del artículo, hasta seis.
 - Filtro por distancia en kilómetros: el mockup lo muestra, pero no hay coordenadas
   de nada. Se filtra por zona. La distancia entra cuando exista el dato.
@@ -193,10 +192,21 @@ conectar y cuentas por crear.
 - Qué se le muestra al comprador sobre un vendedor nuevo mientras acumula
   calificaciones (consecuencia de D-17).
 
+## Lo que sigue simulado o sin conectar, y qué lo desbloquea
+
+| Pieza | Estado | Lo desbloquea |
+|---|---|---|
+| Pagos (Mercado Pago) | proveedor de prueba | R-02: respuesta comercial |
+| SMS | en desarrollo sale por el registro; en producción se niega | elegir agregador (R-02) y `SMS_PROVIDER_TOKEN` |
+| Identidad (KYC) | proveedor de prueba | contrato con proveedor |
+| Transportadora | tarifa plana de prueba | R-04 |
+| Correo (SES) | las alertas se guardan, no se envían | un dominio propio: sin él, el remitente no pasa DMARC |
+| `prod` | definido, plan válido, sin aplicar | SMS real + pasar la cuenta a plan de pago |
+| Dominio propio | no hay; CloudFront da `*.cloudfront.net` con HTTPS | comprarlo (Route 53) |
+
 ## Siguiente paso concreto
 
-S-29: Terraform en `infra/` con un módulo y dos entornos (`dev`, `prod`) en la
-cuenta `681842289811`: ECR, RDS, S3 + CloudFront, SQS + cola de fallidos,
-EventBridge Scheduler (`liberar` cada hora), Secrets Manager, App Runner para la
-web y ECS Fargate para el worker. Comprobar antes que App Runner ya esté activo
-en la cuenta. Luego GitHub Actions con OIDC.
+Con la nube completa para lo que hoy se puede conectar, lo que sigue es producto
+o proveedores. Candidatas por valor y por lo baratas que se volvieron con S-27:
+fotos como evidencia de un reclamo (reusar `uploadBlob` y `claim`), direcciones
+guardadas, apelar una disputa. Y cuando haya dominio: SES para el correo.

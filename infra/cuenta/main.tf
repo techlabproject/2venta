@@ -59,11 +59,15 @@ data "aws_iam_policy_document" "github_trust" {
       variable = "token.actions.githubusercontent.com:aud"
       values   = ["sts.amazonaws.com"]
     }
-    # Solo la rama main de este repositorio puede asumir el rol.
+    # Solo este repositorio puede asumir el rol: desde la rama main, o desde un
+    # job que declara `environment: dev` (GitHub cambia el `sub` en ese caso).
     condition {
-      test     = "StringLike"
+      test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:techlabproject/2venta:ref:refs/heads/main"]
+      values = [
+        "repo:techlabproject/2venta:ref:refs/heads/main",
+        "repo:techlabproject/2venta:environment:dev",
+      ]
     }
   }
 }
