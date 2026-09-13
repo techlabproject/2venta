@@ -18,7 +18,9 @@ export function listCart(userId: string): Promise<CartItem[]> {
        join listings l on l.id = c.listing_id
        join "user" u   on u.id = l.seller_id
       where c.user_id = $1
-      order by c.added_at`,
+      -- Desempate estable por id: dos artículos agregados en el mismo instante
+      -- no se intercambian entre una carga y otra.
+      order by c.added_at, l.id`,
     [userId]
   );
 }

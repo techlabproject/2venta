@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   // La imagen de Docker lleva solo lo que hace falta para correr, no node_modules
   // entero. Ver Dockerfile y slices/26-empaquetado.md.
   output: "standalone",
+  // El indicador flotante de herramientas de Next en desarrollo tapa botones en
+  // móvil y sale en las fotos de las pruebas visuales.
+  devIndicators: false,
   // No anunciar el framework en cada respuesta.
   poweredByHeader: false,
   // Cabeceras de defensa en profundidad (hallazgo de QA, 2026-09-13). Sin CSP

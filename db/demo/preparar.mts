@@ -10,7 +10,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import sharp from "sharp";
-import { ARTICULOS } from "./articulos.mts";
+import { ARTICULOS } from "./articulos";
 
 const OUT = new URL("./media/", import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });

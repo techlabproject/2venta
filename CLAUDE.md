@@ -7,6 +7,10 @@ Marketplace de segunda mano para Colombia. Bogotá, tres categorías, pago prote
 - Desarrollo: `npm run dev`
 - Base, bucket y cola locales: `docker compose up -d` (Postgres 5433, MinIO 9000, ElasticMQ 9324)
 - Worker en desarrollo: `npm run worker` (o `-- --una-vez` para vaciar la cola y salir)
+- Pruebas visuales (foto por pantalla, móvil y escritorio): `npm run test:visual`.
+  Están fuera de `npm run verify`: dependen de la demo y de las referencias
+  `-darwin`, que se generan en este portátil (`-- --update-snapshots`). El runner
+  Linux dibuja las fuentes distinto, así que hoy no corren en CI.
 - Demostración con fotos y cuentas de prueba (con `npm run dev` corriendo):
   `BETTER_AUTH_URL=http://localhost:3100 npm run demo -- --limpiar-pruebas`.
   Cuentas: `camila@`, `andres@` (vendedores verificados), `laura@` (compradora),

@@ -16,7 +16,7 @@ import path from "node:path";
 import { Pool } from "pg";
 import { signUpload } from "../src/lib/storage";
 import { appEnv } from "../src/lib/env";
-import { ARTICULOS } from "./demo/articulos.mts";
+import { ARTICULOS } from "./demo/articulos";
 
 if (appEnv() === "produccion") {
   console.error("La demostración no se carga en producción.");
@@ -90,6 +90,10 @@ async function main() {
     );
     console.log(`limpieza: ${rowCount} publicaciones de prueba retiradas`);
   }
+
+  // Los tres productos del seed apuntan a archivos que no existen (seed/...) y
+  // salen sin foto. En la demo se retiran: lo que se muestra tiene medios reales.
+  await pool.query(`update listings set status = 'retirada' where video_path like 'seed/%' and status = 'activa'`);
 
   const ids: Record<string, string> = {};
   for (const c of CUENTAS) ids[c.clave] = await ensureAccount(c);

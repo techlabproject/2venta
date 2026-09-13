@@ -10,12 +10,15 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
 
   return (
     <header className="bg-brand text-cream">
-      <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
+      {/* En un celular los seis enlaces no caben en una fila junto al logo: la
+          barra se desbordaba y la página quedaba más ancha que la pantalla
+          (prueba visual, 2026-09-13). Se dejan bajar a una segunda fila. */}
+      <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-x-3 gap-y-2 px-5 py-4">
         <Link href="/" aria-label="Ir al inicio de 2venta">
           <Logo className="h-8 w-auto" />
         </Link>
 
-        <div className="ml-auto flex items-center gap-4 text-sm">
+        <div className="ml-auto flex w-full flex-wrap items-center gap-x-4 gap-y-1 text-sm sm:w-auto">
           {user ? (
             <>
               <Link href="/carrito" className="text-cream/85 underline">

@@ -10,7 +10,7 @@ export default defineConfig({
   testDir: "./e2e",
   // La prueba de humo contra la nube y las exploraciones de QA tienen su propia
   // configuración (playwright.nube.config.ts, playwright.qa.config.ts).
-  testIgnore: [/nube\.spec\.ts/, /e2e\/qa\//],
+  testIgnore: [/nube\.spec\.ts/, /e2e\/qa\//, /e2e\/visual\//],
   // Compila las rutas antes de empezar: ver e2e/global-setup.ts.
   globalSetup: "./e2e/global-setup.ts",
   // Las pruebas de compra y envío abren varios contextos de navegador y graban

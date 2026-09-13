@@ -15,6 +15,7 @@
     "db:seed": "tsx db/seed.ts",
     "test:e2e": "playwright test",
     "verify": "tsc --noEmit && eslint && npm run test:unit && npm run db:seed && playwright test",
+    "test:visual": "playwright test --config playwright.visual.config.ts",
     "test:unit": "node --env-file=.env.local --import tsx --test \"src/**/*.test.ts\"",
     "db:migrate": "tsx db/migrate.mts"
   },
