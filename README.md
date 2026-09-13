@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 2venta
 
-## Getting Started
+Marketplace de segunda mano para Colombia. Bogotá, tres categorías, pago protegido:
+el dinero queda retenido hasta que el comprador recibe lo que vio en video.
 
-First, run the development server:
+## Cómo se organiza el proyecto
+
+| Archivo | Qué es |
+|---|---|
+| `SPEC.md` | El producto: problema, alcance, criterios de aceptación |
+| `ARQUITECTURA.md` | Monolito modular en contenedor sobre AWS, y por qué |
+| `DECISIONS.md` | Cada decisión con su fecha y su porqué |
+| `slices/` | Una especificación por rebanada construida |
+| `NOTES.md` | Estado actual y lo que queda a medias |
+| `CLAUDE.md` | Comandos, convenciones y rarezas del entorno |
+
+## Correr en el portátil
 
 ```bash
+docker compose up -d        # Postgres en el puerto 5433
+npm install
+npm run db:migrate
+npm run db:seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Las variables de entorno van en `.env.local`; al arrancar, la aplicación dice
+cuáles faltan y para qué sirve cada una.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Verificar
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run verify
+```
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Tipos, linter, pruebas unitarias, siembra y las pruebas de navegador de punta a
+punta. Para correr la suite contra la imagen de Docker, ver `CLAUDE.md`.
