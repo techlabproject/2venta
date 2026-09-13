@@ -1,12 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Button, ErrorNote, Field } from "@/components/ui";
 
 export function LoginForm() {
   const router = useRouter();
+  // A dónde volver después de entrar. Quien iba a comprar o a escribirle a un
+  // vendedor terminaba en la portada y tenía que buscar el artículo otra vez
+  // (hallazgo de la ronda de agentes, 2026-09-13). Solo se admiten rutas de
+  // esta misma aplicación: una URL completa aquí sería un salto a otro sitio.
+  const volverA = useSearchParams().get("volver");
+  const destino = volverA?.startsWith("/") && !volverA.startsWith("//") ? volverA : "/";
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -35,7 +41,7 @@ export function LoginForm() {
       return;
     }
 
-    router.push("/");
+    router.push(destino);
     router.refresh();
   }
 

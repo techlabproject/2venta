@@ -6,6 +6,7 @@ import { CONDITION_LABEL } from "@/features/catalog/labels";
 import { formatCop } from "@/lib/money";
 import { commissionCop, sellerPayoutCop } from "@/features/payments/money";
 import { AppHeader } from "@/components/AppHeader";
+import { Price } from "@/components/Price";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { BuyButton } from "@/features/payments/BuyButton";
 import { AskForm, AnswerForm, ChatButton } from "@/features/chat/QuestionForms";
@@ -117,9 +118,7 @@ export default async function ListingPage({
           </div>
 
           <div className="mt-6 lg:mt-0">
-            <p className="font-title text-3xl font-semibold tabular-nums">
-              {formatCop(listing.price_cop)}
-            </p>
+            <Price cop={listing.price_cop} size="lg" />
             <h1 className="mt-1 text-lg font-medium">{listing.title}</h1>
 
             <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
@@ -183,8 +182,18 @@ export default async function ListingPage({
               </div>
 
               <div className="bg-white p-4 text-sm">
-                {listing.status === "activa" ? (
-                  <BuyButton listingId={listing.id} />
+                {isSeller ? (
+                  // El dueño no compra lo suyo. Antes veía el botón, llenaba la
+                  // dirección entera y solo al confirmar le decían que no podía
+                  // (hallazgo de la ronda de agentes, 2026-09-13).
+                  <p
+                    role="status"
+                    className="rounded-xl bg-ph px-4 py-3 text-sm text-ink2"
+                  >
+                    Esta es tu publicación. Así la ve un comprador.
+                  </p>
+                ) : listing.status === "activa" ? (
+                  <BuyButton listingId={listing.id} signedIn={Boolean(user)} />
                 ) : (
                   // Vendida o reservada: la ficha se ve (el enlace pudo compartirse),
                   // pero no se invita a comprar lo que ya no está (hallazgo de QA).

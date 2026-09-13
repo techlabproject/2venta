@@ -4,9 +4,24 @@ import { LoginForm } from "@/features/auth/LoginForm";
 import { GoogleButton } from "@/features/auth/GoogleButton";
 import { googleConfigured } from "@/lib/auth";
 
-export default function Ingresar() {
+const MOTIVO: Record<string, string> = {
+  comprar: "Entra para comprar con pago protegido. Tu plata queda guardada hasta que confirmes que recibiste.",
+  chat: "Entra para escribirle al vendedor. Las conversaciones van dentro de 2venta para que el pago siga protegido.",
+  favoritos: "Entra para guardar lo que te gusta y volver después.",
+};
+
+export default async function Ingresar({
+  searchParams,
+}: {
+  searchParams: Promise<{ volver?: string; motivo?: string }>;
+}) {
+  // Se dice por qué se pide la cuenta: antes se caía en esta pantalla sin
+  // explicación, y quien venía de un artículo no sabía por qué se la pedían.
+  const { motivo } = await searchParams;
+  const razon = motivo ? MOTIVO[motivo] : undefined;
+
   return (
-    <AuthShell title="Iniciar sesión">
+    <AuthShell title="Iniciar sesión" subtitle={razon}>
       {googleConfigured() && (
         <>
           <GoogleButton />

@@ -3,7 +3,7 @@ import { mediaUrl } from "@/lib/media";
 import type { Listing } from "./queries";
 import { CONDITION_LABEL } from "./labels";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
-import { formatCop } from "@/lib/money";
+import { Price } from "@/components/Price";
 
 export function ListingCard({ listing }: { listing: Listing }) {
   return (
@@ -42,9 +42,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         </div>
 
         <div className="flex flex-1 flex-col p-3">
-          <p className="font-title text-xl leading-none font-semibold tracking-tight tabular-nums">
-            {formatCop(listing.price_cop)}
-          </p>
+          <Price cop={listing.price_cop} size="sm" />
           <h3 className="mt-1.5 line-clamp-2 text-sm leading-snug font-medium">
             {listing.title}
           </h3>

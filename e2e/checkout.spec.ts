@@ -148,7 +148,22 @@ test("no se puede comprar el propio artículo", async ({ browser }) => {
   const titulo = `Escritorio ${Date.now()}`;
   const seller = await sellerWithListing(browser, titulo, 200_000);
 
-  await goToPayment(seller.page, seller.listingId);
+  // En la ficha ni siquiera se ofrece: antes el dueño llenaba la dirección
+  // entera y solo al confirmar le decían que no (ronda de agentes, 2026-09-13).
+  await seller.page.goto(`/producto/${seller.listingId}`);
+  await expect(
+    seller.page.getByRole("link", { name: "Comprar con pago protegido" })
+  ).toHaveCount(0);
+  await expect(seller.page.getByRole("status")).toContainText("Esta es tu publicación");
+
+  // Y el servidor lo rechaza igual, que es lo que de verdad protege: esconder el
+  // botón no es control de acceso.
+  await seller.page.goto(`/comprar/${seller.listingId}`);
+  await seller.page.getByLabel("Quién recibe").fill("Camila Vendedora");
+  await seller.page.getByLabel("Celular de quien recibe").fill("300 412 88 05");
+  await seller.page.getByLabel("Dirección").fill("Calle 72 #10-34");
+  await seller.page.getByLabel("Zona").selectOption("Chapinero");
+  await seller.page.getByRole("button", { name: "Ir a pagar" }).click();
   await expect(alertIn(seller.page)).toContainText("tu propio artículo");
 
   await seller.context.close();
@@ -368,4 +383,33 @@ test("intentar pagar algo en revisión dice que está en revisión", async ({ br
 
   await seller.context.close();
   await ctx.close();
+});
+
+// Hallazgo de la ronda de agentes (2026-09-13): quien iba a comprar sin sesión
+// caía en /ingresar sin que le dijeran por qué, y al entrar terminaba en la
+// portada teniendo que buscar el artículo otra vez.
+test("comprar sin sesión explica por qué y devuelve al artículo", async ({ browser }) => {
+  const seller = await sellerWithListing(browser, `Lámpara ${Date.now()}`, 150_000);
+
+  const ctx = await browser.newContext();
+  const anon = await ctx.newPage();
+  await anon.goto(`/producto/${seller.listingId}`);
+  await anon.getByRole("link", { name: "Comprar con pago protegido" }).click();
+
+  await expect(anon).toHaveURL(/\/ingresar\?/);
+  await expect(anon.getByRole("main")).toContainText("pago protegido");
+
+  // Una cuenta ya existente entra y vuelve a donde iba.
+  const buyerCtx = await browser.newContext();
+  const buyer = await buyerCtx.newPage();
+  const { email } = await signUpVerified(buyer, "comprador", "Laura Compradora");
+  await buyerCtx.close();
+
+  await anon.getByLabel("Correo").fill(email);
+  await anon.getByLabel("Contraseña").fill("unaClaveLarga1");
+  await anon.getByRole("button", { name: "Iniciar sesión" }).click();
+  await expect(anon).toHaveURL(new RegExp(`/comprar/${seller.listingId}`));
+
+  await ctx.close();
+  await seller.context.close();
 });
