@@ -15,5 +15,25 @@ services:
       interval: 3s
       timeout: 3s
       retries: 20
+
+  # La imagen de producción corriendo contra la base local. No arranca con un
+  # `docker compose up` normal: hay que pedirla con `--profile imagen`.
+  # Toma los secretos de .env.local para que las pruebas puedan descifrar los
+  # códigos igual que contra el servidor de desarrollo.
+  app:
+    build: .
+    container_name: 2venta-app
+    profiles: ["imagen"]
+    env_file: .env.local
+    environment:
+      DATABASE_URL: postgres://2venta:local@db:5432/2venta
+      BETTER_AUTH_URL: http://localhost:3200
+      APP_ENV: desarrollo
+    ports:
+      - "3200:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   dbdata:

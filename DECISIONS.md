@@ -443,3 +443,47 @@ ilegibles, y un código ilegible es una entrega presencial que no se puede
 completar.
 **Los que sí rotan libremente:** `BETTER_AUTH_SECRET`, que solo cierra sesiones;
 los tres de webhook, coordinando con el proveedor; y `CRON_SECRET`.
+
+### D-53 — Una sola cuenta de AWS, entornos separados por prefijo
+`dev` y `prod` viven en la misma cuenta, cada uno con sus propios recursos
+nombrados `2venta-dev-*` y `2venta-prod-*`, definidos desde la misma
+infraestructura como código con distinta variable de entorno.
+**Por qué.** Es un MVP de una sola persona. Dos cuentas bajo una Organization son
+la frontera correcta cuando haya plata real retenida, pero hoy duplican la
+operación (facturación, permisos, perfiles) sin proteger nada que exista.
+**Cuándo se revisa.** Antes del primer pedido con dinero real. Mover `prod` a su
+propia cuenta en ese momento es recrear infraestructura con la misma definición,
+no cambiar código.
+
+### D-54 — El entorno lo declara `APP_ENV`, no `NODE_ENV`
+`APP_ENV` vale `desarrollo` o `produccion` y decide qué proveedores son reales y
+qué puentes de prueba existen. `NODE_ENV` sigue diciendo cómo se compiló.
+**Por qué.** `NODE_ENV` lo fija `next build`: toda imagen de Docker corre en
+`production`, aunque se despliegue en el entorno de desarrollo de la nube. Sin
+esta separación, en `dev` no habría proveedor de pagos de prueba ni puentes
+`/api/dev/*`, y no se podría probar una compra completa sin Mercado Pago real.
+**El valor por defecto.** Si `APP_ENV` falta dentro de una imagen compilada, se
+asume `produccion`. El error seguro es el que apaga los puentes de prueba, no el
+que los deja abiertos. Bajo `next dev` se asume `desarrollo`.
+**Lo que se queda con `NODE_ENV`.** La caché de la piscina de conexiones en
+`db.ts`: lo suyo es la recarga en caliente, no el producto.
+
+### D-55 — Sin dominio por ahora: App Runner da la dirección con HTTPS
+Mientras no haya dominio, los dos entornos corren en App Runner y usan la
+dirección `*.awsapprunner.com` que entrega, con certificado incluido.
+**Por qué.** Una IP pública pelada solo da HTTP, y sobre HTTP fallan las cookies de
+sesión, el webhook de Mercado Pago y el ingreso con Google. `BETTER_AUTH_URL`
+exige `https://` en producción a propósito (D-47).
+**Consecuencia.** Es la "alternativa más barata para arrancar" de D-49. Cuando
+haya dominio se le asocia encima sin recrear nada. Pasar a Fargate + ALB es
+recrear infraestructura, no cambiar código.
+
+### D-56 — La comprobación de configuración mata el proceso, no lanza
+`src/instrumentation.ts` imprime la lista de problemas y hace `process.exit(1)`.
+**Por qué.** Next atrapa la excepción del hook de arranque y deja el servidor vivo
+respondiendo 500. Para quien despliega eso pasa por "arrancó". Un proceso que
+muere hace que App Runner o ECS reviertan el despliegue solos.
+**Lo que se encontró al hacerlo.** `instrumentation.ts` estaba en la raíz y Next,
+cuando el proyecto usa `src/`, solo lo busca en `src/`. Nunca había corrido, ni en
+desarrollo. La validación de D-47 se probaba en unitarias pero no en el arranque
+real; la prueba de la imagen fue lo que lo destapó.

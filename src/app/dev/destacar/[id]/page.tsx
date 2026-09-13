@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isProduction } from "@/lib/env";
 import { query } from "@/lib/db";
 import { DevDestacarControls } from "@/features/promotions/DevControls";
 import { formatCop } from "@/lib/money";
@@ -13,7 +14,7 @@ export default async function DevDestacar({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (isProduction()) notFound();
   const { id } = await params;
 
   const rows = await query<{ price_cop: number; provider_ref: string; listing_id: string }>(

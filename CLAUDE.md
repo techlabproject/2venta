@@ -11,6 +11,10 @@ Marketplace de segunda mano para Colombia. Bogotá, tres categorías, pago prote
 - Verificación completa antes de confirmar cambios: `npm run verify`
   (tipos + linter + pruebas unitarias + siembra + pruebas de punta a punta)
 
+- Imagen de producción contra la base local: `docker compose --profile imagen up -d --build app`
+  y la suite completa contra ella: `E2E_BASE_URL=http://localhost:3200 npx playwright test`.
+  Migraciones dentro de la imagen: `docker compose --profile imagen run --rm app node db/migrate.mts`.
+
 `verify` vuelve a sembrar la base a propósito. Las pruebas crean artículos y
 cuentas que se acumulan, y sin reiniciar, cualquier aserción sobre rangos de precio
 o sobre resultados de búsqueda empieza a fallar de forma intermitente.
@@ -89,7 +93,13 @@ el número y se le manda el código antes de dejarlo comprar o escribir.
 
 # Configuración
 
-La aplicación comprueba sus variables de entorno al arrancar (`src/lib/config.ts`).
+`APP_ENV` (`desarrollo` | `produccion`) dice qué proveedores son reales y qué
+puentes `/api/dev/*` existen; `NODE_ENV` solo dice cómo se compiló. Para preguntar
+"¿estoy en producción?" se usa `isProduction()` de `src/lib/env.ts`, nunca
+`NODE_ENV`. Si `APP_ENV` falta dentro de una imagen compilada se asume producción.
+
+La aplicación comprueba sus variables de entorno al arrancar (`src/instrumentation.ts`
+→ `src/lib/config.ts`) y **sale del proceso** si falta algo.
 Si falta alguna, se detiene diciendo cuáles y para qué sirve cada una. Al agregar
 una variable nueva, agrégala también a `REQUIREMENTS`: si no, su ausencia se va a
 descubrir en producción y de la peor forma.

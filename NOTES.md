@@ -1,14 +1,26 @@
 # Estado
 
-**Última actualización:** 2026-09-06
+**Última actualización:** 2026-09-12
 
 ## En qué voy
 
-Las tres fases del plan más diez rebanadas posteriores. 236 pruebas de navegador y
-79 unitarias.
+Las tres fases del plan más once rebanadas posteriores. 236 pruebas de navegador y
+88 unitarias.
 
-**Todos los requisitos funcionales originales están construidos.** El último era el
-RF-42, reportes de negocio.
+**Todos los requisitos funcionales originales están construidos.** Ahora se está
+llevando a AWS siguiendo `ARQUITECTURA.md`:
+
+- S-26 empaquetado: HECHA. La imagen de Docker corre las 236 pruebas contra sí
+  misma. `APP_ENV` separa "qué proveedores son reales" de "cómo se compiló" (D-54).
+- S-27 archivos en S3 con URL prefirmada (D-50): siguiente.
+- S-28 worker y cola SQS (D-51).
+- S-29 Terraform con `dev` y `prod` en la misma cuenta (D-53) + GitHub Actions.
+
+Cuenta de AWS: Nicolás la está creando. Lo que necesito de él: usuario IAM
+`nicolas-cli` con `AdministratorAccess` y `aws configure --profile 2venta` hecho en
+su terminal. Ya están instalados `awscli` y `terraform`. Repositorio remoto:
+`github.com/techlabproject/2venta`, **público**, pendiente de decidir si pasa a
+privado antes del primer push.
 
 De lo que queda a medias, ya casi nada es código propio: son proveedores por
 conectar y cuentas por crear.
@@ -32,7 +44,10 @@ conectar y cuentas por crear.
 - El retiro del dinero por parte del vendedor no existe. El pedido llega a
   'liberado' y ahí se detiene.
 - La liberación automática necesita un programador de tareas que llame
-  `POST /api/tareas/liberar` con el secreto. En desarrollo se llama a mano.
+  `POST /api/tareas/liberar` con el secreto. En desarrollo se llama a mano. Con
+  S-28 pasa a SQS + worker (D-51).
+- Los archivos subidos dentro del contenedor van a su disco, que es efímero: un
+  despliegue nuevo los pierde. Solo aceptable hasta S-27.
 - La transportadora es de prueba: tarifa plana de $12.000 y una sola opción. R-04
   propone un agregador logístico, pero no hay contrato.
 - No se puede elegir entre transportadoras ni ver opciones de precio.
@@ -105,6 +120,18 @@ conectar y cuentas por crear.
 
 ## Qué aprendí que no está en ningún otro archivo
 
+- `instrumentation.ts` en la raíz no corre cuando el proyecto usa `src/`. Next solo
+  lo busca en `src/`. Estuvo así desde S-25 y nadie lo notó porque la validación se
+  probaba en unitarias, no arrancando el servidor.
+- Next atrapa la excepción del hook de arranque y sigue vivo sirviendo 500. Para
+  detener el proceso hay que hacer `process.exit(1)` uno mismo (D-56).
+- `next build` imprime "You are using the default secret" de Better Auth varias
+  veces. Es ruido de la compilación, que no tiene `.env.local`; la imagen arranca
+  bien con los secretos del entorno.
+- La suite contra la imagen tarda 1,8 min frente a ~3 contra `next dev`.
+- macOS no trae `timeout`; para acotar un contenedor hay que usar `docker run` y
+  matarlo, o `gtimeout` de coreutils.
+
 - Docker Desktop está instalado pero el daemon no arranca solo. Hay que abrirlo
   antes de `docker compose up`.
 - No hay Xcode completo, solo Command Line Tools, y no hay Android Studio. No
@@ -141,5 +168,6 @@ conectar y cuentas por crear.
 
 ## Siguiente paso concreto
 
-Levantar Postgres, crear el esquema con `sellers` y `listings`, sembrar tres
-productos y hacer que la lista los muestre.
+S-27: `storage.ts` contra S3 con URL prefirmada, probado contra MinIO en
+`docker-compose.yml`. En paralelo, cuando exista el perfil `2venta` de la CLI,
+comprobar `aws sts get-caller-identity` y empezar S-29.

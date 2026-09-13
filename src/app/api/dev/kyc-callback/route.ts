@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { isProduction } from "@/lib/env";
 import { signPayload } from "@/features/kyc/provider";
 
 // Puente de desarrollo: firma el cuerpo como lo haría el proveedor y lo manda al
 // webhook real. Así el camino que se prueba es el de producción, firma incluida.
 export async function POST(request: Request) {
-  if (process.env.NODE_ENV === "production") {
+  if (isProduction()) {
     return NextResponse.json({ error: "no disponible" }, { status: 404 });
   }
 

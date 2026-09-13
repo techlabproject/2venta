@@ -1,4 +1,5 @@
 import { request } from "@playwright/test";
+import { baseURL } from "../playwright.config";
 
 /**
  * Compila las rutas antes de que empiecen las pruebas.
@@ -43,10 +44,11 @@ const ROUTES = [
   "/comprar/00000000-0000-4000-8000-000000000000",
   "/vendedor/no-existe",
   "/api/auth/get-session",
+  "/api/salud",
 ];
 
 export default async function globalSetup() {
-  const baseURL = "http://localhost:3100";
+  // Contra una imagen ya compilada esto no cuesta nada y no estorba.
   const ctx = await request.newContext({ baseURL });
 
   const started = Date.now();

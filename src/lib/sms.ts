@@ -1,3 +1,5 @@
+import { isProduction } from "./env";
+
 // Punto único de salida de los códigos de verificación.
 //
 // En desarrollo el código se escribe en el registro del servidor, porque no hay
@@ -8,7 +10,7 @@
 // con acceso a los registros puede tomar el control de una cuenta. Por eso la
 // función se niega a operar si no hay proveedor configurado.
 export async function sendVerificationCode(phone: string, code: string): Promise<void> {
-  if (process.env.NODE_ENV === "production") {
+  if (isProduction()) {
     throw new Error(
       "No hay proveedor de SMS configurado. Conectarlo antes de desplegar a producción."
     );

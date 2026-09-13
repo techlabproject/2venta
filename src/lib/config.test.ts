@@ -10,7 +10,11 @@ function completo(isProduction = false): Record<string, string | undefined> {
   for (const r of REQUIREMENTS) {
     if (r.productionOnly && !isProduction) continue;
     env[r.name] =
-      r.name === "DATABASE_URL"
+      r.name === "APP_ENV"
+        ? isProduction
+          ? "produccion"
+          : "desarrollo"
+        : r.name === "DATABASE_URL"
         ? "postgres://u:p@localhost:5433/db"
         : r.name === "BETTER_AUTH_URL"
           ? "https://2venta.co"
@@ -92,4 +96,22 @@ test("el mensaje nombra cada variable y su propósito", () => {
   const texto = describeProblems(checkConfig(env, false));
   assert.match(texto, /CRON_SECRET/);
   assert.match(texto, /liberación automática/);
+});
+
+test("APP_ENV puede faltar, pero si está tiene que ser válida", () => {
+  const env = completo();
+  delete env.APP_ENV;
+  assert.deepEqual(checkConfig(env, false), []);
+
+  env.APP_ENV = "staging";
+  const [problem] = checkConfig(env);
+  assert.equal(problem.name, "APP_ENV");
+  assert.match(problem.problem, /"desarrollo" o "produccion"/);
+});
+
+test("el entorno se deduce de APP_ENV: en producción se exigen las de producción", () => {
+  const env = completo(true);
+  delete env.SMS_PROVIDER_TOKEN;
+  const [problem] = checkConfig(env);
+  assert.equal(problem.name, "SMS_PROVIDER_TOKEN");
 });

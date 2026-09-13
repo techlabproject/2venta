@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isProduction } from "@/lib/env";
 import { DevKycControls } from "@/features/kyc/DevKycControls";
 
 // Pantalla del proveedor de prueba. Existe solo mientras R-02 no tenga respuesta:
@@ -11,7 +12,7 @@ export default async function DevKyc({
 }: {
   params: Promise<{ ref: string }>;
 }) {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (isProduction()) notFound();
   const { ref } = await params;
 
   return (

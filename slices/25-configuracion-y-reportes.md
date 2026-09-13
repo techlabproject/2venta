@@ -54,7 +54,7 @@ Por eso va destacada y con el objetivo al lado, no perdida en una tabla.
 ## Archivos que toca
 
 - `src/lib/config.ts` — la validación
-- `instrumentation.ts` — el arranque
+- `src/instrumentation.ts` — el arranque
 - `src/features/reports/` — las consultas
 - `src/app/admin/reportes/page.tsx`
 - `src/app/api/admin/reportes.csv/route.ts`

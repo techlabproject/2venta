@@ -12,7 +12,7 @@
     "test:e2e": "playwright test",
     "verify": "tsc --noEmit && eslint && npm run test:unit && npm run db:seed && playwright test",
     "test:unit": "node --import tsx --test \"src/**/*.test.ts\"",
-    "db:migrate": "tsx db/migrate.ts"
+    "db:migrate": "tsx db/migrate.mts"
   },
   "dependencies": {
     "better-auth": "^1.7.3",

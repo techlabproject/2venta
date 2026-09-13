@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isProduction } from "@/lib/env";
 import { getOrder } from "@/features/payments/orders";
 import { DevPagoControls } from "@/features/payments/DevPagoControls";
 import { formatCop } from "@/lib/money";
@@ -8,7 +9,7 @@ import { formatCop } from "@/lib/money";
 export const dynamic = "force-dynamic";
 
 export default async function DevPago({ params }: { params: Promise<{ id: string }> }) {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (isProduction()) notFound();
   const { id } = await params;
   const order = await getOrder(id);
   if (!order) notFound();

@@ -1,9 +1,13 @@
-import { config } from "dotenv";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { Pool } from "pg";
 
-config({ path: ".env.local" });
+// En el portátil la conexión sale de .env.local. Dentro del contenedor no existe ese
+// archivo ni la biblioteca que lo lee: la variable llega del entorno de la tarea.
+if (existsSync(".env.local")) {
+  const { config } = await import("dotenv");
+  config({ path: ".env.local" });
+}
 
 const DIR = path.resolve("db/migrations");
 

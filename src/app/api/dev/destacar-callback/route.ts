@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { isProduction } from "@/lib/env";
 import { signPayload } from "@/features/payments/provider";
 
 export async function POST(request: Request) {
-  if (process.env.NODE_ENV === "production") {
+  if (isProduction()) {
     return NextResponse.json({ error: "no disponible" }, { status: 404 });
   }
   const raw = await request.text();

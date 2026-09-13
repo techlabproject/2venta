@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { pool } from "./db";
+import { isProduction } from "./env";
 
 // La autenticación se delega en una biblioteca establecida a propósito: el manejo
 // de contraseñas, tokens y sesiones es exactamente lo que no se implementa a mano
@@ -21,7 +22,7 @@ export const auth = betterAuth({
   // cualquier puerto. En producción solo vale el dominio real: si esta lista
   // quedara abierta allí, la protección desaparece.
   trustedOrigins:
-    process.env.NODE_ENV === "production"
+    isProduction()
       ? [process.env.BETTER_AUTH_URL!]
       : ["http://localhost:*", "http://127.0.0.1:*"],
 
@@ -34,7 +35,7 @@ export const auth = betterAuth({
     // decenas de registros seguidos desde la misma máquina y los bloquearía. El
     // límite que de verdad protege cada cuenta es el de por número, que sí se
     // prueba y sí corre en desarrollo.
-    enabled: process.env.NODE_ENV === "production",
+    enabled: isProduction(),
     storage: "database",
     window: 60,
     max: 60,

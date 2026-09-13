@@ -9,12 +9,16 @@
  * Eso muerde justo el día del despliegue, que es el peor día para descubrirlo.
  */
 
+import { APP_ENVS, isProduction } from "./env";
+
 type Requirement = {
   name: string;
   /** Para qué sirve, en una línea. Es lo que se le muestra a quien la tiene que poner. */
   purpose: string;
   /** Solo obligatoria en producción. */
   productionOnly?: boolean;
+  /** Puede faltar; si está, se comprueba igual. */
+  optional?: boolean;
   /** Comprobación extra sobre el valor, más allá de que exista. */
   check?: (value: string) => string | null;
 };
@@ -29,6 +33,16 @@ function secret(value: string): string | null {
 }
 
 export const REQUIREMENTS: Requirement[] = [
+  {
+    name: "APP_ENV",
+    purpose: "qué proveedores son reales y qué puentes de prueba existen",
+    // Si falta se deduce de la compilación (ver env.ts); si está, tiene que ser válida.
+    optional: true,
+    check: (v) =>
+      (APP_ENVS as readonly string[]).includes(v)
+        ? null
+        : `vale "${v}" y solo admite ${APP_ENVS.map((e) => `"${e}"`).join(" o ")}`,
+  },
   {
     name: "DATABASE_URL",
     purpose: "conexión a Postgres",
@@ -55,6 +69,15 @@ export const REQUIREMENTS: Requirement[] = [
   },
 ];
 
+/** Un APP_ENV inválido lo reporta la lista, no una excepción antes de la lista. */
+function productionSafely(env: Record<string, string | undefined>): boolean {
+  try {
+    return isProduction(env);
+  } catch {
+    return false;
+  }
+}
+
 export type ConfigProblem = { name: string; purpose: string; problem: string };
 
 /**
@@ -65,16 +88,18 @@ export type ConfigProblem = { name: string; purpose: string; problem: string };
  */
 export function checkConfig(
   env: Record<string, string | undefined> = process.env,
-  isProduction = process.env.NODE_ENV === "production"
+  production = productionSafely(env)
 ): ConfigProblem[] {
   const problems: ConfigProblem[] = [];
 
   for (const req of REQUIREMENTS) {
-    if (req.productionOnly && !isProduction) continue;
+    if (req.productionOnly && !production) continue;
 
     const value = env[req.name];
     if (!value || value.trim() === "") {
-      problems.push({ name: req.name, purpose: req.purpose, problem: "falta" });
+      if (!req.optional) {
+        problems.push({ name: req.name, purpose: req.purpose, problem: "falta" });
+      }
       continue;
     }
 
@@ -95,10 +120,4 @@ export function describeProblems(problems: ConfigProblem[]): string {
     "Se comprueban todas de una vez a propósito, para no tener que arreglarlas de a una.",
     "En desarrollo van en .env.local. Ver db/LEEME.md y GOOGLE.md.",
   ].join("\n");
-}
-
-/** Se llama al arrancar. Detiene la aplicación en vez de dejarla fallar más tarde. */
-export function assertConfig(): void {
-  const problems = checkConfig();
-  if (problems.length > 0) throw new Error(`\n\n${describeProblems(problems)}\n`);
 }
