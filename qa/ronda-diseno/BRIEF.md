@@ -79,3 +79,22 @@ Y lo más importante para esta ronda: **propón la solución concreta**. No bast
 «se ve plano»: di qué harías, en qué pantalla, y por qué eso mejora la confianza
 o la conversión. Si propones un cambio visual, descríbelo con suficiente detalle
 para que alguien lo pueda implementar sin adivinar.
+
+---
+
+## Actualización del 2026-09-13, 17:40
+
+Antes de que empezaras ya se corrigieron estas cosas (no las reportes como
+nuevas; **sí verifica que quedaron bien**):
+
+- `/vender` de un vendedor verificado es ahora un panel con «Publicar un
+  artículo», «Mis publicaciones» y «Mis ventas y conversaciones». Antes era un
+  callejón sin salida.
+- La cabecera tiene un botón **Vender** para quien tiene sesión.
+- El perfil del vendedor explica que se le escribe desde el artículo.
+- El feed pasa de 2 a 4 columnas en escritorio y las tarjetas anuncian «Con video».
+- La portada abre con una franja verde con la promesa del producto.
+- La ficha es de dos columnas en escritorio, con el video primero.
+- El chat encabeza con la foto del artículo y dice con quién hablas.
+
+Tu trabajo es lo que **queda**.

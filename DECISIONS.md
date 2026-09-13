@@ -598,3 +598,39 @@ mayúsculas). No hay índice único.
 **Por qué.** El alias inicial se deriva del nombre ("Catalina R.", D-04) y dos
 personas con el mismo nombre son inevitables; un índice único rompía el registro.
 Lo que importa cerrar es hacerse pasar a propósito por alguien concreto.
+
+### D-68 — `/vender` es el panel del vendedor, no una pantalla de estado
+Para un vendedor con identidad aprobada, `/vender` deja de ser un mensaje de
+confirmación y pasa a ser su punto de entrada: publicar, sus publicaciones y sus
+ventas. La cabecera lleva ahí con un botón «Vender».
+**Por qué.** Decía «ya puedes publicar» y su único enlace iba al catálogo. Sus
+publicaciones vivían en `/vender/metricas`, a la que no llegaba ningún enlace de
+la interfaz: existía y no se podía encontrar. Lo reportó Nicolás usando la app.
+**Consecuencia.** El título pasa de «Identidad verificada» a «Tu espacio de
+vendedor»; el distintivo de verificación sigue visible dentro.
+
+### D-69 — Desde el perfil del vendedor se explica dónde está el chat, no se abre uno
+El perfil dice que la conversación va por artículo y que hay que abrir el que
+interesa. No se crea un hilo sin artículo.
+**Por qué.** Un hilo sin artículo obligaría a cambiar el modelo (la conversación
+es única por `(listing_id, buyer_id)`) y dejaría conversaciones sin contexto: ni
+el vendedor sabría de qué producto le hablan. El hueco real era que nadie decía
+dónde estaba el chat.
+**Pendiente de confirmar con Nicolás**, que esperaba encontrarlo en el perfil.
+
+### D-70 — El escritorio deja de ser el móvil estirado
+El feed y la ficha usan un contenedor de 1152 px; el feed va de 2 a 4 columnas
+según el ancho, y la ficha se parte en dos columnas con la compra a la derecha.
+**Por qué.** Todo el producto se dibujaba en 768 px con dos columnas fijas: en un
+monitor quedaban dos tiras estrechas centradas, media pantalla vacía y una página
+interminable. Y en la ficha, el botón de comprar caía fuera de la pantalla.
+**Qué no cambia.** Las pantallas de lectura y de formulario siguen angostas: una
+línea de texto de 1152 px no se lee.
+
+### D-71 — El video se anuncia donde se mira
+Cada tarjeta del feed lleva un distintivo «Con video», y la ficha marca el video
+como «Grabado por el vendedor».
+**Por qué.** D-14 hace del video la prueba de que el artículo existe y es lo que
+justifica la comisión y el pago protegido. En el feed no se veía: la tarjeta era
+la de cualquier clasificado, con una foto fija. El diferenciador del negocio era
+invisible en la pantalla más vista.
