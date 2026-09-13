@@ -1,26 +1,27 @@
 # Estado
 
-**Última actualización:** 2026-09-12
+**Última actualización:** 2026-09-13
 
 ## En qué voy
 
-Las tres fases del plan más once rebanadas posteriores. 236 pruebas de navegador y
-88 unitarias.
+Las tres fases del plan más doce rebanadas posteriores. 236 pruebas de navegador y
+94 unitarias (seis de ellas contra MinIO).
 
 **Todos los requisitos funcionales originales están construidos.** Ahora se está
 llevando a AWS siguiendo `ARQUITECTURA.md`:
 
 - S-26 empaquetado: HECHA. La imagen de Docker corre las 236 pruebas contra sí
   misma. `APP_ENV` separa "qué proveedores son reales" de "cómo se compiló" (D-54).
-- S-27 archivos en S3 con URL prefirmada (D-50): siguiente.
-- S-28 worker y cola SQS (D-51).
+- S-27 archivos en S3 con URL prefirmada (D-50, D-57): HECHA. MinIO en el
+  portátil, bucket real en S-29.
+- S-28 worker y cola SQS (D-51): siguiente.
 - S-29 Terraform con `dev` y `prod` en la misma cuenta (D-53) + GitHub Actions.
 
-Cuenta de AWS: Nicolás la está creando. Lo que necesito de él: usuario IAM
-`nicolas-cli` con `AdministratorAccess` y `aws configure --profile 2venta` hecho en
-su terminal. Ya están instalados `awscli` y `terraform`. Repositorio remoto:
-`github.com/techlabproject/2venta`, **público**, pendiente de decidir si pasa a
-privado antes del primer push.
+Cuenta de AWS `681842289811`, perfil de CLI `2venta` (usuario `nicolas-cli`,
+`AdministratorAccess`, región `us-east-1`). MFA en la raíz activa, presupuesto de
+50 USD/mes con alertas a dos correos. App Runner aún decía `SubscriptionRequired`
+el 2026-09-13 (cuenta nueva); comprobar antes de S-29. Repositorio remoto:
+`github.com/techlabproject/2venta`, público por decisión de Nicolás.
 
 De lo que queda a medias, ya casi nada es código propio: son proveedores por
 conectar y cuentas por crear.
@@ -46,8 +47,8 @@ conectar y cuentas por crear.
 - La liberación automática necesita un programador de tareas que llame
   `POST /api/tareas/liberar` con el secreto. En desarrollo se llama a mano. Con
   S-28 pasa a SQS + worker (D-51).
-- Los archivos subidos dentro del contenedor van a su disco, que es efímero: un
-  despliegue nuevo los pierde. Solo aceptable hasta S-27.
+- Los archivos de publicaciones retiradas no se borran del bucket. Y no hay
+  política de ciclo de vida todavía: es infraestructura, va en S-29.
 - La transportadora es de prueba: tarifa plana de $12.000 y una sola opción. R-04
   propone un agregador logístico, pero no hay contrato.
 - No se puede elegir entre transportadoras ni ver opciones de precio.
@@ -72,8 +73,8 @@ conectar y cuentas por crear.
   a su método de devolución y queda en el registro, igual que la liberación.
 - Quién paga el envío de retorno en una disputa: la D-12 dice que la parte
   responsable, pero calcularlo necesita la transportadora real.
-- No se pueden subir fotos como evidencia de un reclamo; hoy es solo texto. Es lo
-  primero que hay que agregar cuando haya almacenamiento de verdad.
+- No se pueden subir fotos como evidencia de un reclamo; hoy es solo texto. Ya
+  hay almacenamiento de verdad (S-27); es reutilizar `uploadBlob` y `claim`.
 - No se puede apelar una decisión de disputa.
 - Google: falta pegar las credenciales, ver GOOGLE.md. El botón solo aparece
   cuando existen las dos variables.
@@ -95,10 +96,9 @@ conectar y cuentas por crear.
 - Reportar una conversación o un usuario (RF-32): va con moderación.
 - El seguimiento del envío solo tiene dos estados, despachado y entregado. Falta el
   detalle intermedio que muestra el mockup.
-- Los archivos subidos van a disco local en `uploads/`, detrás de
-  `src/lib/storage.ts`. Mover a almacenamiento en la nube es reescribir esas tres
-  funciones. Falta transcodificar a un formato único: hoy se guarda lo que grabe
-  cada navegador, que no es lo mismo en Android que en iOS.
+- (RESUELTO en S-27) Archivos a disco local. Ahora van al bucket. Falta
+  transcodificar a un formato único: hoy se guarda lo que grabe cada navegador,
+  que no es lo mismo en Android que en iOS. Va con el worker de S-28.
 - (RESUELTO en S-23) Fotos del artículo, hasta seis.
 - Filtro por distancia en kilómetros: el mockup lo muestra, pero no hay coordenadas
   de nada. Se filtra por zona. La distancia entra cuando exista el dato.
@@ -168,6 +168,6 @@ conectar y cuentas por crear.
 
 ## Siguiente paso concreto
 
-S-27: `storage.ts` contra S3 con URL prefirmada, probado contra MinIO en
-`docker-compose.yml`. En paralelo, cuando exista el perfil `2venta` de la CLI,
-comprobar `aws sts get-caller-identity` y empezar S-29.
+S-28: `src/worker/` que consume de SQS (ElasticMQ o LocalStack en el portátil),
+liberación automática por cola, `notifyMatchingSearches` fuera de la acción de
+publicar. Después S-29 y el primer despliegue a `dev`.

@@ -16,6 +16,39 @@ services:
       timeout: 3s
       retries: 20
 
+  # El bucket de archivos en el portátil: la misma API que S3 (D-50). El segundo
+  # contenedor crea el bucket y lo deja con lectura pública, que es lo que hace
+  # CloudFront en AWS.
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: 2venta-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: local
+      MINIO_ROOT_PASSWORD: localminio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  minio-init:
+    image: quay.io/minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 local localminio &&
+      mc mb --ignore-existing local/2venta-media &&
+      mc anonymous set download local/2venta-media
+      "
+
   # La imagen de producción corriendo contra la base local. No arranca con un
   # `docker compose up` normal: hay que pedirla con `--profile imagen`.
   # Toma los secretos de .env.local para que las pruebas puedan descifrar los
@@ -29,11 +62,18 @@ services:
       DATABASE_URL: postgres://2venta:local@db:5432/2venta
       BETTER_AUTH_URL: http://localhost:3200
       APP_ENV: desarrollo
+      # Dentro de la red de Docker el bucket se llama `minio`; el navegador lo ve
+      # en localhost. La firma lleva el host, así que hacen falta los dos.
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: http://localhost:9000
     ports:
       - "3200:3000"
     depends_on:
       db:
         condition: service_healthy
+      minio:
+        condition: service_healthy
 
 volumes:
   dbdata:
+  miniodata:

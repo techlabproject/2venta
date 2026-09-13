@@ -5,7 +5,7 @@ Marketplace de segunda mano para Colombia. Bogotá, tres categorías, pago prote
 # Comandos
 
 - Desarrollo: `npm run dev`
-- Base de datos local: `docker compose up -d` (Postgres en 5433)
+- Base de datos y bucket locales: `docker compose up -d` (Postgres en 5433, MinIO en 9000)
 - Migraciones: `npm run db:migrate`
 - Datos de prueba: `npm run db:seed`
 - Verificación completa antes de confirmar cambios: `npm run verify`
@@ -47,6 +47,10 @@ cerrado.
 - Los identificadores públicos son UUID, no enteros secuenciales. Un id secuencial
   en una URL deja contar cuántos productos existen.
 - Todo texto visible va en español de Colombia.
+- Los archivos (video, fotos) van directo del navegador al bucket con URL prefirmada
+  (D-50). La acción de servidor recibe claves y las comprueba con `claim()` contra
+  S3; nunca confía en el tipo o tamaño que declara el cliente. Las pantallas arman
+  la dirección con `mediaUrl()` (servidor), nunca con `NEXT_PUBLIC_*`.
 
 # Zonas donde hay que bajar la velocidad
 
@@ -89,7 +93,12 @@ el número y se le manda el código antes de dejarlo comprar o escribir.
   fecha con nombre de mes se formatea en la aplicación con `Intl`, nunca con
   `to_char` en SQL.
 - `dotenv` no lee `.env.local`, eso solo lo hace Next. Los scripts fuera de Next
-  tienen que pasarle la ruta explícita.
+  tienen que pasarle la ruta explícita. Las unitarias lo cargan con
+  `node --env-file`, porque `claim.test.ts` habla con MinIO.
+- Las imágenes de MinIO viven en `quay.io/minio/*`; las de Docker Hub ya no existen.
+- Al firmar con `getSignedUrl`, las cabeceras que deban quedar dentro de la firma
+  van en `signableHeaders` **y** `unhoistableHeaders`; si no, el SDK las mueve a la
+  URL y S3 rechaza el PUT por "cabeceras sin firmar".
 
 # Configuración
 

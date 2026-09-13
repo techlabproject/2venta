@@ -1,7 +1,6 @@
 node_modules
 .next
 .git
-uploads
 test-results
 playwright-report
 qa/capturas

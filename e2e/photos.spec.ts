@@ -80,7 +80,11 @@ test("la primera foto pasa a ser la portada en el catálogo", async ({ browser }
   const tarjeta = anon.getByRole("main").getByRole("listitem").filter({ hasText: titulo });
   // La imagen lleva alt vacío a propósito: el título de la tarjeta ya la describe,
   // así que para un lector de pantalla es decorativa y no tiene rol de imagen.
-  await expect(tarjeta.locator("img")).toHaveAttribute("src", `/api/media/${portada}`);
+  // Se sirve desde el bucket, no desde la aplicación (D-50).
+  await expect(tarjeta.locator("img")).toHaveAttribute(
+    "src",
+    `${process.env.MEDIA_BASE_URL}/${portada}`
+  );
 
   await ctx.close();
   await anonCtx.close();

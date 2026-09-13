@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { publishListing, type PublishResult } from "./actions";
+import { uploadBlob, uploadImages, UploadError } from "./useUpload";
 import { VideoCapture } from "./VideoCapture";
 import { Button, ErrorNote, Field } from "@/components/ui";
 import { CONDITION_LABEL } from "@/features/catalog/labels";
@@ -10,21 +11,6 @@ import type { Category } from "@/features/catalog/queries";
 import type { SuggestionMap } from "@/features/pricing/suggest";
 import { MAX_PHOTOS } from "./photos";
 import { formatCop } from "@/lib/money";
-
-const EXTENSION: Record<string, string> = {
-  "video/webm": "webm",
-  "video/mp4": "mp4",
-  "image/jpeg": "jpg",
-  "image/png": "png",
-};
-
-function asFile(blob: Blob, base: string): File {
-  // El tipo se limpia de los parámetros de códec. MediaRecorder produce cosas como
-  // "video/webm;codecs=vp8,opus", y ese punto y coma rompe la cabecera del envío:
-  // el archivo llega al servidor declarado como texto plano.
-  const type = blob.type.split(";")[0];
-  return new File([blob], `${base}.${EXTENSION[type] ?? "bin"}`, { type });
-}
 
 export function PublishForm({
   categories,
@@ -38,13 +24,33 @@ export function PublishForm({
   // D-15: el IMEI solo se pide en electrónica.
   const [category, setCategory] = useState(categories[0]?.slug ?? "");
 
+  const [uploading, setUploading] = useState(false);
+
   const [result, submit, pending] = useActionState<PublishResult | null, FormData>(
     async (prev, form) => {
+      // D-50: los archivos van directo al bucket y a la acción solo llegan las
+      // claves. Los bytes nunca pasan por el servidor de la aplicación.
       if (media) {
-        // El nombre lleva extensión a propósito: sin ella, el tipo del archivo se
-        // pierde al cruzar hacia el servidor y llega como texto plano.
-        form.set("video", asFile(media.video, "video"));
-        form.set("poster", asFile(media.poster, "poster"));
+        setUploading(true);
+        try {
+          const photos = form
+            .getAll("photos")
+            .filter((f): f is File => f instanceof File && f.size > 0);
+          const [videoKey, posterKey, photoKeys] = await Promise.all([
+            uploadBlob(media.video, "video"),
+            uploadBlob(media.poster, "image"),
+            uploadImages(photos),
+          ]);
+          form.set("video_key", videoKey);
+          form.set("poster_key", posterKey);
+          form.delete("photos");
+          for (const key of photoKeys) form.append("photo_keys", key);
+        } catch (err) {
+          if (err instanceof UploadError) return { error: err.message };
+          throw err;
+        } finally {
+          setUploading(false);
+        }
       }
       const res = await publishListing(prev, form);
       if ("id" in res) {
@@ -132,7 +138,13 @@ export function PublishForm({
       </div>
 
       <Button type="submit" disabled={pending || !media}>
-        {pending ? "Publicando…" : media ? "Publicar" : "Graba el video para continuar"}
+        {uploading
+          ? "Subiendo…"
+          : pending
+            ? "Publicando…"
+            : media
+              ? "Publicar"
+              : "Graba el video para continuar"}
       </Button>
 
       {category === "tecnologia" && (

@@ -33,8 +33,6 @@ COPY --from=build --chown=app:app /app/public ./public
 # dos tareas levantando a la vez, las dos intentarían migrar a la vez.
 COPY --from=build --chown=app:app /app/db/migrate.mts ./db/migrate.mts
 COPY --from=build --chown=app:app /app/db/migrations ./db/migrations
-# Hasta S-27 los archivos subidos van a disco dentro del contenedor.
-RUN mkdir -p uploads && chown app:app uploads
 
 USER app
 EXPOSE 3000

@@ -125,10 +125,12 @@ test("un precio de cero se rechaza", async ({ page }) => {
   await expect(alertIn(page)).toContainText("mayor que cero");
 });
 
-test("pedir un archivo fuera del directorio de subidas no devuelve nada", async ({
+test("la aplicación ya no sirve archivos: eso lo hace el bucket (D-50)", async ({
   request,
 }) => {
-  // Sin la comprobación de ruta, esto devolvería los secretos del servidor.
-  const res = await request.get("/api/media/..%2F..%2F.env.local");
+  // La ruta que leía del disco desapareció con S-27. Si vuelve a existir, vuelve
+  // con ella la superficie de escape de ruta que probaba la versión anterior de
+  // esta prueba.
+  const res = await request.get("/api/media/2026-09/00000000-0000-4000-8000-000000000000.webm");
   expect(res.status()).toBe(404);
 });

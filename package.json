@@ -11,10 +11,12 @@
     "db:seed": "tsx db/seed.ts",
     "test:e2e": "playwright test",
     "verify": "tsc --noEmit && eslint && npm run test:unit && npm run db:seed && playwright test",
-    "test:unit": "node --import tsx --test \"src/**/*.test.ts\"",
+    "test:unit": "node --env-file=.env.local --import tsx --test \"src/**/*.test.ts\"",
     "db:migrate": "tsx db/migrate.mts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1131.0",
+    "@aws-sdk/s3-request-presigner": "^3.1131.0",
     "better-auth": "^1.7.3",
     "dotenv": "^17.4.2",
     "next": "16.3.4",

@@ -46,5 +46,3 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 
-# archivos subidos en desarrollo
-/uploads/

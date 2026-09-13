@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { mediaUrl } from "@/lib/media";
 import type { Listing } from "./queries";
 import { CONDITION_LABEL } from "./labels";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -14,7 +15,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         {/* La portada sale del primer cuadro del video, así que siempre
             corresponde al artículo de verdad. */}
         <img
-          src={`/api/media/${listing.poster_path}`}
+          src={mediaUrl(listing.poster_path)}
           alt=""
           className="aspect-[4/3] w-full bg-ph object-cover"
         />

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { mediaUrl } from "@/lib/media";
 import Link from "next/link";
 import { getListing } from "@/features/catalog/queries";
 import { CONDITION_LABEL } from "@/features/catalog/labels";
@@ -60,7 +61,7 @@ export default async function ListingPage({
           <ul data-testid="fotos" className="mt-4 flex gap-2 overflow-x-auto pb-1">
             {photos.map((p) => (
               <li key={p.id} className="shrink-0">
-                <img src={`/api/media/${p.path}`} alt=""
+                <img src={mediaUrl(p.path)} alt=""
                   className="h-40 w-40 rounded-xl bg-ph object-cover" />
               </li>
             ))}
@@ -73,8 +74,8 @@ export default async function ListingPage({
           controls
           playsInline
           preload="metadata"
-          poster={`/api/media/${listing.poster_path}`}
-          src={`/api/media/${listing.video_path}`}
+          poster={mediaUrl(listing.poster_path)}
+          src={mediaUrl(listing.video_path)}
         />
 
         <p className="mt-5 font-title text-3xl font-semibold">

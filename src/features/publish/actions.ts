@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { activeUser } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
-import { isAllowedType, MAX_BYTES, store } from "@/lib/storage";
+import { claim } from "./claim";
 import { MAX_PHOTOS } from "./photos";
 import { query } from "@/lib/db";
 import { MIN_PRICE_COP, parseCop } from "@/features/payments/money";
@@ -69,33 +69,27 @@ export async function publishListing(
     imei = normalizeImei(raw);
   }
 
-  const video = form.get("video");
-  const poster = form.get("poster");
-  if (!(video instanceof File) || !(poster instanceof File)) {
-    // D-14: sin video no hay publicación, y esto se comprueba aquí y no solo en
-    // la pantalla.
-    return { error: "Falta el video del artículo." };
-  }
-  if (!isAllowedType(video.type) || !isAllowedType(poster.type)) {
-    return { error: "Ese tipo de archivo no sirve." };
-  }
-  if (video.size > MAX_BYTES || poster.size > MAX_BYTES) {
-    return { error: "El video pesa demasiado. Graba uno más corto." };
-  }
-
-  const videoPath = await store(await video.arrayBuffer(), video.type);
-  const posterPath = await store(await poster.arrayBuffer(), poster.type);
+  // D-14: sin video no hay publicación, y esto se comprueba aquí y no solo en
+  // la pantalla. El video ya está en el bucket; aquí llega su clave (D-50).
+  const video = await claim(form.get("video_key"), user.id, "video");
+  if ("error" in video) return video;
+  const poster = await claim(form.get("poster_key"), user.id, "image");
+  if ("error" in poster) return { error: "Falta la portada del video." };
+  const videoPath = video.key;
+  const posterPath = poster.key;
 
   // RF-15: hasta seis fotos. A diferencia del video, sí pueden venir de la galería:
   // el video ya prueba que el artículo existe, y las fotos son presentación. Exigir
   // que se tomen dentro de la app solo las haría peores sin agregar garantía.
-  const photos = form.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
-  if (photos.length > MAX_PHOTOS) {
+  const photoKeys = form.getAll("photo_keys").map(String).filter(Boolean);
+  if (photoKeys.length > MAX_PHOTOS) {
     return { error: `Máximo ${MAX_PHOTOS} fotos.` };
   }
-  for (const photo of photos) {
-    if (!isAllowedType(photo.type)) return { error: "Alguno de los archivos no es una imagen." };
-    if (photo.size > MAX_BYTES) return { error: "Alguna foto pesa demasiado." };
+  const photos: string[] = [];
+  for (const raw of photoKeys) {
+    const photo = await claim(raw, user.id, "image");
+    if ("error" in photo) return { error: "Alguno de los archivos no es una imagen." };
+    photos.push(photo.key);
   }
 
   // Un mismo IMEI publicado dos veces no es coincidencia. La base tiene el índice
@@ -120,8 +114,7 @@ export async function publishListing(
     throw err;
   }
 
-  for (const [index, photo] of photos.entries()) {
-    const path = await store(await photo.arrayBuffer(), photo.type);
+  for (const [index, path] of photos.entries()) {
     await query(
       `insert into listing_photos (listing_id, path, position) values ($1, $2, $3)`,
       [rows[0].id, path, index]
@@ -163,20 +156,12 @@ export async function publishDraft(
   const draft = drafts[0];
   if (!draft) return { error: "Ese borrador no existe o ya se publicó." };
 
-  const video = form.get("video");
-  const poster = form.get("poster");
-  if (!(video instanceof File) || !(poster instanceof File)) {
-    return { error: "Falta el video del artículo." };
-  }
-  if (!isAllowedType(video.type) || !isAllowedType(poster.type)) {
-    return { error: "Ese tipo de archivo no sirve." };
-  }
-  if (video.size > MAX_BYTES || poster.size > MAX_BYTES) {
-    return { error: "El video pesa demasiado. Graba uno más corto." };
-  }
-
-  const videoPath = await store(await video.arrayBuffer(), video.type);
-  const posterPath = await store(await poster.arrayBuffer(), poster.type);
+  const video = await claim(form.get("video_key"), user.id, "video");
+  if ("error" in video) return video;
+  const poster = await claim(form.get("poster_key"), user.id, "image");
+  if ("error" in poster) return { error: "Falta la portada del video." };
+  const videoPath = video.key;
+  const posterPath = poster.key;
 
   // El borrador sigue el mismo camino que cualquier publicación, revisión de
   // electrónica incluida: cargar en lote no salta la moderación.

@@ -487,3 +487,15 @@ muere hace que App Runner o ECS reviertan el despliegue solos.
 cuando el proyecto usa `src/`, solo lo busca en `src/`. Nunca había corrido, ni en
 desarrollo. La validación de D-47 se probaba en unitarias pero no en el arranque
 real; la prueba de la imagen fue lo que lo destapó.
+
+### D-57 — La clave que manda el cliente se comprueba contra S3, no contra el cliente
+Al publicar, cada clave pasa por `claim()`: forma exacta, el objeto existe, su
+metadato `owner` es quien publica, y tipo y tamaño se leen de lo que S3 registró.
+**Por qué.** Con la subida directa (D-50) el servidor deja de ver los bytes, y el
+cliente pasa a mandar una clave que él obtuvo. Sin esta comprobación, podría
+publicar con el video de otro vendedor o con un objeto que nunca subió.
+**Cómo se ata el dueño.** La firma de subida incluye `x-amz-meta-owner`,
+`content-type` y `content-length`: cambiar cualquiera hace que el bucket rechace
+el PUT. Así lo que `claim` lee es lo que se firmó.
+**Consecuencia.** No hay camino de disco local. En el portátil el bucket lo da
+MinIO; el código que se prueba es el que se despliega.

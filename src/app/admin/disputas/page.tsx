@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { mediaUrl } from "@/lib/media";
 import Link from "next/link";
 import { currentAdmin } from "@/lib/session";
 import { KIND_LABEL, listOpenClaims } from "@/features/claims/queries";
@@ -50,7 +51,7 @@ export default async function Disputas() {
                 className="mt-3 aspect-[4/3] w-full rounded-xl bg-ph object-cover"
                 controls
                 preload="metadata"
-                src={`/api/media/${c.video_path}`}
+                src={mediaUrl(c.video_path)}
               />
 
               <div className="mt-4 flex flex-col gap-3 text-sm">

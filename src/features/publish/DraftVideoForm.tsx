@@ -3,30 +3,34 @@
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { publishDraft, type PublishResult } from "./actions";
+import { uploadBlob, UploadError } from "./useUpload";
 import { VideoCapture } from "./VideoCapture";
 import { Button, ErrorNote } from "@/components/ui";
-
-const EXTENSION: Record<string, string> = {
-  "video/webm": "webm",
-  "video/mp4": "mp4",
-  "image/jpeg": "jpg",
-  "image/png": "png",
-};
-
-function asFile(blob: Blob, base: string): File {
-  const type = blob.type.split(";")[0];
-  return new File([blob], `${base}.${EXTENSION[type] ?? "bin"}`, { type });
-}
 
 export function DraftVideoForm({ draftId }: { draftId: string }) {
   const router = useRouter();
   const [media, setMedia] = useState<{ video: Blob; poster: Blob } | null>(null);
 
+  const [uploading, setUploading] = useState(false);
+
   const [result, submit, pending] = useActionState<PublishResult | null, FormData>(
     async (prev, form) => {
+      // D-50: directo al bucket; a la acción llegan solo las claves.
       if (media) {
-        form.set("video", asFile(media.video, "video"));
-        form.set("poster", asFile(media.poster, "poster"));
+        setUploading(true);
+        try {
+          const [videoKey, posterKey] = await Promise.all([
+            uploadBlob(media.video, "video"),
+            uploadBlob(media.poster, "image"),
+          ]);
+          form.set("video_key", videoKey);
+          form.set("poster_key", posterKey);
+        } catch (err) {
+          if (err instanceof UploadError) return { error: err.message };
+          throw err;
+        } finally {
+          setUploading(false);
+        }
       }
       const res = await publishDraft(prev, form);
       if ("id" in res) {
@@ -44,7 +48,13 @@ export function DraftVideoForm({ draftId }: { draftId: string }) {
       <input type="hidden" name="draftId" value={draftId} />
       <VideoCapture onCaptured={(video, poster) => setMedia({ video, poster })} />
       <Button type="submit" disabled={pending || !media}>
-        {pending ? "Publicando…" : media ? "Publicar" : "Graba el video para continuar"}
+        {uploading
+          ? "Subiendo…"
+          : pending
+            ? "Publicando…"
+            : media
+              ? "Publicar"
+              : "Graba el video para continuar"}
       </Button>
     </form>
   );

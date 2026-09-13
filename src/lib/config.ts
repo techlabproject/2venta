@@ -62,6 +62,23 @@ export const REQUIREMENTS: Requirement[] = [
   { name: "PAYMENTS_WEBHOOK_SECRET", purpose: "firma de los avisos del proveedor de pagos", check: secret },
   { name: "SHIPPING_WEBHOOK_SECRET", purpose: "firma de los avisos de la transportadora", check: secret },
   { name: "CRON_SECRET", purpose: "autoriza la tarea de liberación automática de pagos" },
+  { name: "AWS_REGION", purpose: "región del bucket de archivos" },
+  { name: "S3_BUCKET", purpose: "bucket donde viven videos y fotos" },
+  {
+    name: "MEDIA_BASE_URL",
+    purpose: "dirección pública desde la que se sirven videos y fotos",
+    check: (v) => (/^https?:\/\//.test(v) ? null : "tiene que ser una URL completa"),
+  },
+  {
+    name: "S3_ENDPOINT",
+    purpose: "endpoint del bucket cuando no es S3 de verdad (MinIO en el portátil)",
+    optional: true,
+  },
+  {
+    name: "S3_PUBLIC_ENDPOINT",
+    purpose: "el mismo endpoint como lo ve el navegador, para firmar las subidas",
+    optional: true,
+  },
   {
     name: "SMS_PROVIDER_TOKEN",
     purpose: "envío real de los códigos por SMS (en desarrollo salen por consola)",
