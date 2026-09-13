@@ -11,6 +11,7 @@ import type { Category } from "@/features/catalog/queries";
 import type { SuggestionMap } from "@/features/pricing/suggest";
 import { MAX_PHOTOS } from "./photos";
 import { formatCop } from "@/lib/money";
+import { commissionCop, MIN_PRICE_COP, parseCop, sellerPayoutCop } from "@/features/payments/money";
 
 export function PublishForm({
   categories,
@@ -23,6 +24,9 @@ export function PublishForm({
   const [media, setMedia] = useState<{ video: Blob; poster: Blob } | null>(null);
   // D-15: el IMEI solo se pide en electrónica.
   const [category, setCategory] = useState(categories[0]?.slug ?? "");
+  // Lo que le queda al vendedor, calculado mientras escribe el precio. Es el
+  // dato que más le importa y nadie se lo decía (hallazgo de QA, 2026-09-13).
+  const [price, setPrice] = useState<number | null>(null);
 
   const [uploading, setUploading] = useState(false);
 
@@ -105,7 +109,14 @@ export function PublishForm({
       )}
 
       <Field id="price" name="price" label="Precio" inputMode="numeric" required
-        placeholder="260000" hint="En pesos, sin puntos ni comas. Mínimo $10.000." />
+        placeholder="260000" hint="En pesos, sin puntos ni comas. Mínimo $10.000."
+        onChange={(e) => setPrice(parseCop(e.target.value))} />
+      {price !== null && price >= MIN_PRICE_COP && (
+        <p data-testid="te-llegan" className="-mt-2 text-xs text-ink2">
+          Te llegan <b>{formatCop(sellerPayoutCop(price))}</b> después de la comisión de 2venta
+          ({formatCop(commissionCop(price))}). El comprador paga {formatCop(price)} más el envío.
+        </p>
+      )}
 
       {/* D-24: el rango sale de lo que se ha vendido de verdad en 2venta. Si no
           hay suficientes ventas no aparece nada, porque un promedio de dos ventas

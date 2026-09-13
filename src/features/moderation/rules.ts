@@ -1,3 +1,4 @@
+import { CONTACT_REJECTED, hasContact } from "@/features/chat/redact";
 // Moderación automática al publicar (D-16).
 //
 // Es un filtro de primera línea, no un juez. Su trabajo es que lo evidentemente
@@ -62,6 +63,11 @@ export function moderateListing(input: {
   for (const rule of FORBIDDEN) {
     if (rule.pattern.test(text)) return { allowed: false, reason: rule.reason };
   }
+  // D-22 también aplica a la ficha: es pública y permanente, y un teléfono en el
+  // título es la forma más cómoda de salirse del pago protegido (hallazgo de
+  // QA, 2026-09-13). Aquí se rechaza en vez de ocultar: una publicación con
+  // "•••••" en el título no dice qué vende.
+  if (hasContact(text)) return { allowed: false, reason: CONTACT_REJECTED };
   return { allowed: true };
 }
 

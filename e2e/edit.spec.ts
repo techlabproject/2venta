@@ -192,3 +192,63 @@ test("no se puede editar una publicación vendida", async ({ browser }) => {
 
   await seller.context.close();
 });
+
+// Hallazgos de la ronda de QA del 2026-09-13 (agente funcional).
+test("un título o una descripción con teléfono se rechazan al editar", async ({ browser }) => {
+  const marca = Date.now();
+  const seller = await sellerWithListing(browser, `Limpio ${marca}`, 100_000, "ropa");
+  await seller.page.goto(`/producto/${seller.listingId}/editar`);
+
+  await seller.page.getByLabel("Título").fill(`Camisa ${marca} llama al 3004128805`);
+  await seller.page.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(alertIn(seller.page)).toContainText("números de teléfono");
+
+  await seller.page.getByLabel("Título").fill(`Camisa ${marca}`);
+  await seller.page.getByLabel("Descripción").fill("Escríbeme por whatsapp y cuadramos");
+  await seller.page.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(alertIn(seller.page)).toContainText("números de teléfono");
+
+  await seller.context.close();
+});
+
+test("una publicación retirada o en borrador no tiene ficha pública; vendida sí", async ({
+  browser,
+}) => {
+  const seller = await sellerWithListing(browser, `Escondida ${Date.now()}`, 80_000, "ropa");
+  const anonCtx = await browser.newContext();
+  const anon = await anonCtx.newPage();
+
+  for (const status of ["retirada", "borrador", "en_revision", "rechazada"]) {
+    await withDb((c) =>
+      c.query(`update listings set status = $2 where id = $1`, [seller.listingId, status])
+    );
+    const res = await anon.goto(`/producto/${seller.listingId}`);
+    expect(res?.status(), status).toBe(404);
+    // El dueño sí la ve.
+    const own = await seller.page.goto(`/producto/${seller.listingId}`);
+    expect(own?.status(), `dueño, ${status}`).toBe(200);
+  }
+
+  await withDb((c) =>
+    c.query(`update listings set status = 'vendida' where id = $1`, [seller.listingId])
+  );
+  const sold = await anon.goto(`/producto/${seller.listingId}`);
+  expect(sold?.status()).toBe(200);
+  await expect(anon.getByRole("link", { name: "Comprar con pago protegido" })).toHaveCount(0);
+
+  await anonCtx.close();
+  await seller.context.close();
+});
+
+test("la pantalla de editar de una publicación vendida no muestra el formulario", async ({
+  browser,
+}) => {
+  const seller = await sellerWithListing(browser, `Cerrada ${Date.now()}`, 60_000, "ropa");
+  await withDb((c) =>
+    c.query(`update listings set status = 'vendida' where id = $1`, [seller.listingId])
+  );
+  await seller.page.goto(`/producto/${seller.listingId}/editar`);
+  await expect(seller.page.getByRole("status")).toContainText("ya no se puede editar");
+  await expect(seller.page.getByLabel("Título")).toHaveCount(0);
+  await seller.context.close();
+});

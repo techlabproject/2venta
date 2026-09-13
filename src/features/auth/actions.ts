@@ -97,9 +97,33 @@ export async function verifyCode(
     };
   }
 
+  // D-01: un celular confirma UNA cuenta. Se comprueba aquí y no al registrarse,
+  // porque aquí quien pregunta ya demostró tener el número; al registrarse,
+  // decirle a cualquiera "ese número ya tiene cuenta" regalaría el dato.
+  const taken = await query<{ id: string }>(
+    `select id from "user"
+      where "phoneNumber" = $1 and "phoneNumberVerified" and id <> $2 limit 1`,
+    [user.phoneNumber, user.id]
+  );
+  if (taken.length) {
+    return {
+      error:
+        "Ese celular ya está confirmado en otra cuenta. Si es tuya, entra con ella o recupera la contraseña.",
+    };
+  }
+
   // El código se consume: no sirve una segunda vez.
   await query(`update phone_codes set used_at = now() where phone = $1`, [user.phoneNumber]);
-  await query(`update "user" set "phoneNumberVerified" = true where id = $1`, [user.id]);
+  try {
+    await query(`update "user" set "phoneNumberVerified" = true where id = $1`, [user.id]);
+  } catch (err) {
+    // Dos confirmaciones a la vez con el mismo número: el índice único de la
+    // migración 0010 deja pasar una sola.
+    if (err instanceof Error && /user_celular_verificado_unico/.test(err.message)) {
+      return { error: "Ese celular ya está confirmado en otra cuenta." };
+    }
+    throw err;
+  }
 
   revalidatePath("/");
   return { error: "" };

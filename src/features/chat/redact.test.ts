@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { redact } from "./redact";
+import { hasContact, redact } from "./redact";
 
 const oculta = (t: string) => redact(t).text.includes("•••••");
 
@@ -83,4 +83,28 @@ test("conserva el resto del mensaje alrededor de lo que oculta", () => {
 test("oculta varios datos en el mismo mensaje", () => {
   const r = redact("3004128805 o juan@correo.com o www.otro.com");
   assert.equal(r.text.match(/•••••/g)?.length, 3);
+});
+
+// Hallazgos de la ronda de QA del 2026-09-13.
+test("un emoji o cualquier símbolo entre los dígitos no salva el número", () => {
+  assert.equal(redact("mi cel 3🙂0🙂0🙂4🙂1🙂2🙂8🙂8🙂0🙂5").redactions.includes("telefono"), true);
+  assert.equal(redact("3·0·0·4·1·2·8·8·0·5").redactions.includes("telefono"), true);
+  assert.equal(redact("300|412|88|05 escríbeme").redactions.includes("telefono"), true);
+});
+
+test("una fecha no es un teléfono", () => {
+  assert.deepEqual(redact("nos vemos el 13/09/2026 a las 3").redactions, []);
+  assert.deepEqual(redact("entrega 2026-09-13").redactions, []);
+});
+
+test("hasContact dice si un texto público lleva contacto", () => {
+  assert.equal(hasContact("Bicicleta todoterreno rin 29"), false);
+  assert.equal(hasContact("Bicicleta, llama al 3004128805"), true);
+  assert.equal(hasContact("Camisa nueva, escríbeme por whatsapp"), true);
+  assert.equal(hasContact("ventas@tienda.com"), true);
+});
+
+test("un serial, un IMEI o un sello de trece o más dígitos no es un teléfono", () => {
+  assert.deepEqual(redact("Camisa avisada 1789304176463").redactions, []);
+  assert.deepEqual(redact("IMEI 490154203237518").redactions, []);
 });

@@ -297,3 +297,33 @@ test("quien no es administrador no puede suspender", async ({ browser }) => {
   await seller.context.close();
   await ctx.close();
 });
+
+// Hallazgos de la ronda de QA del 2026-09-13 (agente funcional).
+test("un alias con teléfono se rechaza", async ({ browser }) => {
+  const seller = await sellerWithListing(browser, `Alias ${Date.now()}`, 50_000, "ropa");
+  await seller.page.goto("/cuenta/editar");
+  await seller.page.getByLabel("Alias público").fill("3004128805");
+  await seller.page.getByRole("button", { name: "Guardar" }).click();
+  await expect(alertIn(seller.page)).toContainText("números de teléfono");
+  await seller.context.close();
+});
+
+test("dos cuentas no pueden tener el mismo alias, ni cambiando mayúsculas", async ({
+  browser,
+}) => {
+  const marca = Date.now();
+  const a = await sellerWithListing(browser, `Uno ${marca}`, 50_000, "ropa");
+  await a.page.goto("/cuenta/editar");
+  await a.page.getByLabel("Alias público").fill(`Camila ${marca}`);
+  await a.page.getByRole("button", { name: "Guardar" }).click();
+  await expect(a.page.getByRole("status")).toContainText("Guardado");
+
+  const b = await sellerWithListing(browser, `Dos ${marca}`, 50_000, "ropa");
+  await b.page.goto("/cuenta/editar");
+  await b.page.getByLabel("Alias público").fill(`CAMILA ${marca}`);
+  await b.page.getByRole("button", { name: "Guardar" }).click();
+  await expect(alertIn(b.page)).toContainText("ya lo usa otra persona");
+
+  await a.context.close();
+  await b.context.close();
+});

@@ -40,7 +40,16 @@ export default async function Editar({ params }: { params: Promise<{ id: string 
           Volver al artículo
         </Link>
         <h1 className="mt-4 font-title text-xl font-semibold">Editar publicación</h1>
-        <EditForm listing={listing} />
+        {["vendida", "retirada", "rechazada"].includes(listing.status) ? (
+          // El servidor ya lo rechazaba; mostrar el formulario entero era
+          // invitar a llenarlo para nada (hallazgo de QA, 2026-09-13).
+          <p role="status" className="mt-4 rounded-xl bg-ph px-4 py-3 text-sm text-ink2">
+            Una publicación {listing.status} ya no se puede editar. Si quieres volver a
+            ofrecerla, publícala de nuevo con un video actual.
+          </p>
+        ) : (
+          <EditForm listing={listing} />
+        )}
       </main>
     </>
   );

@@ -337,3 +337,44 @@ test("un código ya usado no sirve otra vez", async ({ page }) => {
   await page.goto("/verificar");
   await expect(page).toHaveURL(/^[^?]*\/$|\/$/);
 });
+
+// Hallazgo de la ronda de QA del 2026-09-13 (agente técnico, CRÍTICO): el mismo
+// celular quedaba verificado en dos cuentas. La D-01 dice que el número
+// verificado es lo que impide las cuentas desechables; con dos cuentas por
+// número, no lo impedía.
+test("un celular ya confirmado en otra cuenta no confirma una segunda", async ({
+  browser,
+}) => {
+  const { phoneDigits } = uniqueAccount();
+  const phone = `+57${phoneDigits}`;
+
+  const a = await browser.newContext();
+  const pageA = await a.newPage();
+  await fillRegistration(pageA, uniqueAccount().email, phoneDigits);
+  await pageA.getByLabel("Código de seis dígitos").fill(await readOtp(phone));
+  await pageA.getByRole("button", { name: "Confirmar celular" }).click();
+  await expect(pageA.getByTestId("usuario")).toBeVisible();
+
+  const b = await browser.newContext();
+  const pageB = await b.newPage();
+  const emailB = uniqueAccount().email;
+  await fillRegistration(pageB, emailB, phoneDigits);
+  await pageB.getByLabel("Código de seis dígitos").fill(await readOtp(phone));
+  await pageB.getByRole("button", { name: "Confirmar celular" }).click();
+  await expect(alertIn(pageB)).toContainText("ya está confirmado en otra cuenta");
+
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  await client.connect();
+  try {
+    const { rows } = await client.query<{ n: string }>(
+      `select count(*)::text as n from "user"
+        where "phoneNumber" = $1 and "phoneNumberVerified"`,
+      [phone]
+    );
+    expect(Number(rows[0].n)).toBe(1);
+  } finally {
+    await client.end();
+  }
+  await a.close();
+  await b.close();
+});

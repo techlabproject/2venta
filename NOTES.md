@@ -4,8 +4,14 @@
 
 ## En qué voy
 
-Las tres fases del plan más trece rebanadas posteriores. 239 pruebas de navegador y
-96 unitarias (seis de ellas contra MinIO).
+Las tres fases del plan más catorce rebanadas posteriores. 253 pruebas de navegador
+y 103 unitarias (seis de ellas contra MinIO).
+
+**Ronda de QA con tres agentes (2026-09-13):** informes en `qa/agentes-2026-09-13/`
+y la respuesta en `respuesta.md`. Cinco hallazgos críticos o altos reales, todos
+cerrados con prueba: celular verificado en dos cuentas, filtro anti-desvío ausente
+en título/descripción/alias/razón social, emoji entre dígitos, fichas no activas
+visibles con botón de compra, byte nulo con 500.
 
 **Todos los requisitos funcionales originales están construidos.** Ahora se está
 llevando a AWS siguiendo `ARQUITECTURA.md`:
@@ -213,6 +219,15 @@ conectar y cuentas por crear.
 | Correo (SES) | las alertas se guardan, no se envían | un dominio propio: sin él, el remitente no pasa DMARC |
 | `prod` | definido, plan válido, sin aplicar | SMS real + pasar la cuenta a plan de pago |
 | Dominio propio | no hay; CloudFront da `*.cloudfront.net` con HTTPS | comprarlo (Route 53) |
+
+## Pendientes de diseño que dejó la ronda de QA
+
+- Chat con oferta activa: "Aceptar" y "Enviar" compiten por el acento mostaza.
+- "Crear una cuenta" desde ingresar pasa por un paso extra; comprar sin cuenta no
+  explica por qué pide iniciar sesión.
+- CSP: falta; requiere nonces para los scripts en línea de Next.
+- Para la próxima ronda: un agente por base de datos, y "todo en primer plano"
+  en el brief.
 
 ## Siguiente paso concreto
 

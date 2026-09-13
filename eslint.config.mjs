@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // El worker empaquetado por esbuild.
     "dist/**",
+    // Exploraciones de los agentes de QA: no son código del producto.
+    "e2e/qa/**",
   ]),
 ]);
 

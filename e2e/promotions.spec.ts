@@ -218,3 +218,38 @@ test("un webhook de destacado con referencia desconocida se rechaza", async ({
   );
   expect(res.status()).toBe(404);
 });
+
+// D-65, a partir de una duda de la ronda de QA del 2026-09-13.
+test("retirar la publicación termina el destacado, sin devolución", async ({ browser }) => {
+  const seller = await sellerWithListing(browser, `Destacada y retirada ${Date.now()}`, 90_000);
+  await promote(seller.page, seller.listingId);
+
+  await seller.page.goto(`/producto/${seller.listingId}`);
+  await seller.page.getByRole("button", { name: "Retirar la publicación" }).click();
+  // Mientras la acción corre el botón dice "Guardando…"; se espera al estado final,
+  // que para una retirada es que desaparezca el bloque entero del vendedor.
+  await expect(seller.page.getByRole("button", { name: "Marcar como vendida" })).toHaveCount(0);
+  await expect.poll(async () =>
+    withDb(async (c) => {
+      const { rows } = await c.query<{ status: string }>(
+        `select status from listings where id = $1`,
+        [seller.listingId]
+      );
+      return rows[0].status;
+    })
+  ).toBe("retirada");
+
+  const state = await withDb(async (c) => {
+    const { rows } = await c.query<{ status: string; n: string }>(
+      `select l.status,
+              (select count(*) from promotions p
+                where p.listing_id = l.id and p.status = 'activa' and p.ends_at > now())::text as n
+         from listings l where l.id = $1`,
+      [seller.listingId]
+    );
+    return rows[0];
+  });
+  expect(state.status).toBe("retirada");
+  expect(Number(state.n)).toBe(0);
+  await seller.context.close();
+});

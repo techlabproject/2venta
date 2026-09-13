@@ -145,3 +145,20 @@ test("una comilla en la búsqueda no altera la consulta", async ({ page }) => {
   await expect(card(page, "Chaqueta de jean")).toHaveCount(1);
   await expect(card(page, "Coche Chicco")).toHaveCount(1);
 });
+
+// Hallazgos de la ronda de QA del 2026-09-13 (agente técnico).
+test("un byte nulo en la búsqueda o en un filtro no tumba la petición", async ({ request }) => {
+  for (const url of ["/buscar?q=algo%00malicioso", "/buscar?zona=algo%00x", "/buscar?categoria=ropa%00"]) {
+    const res = await request.get(url);
+    expect(res.status(), url).toBe(200);
+  }
+});
+
+test("las respuestas llevan cabeceras de defensa en profundidad", async ({ request }) => {
+  const res = await request.get("/");
+  const h = res.headers();
+  expect(h["x-content-type-options"]).toBe("nosniff");
+  expect(h["x-frame-options"]).toBe("DENY");
+  expect(h["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+  expect(h["x-powered-by"]).toBeUndefined();
+});

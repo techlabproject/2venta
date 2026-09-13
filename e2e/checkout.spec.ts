@@ -345,3 +345,27 @@ test("la tarea de liberación automática exige su secreto", async ({ request })
   });
   expect(malo.status()).toBe(401);
 });
+
+// Hallazgo de la ronda de QA del 2026-09-13 (agente de usuario): comprar algo en
+// revisión decía "alguien se adelantó", que no era verdad.
+test("intentar pagar algo en revisión dice que está en revisión", async ({ browser }) => {
+  const seller = await sellerWithListing(browser, `Celular en revisión ${Date.now()}`, 900_000);
+  const ctx = await browser.newContext();
+  const buyer = await ctx.newPage();
+  await signUpVerified(buyer, "comprador", "Laura Compradora");
+
+  // Se llega al formulario mientras está activa y se cambia el estado antes de pagar.
+  await buyer.goto(`/comprar/${seller.listingId}`);
+  await buyer.getByLabel("Quién recibe").fill("Laura Torres");
+  await buyer.getByLabel("Celular de quien recibe").fill("300 412 88 05");
+  await buyer.getByLabel("Dirección").fill("Calle 72 #10-34");
+  await buyer.getByLabel("Zona").selectOption("Chapinero");
+  await withDb((c) =>
+    c.query(`update listings set status = 'en_revision' where id = $1`, [seller.listingId])
+  );
+  await buyer.getByRole("button", { name: "Ir a pagar" }).click();
+  await expect(alertIn(buyer)).toContainText("en revisión");
+
+  await seller.context.close();
+  await ctx.close();
+});

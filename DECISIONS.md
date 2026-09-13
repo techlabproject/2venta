@@ -575,3 +575,26 @@ también llegan portadas y fotos, y quien sabe que hay un video nuevo es quien
 lo acaba de publicar. Funciona igual en el portátil con el proveedor de prueba.
 **Qué se sirve mientras tanto.** El original. Quien tenga el mismo tipo de
 teléfono que el vendedor lo ve igual que antes; el resto, en pocos minutos.
+
+### D-65 — Al retirar o vender, el destacado termina y no se devuelve
+`setListingStatus` cierra los destacados activos al pasar a `retirada` o `vendida`.
+**Por qué.** Nadie va a ver un destacado de algo que ya no se ofrece, y fue el
+vendedor quien la sacó. Devolver una parte proporcional exige contabilidad que no
+existe y un proveedor de pagos real.
+**Origen.** Duda de la ronda de QA del 2026-09-13.
+
+### D-66 — La D-22 aplica a todo lo público, y en los campos de identidad se rechaza
+Título, descripción, alias y razón social pasan por el mismo detector que el
+chat. En ellos no se oculta con "•••••": se rechaza con explicación.
+**Por qué.** Un teléfono en el título es la forma más cómoda de salirse del pago
+protegido, más que el chat. Y un título o un alias con un hueco no dicen nada.
+**Qué no cubre.** La nota de dirección (la ven las dos partes; el celular de quien
+recibe es legítimo) y el detalle de un reporte (lo lee un administrador).
+**Origen.** Tres hallazgos críticos de la ronda de QA del 2026-09-13.
+
+### D-67 — El alias elegido no puede ser el de otra persona; el derivado sí puede repetirse
+Al cambiar el alias se comprueba que no lo use nadie más (sin distinguir
+mayúsculas). No hay índice único.
+**Por qué.** El alias inicial se deriva del nombre ("Catalina R.", D-04) y dos
+personas con el mismo nombre son inevitables; un índice único rompía el registro.
+Lo que importa cerrar es hacerse pasar a propósito por alguien concreto.

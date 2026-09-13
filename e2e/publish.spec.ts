@@ -134,3 +134,21 @@ test("la aplicación ya no sirve archivos: eso lo hace el bucket (D-50)", async 
   const res = await request.get("/api/media/2026-09/00000000-0000-4000-8000-000000000000.webm");
   expect(res.status()).toBe(404);
 });
+
+// Hallazgo de la ronda de QA del 2026-09-13 (agente de usuario): al vendedor
+// nadie le decía cuánto le queda después de la comisión.
+test("al escribir el precio, el vendedor ve cuánto le llega después de la comisión", async ({
+  page,
+}) => {
+  await signUpVerified(page, "vendedor", "Andrés Molina");
+  await approveKyc(page);
+  await page.goto("/publicar");
+
+  await page.getByLabel("Precio").fill("200000");
+  await expect(page.getByTestId("te-llegan")).toContainText("$ 190.000");
+  await expect(page.getByTestId("te-llegan")).toContainText("$ 10.000");
+
+  // Por debajo del mínimo no se calcula nada.
+  await page.getByLabel("Precio").fill("5000");
+  await expect(page.getByTestId("te-llegan")).toHaveCount(0);
+});

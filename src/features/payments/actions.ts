@@ -120,6 +120,19 @@ export async function buyListing(
         claimed.map((c) => c.id),
       ]);
     }
+    // Decir por qué: "alguien se adelantó" no es verdad si el artículo está en
+    // revisión o retirado (hallazgo de QA, 2026-09-13).
+    const states = await query<{ status: string }>(
+      `select status from listings where id = any($1::uuid[]) and status <> 'activa'`,
+      [ids]
+    );
+    const status = states[0]?.status;
+    if (status === "en_revision") {
+      return { error: "Ese artículo todavía está en revisión. Podrás comprarlo cuando quede visible." };
+    }
+    if (status === "retirada" || status === "vendida") {
+      return { error: "Ese artículo ya no está a la venta." };
+    }
     return { error: "Alguien más se adelantó: algo de tu pedido ya no está disponible." };
   }
 

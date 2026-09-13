@@ -1,5 +1,6 @@
 "use server";
 
+import { CONTACT_REJECTED, hasContact } from "@/features/chat/redact";
 import { revalidatePath } from "next/cache";
 import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
@@ -27,6 +28,8 @@ export async function registerStore(
 
   const legalName = String(form.get("legalName") ?? "").trim().slice(0, 200);
   if (legalName.length < 3) return { error: "Escribe la razón social de la tienda." };
+  // La razón social reemplaza al alias en el perfil público: mismo listón.
+  if (hasContact(legalName)) return { error: `La razón social ${CONTACT_REJECTED.charAt(0).toLowerCase()}${CONTACT_REJECTED.slice(1)}` };
 
   const rawNit = String(form.get("nit") ?? "");
   if (!isValidNit(rawNit)) {

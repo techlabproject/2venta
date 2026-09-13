@@ -99,6 +99,16 @@ export async function setListingStatus(
     return { error: "Esa publicación no es tuya o ya no está en ese estado." };
   }
 
+  // D-65: al retirar o marcar vendida, el destacado termina y no se devuelve.
+  // Nadie lo va a ver, y era el vendedor quien decidió sacarla.
+  if (to === "retirada" || to === "vendida") {
+    await query(
+      `update promotions set ends_at = now()
+        where listing_id = $1 and status = 'activa' and ends_at > now()`,
+      [id]
+    );
+  }
+
   revalidatePath(`/producto/${id}`);
   revalidatePath("/");
   revalidatePath("/vender/metricas");

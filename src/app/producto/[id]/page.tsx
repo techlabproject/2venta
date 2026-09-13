@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getListing } from "@/features/catalog/queries";
 import { CONDITION_LABEL } from "@/features/catalog/labels";
 import { formatCop } from "@/lib/money";
+import { commissionCop, sellerPayoutCop } from "@/features/payments/money";
 import { AppHeader } from "@/components/AppHeader";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { BuyButton } from "@/features/payments/BuyButton";
@@ -35,8 +36,18 @@ export default async function ListingPage({
   // excepción ni en una pantalla en blanco.
   if (!listing) notFound();
 
-  const questions = await listQuestions(listing.id);
   const isSeller = user?.id === listing.seller_id;
+  // Lo que nunca pasó por la garantía del video o ya no se ofrece no tiene ficha
+  // pública: un borrador de carga en lote, algo en revisión o rechazado, o algo
+  // retirado, solo lo ve su dueño o un administrador (hallazgo de QA,
+  // 2026-09-13). Vendida y reservada sí se ven: son historia real y el enlace
+  // pudo compartirse.
+  const publicStatuses = ["activa", "reservada", "vendida"];
+  if (!publicStatuses.includes(listing.status) && !isSeller && user?.role !== "admin") {
+    notFound();
+  }
+
+  const questions = await listQuestions(listing.id);
   const promotion = isSeller ? await getActivePromotion(listing.id) : null;
   // S-15: no cuenta las vistas del propio vendedor, que si no vería su publicación
   // llena de visitas suyas y creería que interesa.
@@ -106,7 +117,19 @@ export default async function ListingPage({
           <p className="mt-1 text-muted">
             Guardamos tu plata hasta que confirmes que recibiste el producto.
           </p>
-          <BuyButton listingId={listing.id} />
+          {listing.status === "activa" ? (
+            <BuyButton listingId={listing.id} />
+          ) : (
+            // Vendida o reservada: la ficha se ve (el enlace pudo compartirse),
+            // pero no se invita a comprar lo que ya no está (hallazgo de QA).
+            <p role="status" className="mt-4 rounded-xl bg-ph px-4 py-3 text-sm text-ink2">
+              {listing.status === "vendida"
+                ? "Este artículo ya se vendió."
+                : listing.status === "reservada"
+                  ? "Este artículo está reservado para otra persona."
+                  : "Este artículo no está disponible."}
+            </p>
+          )}
           {user && !isSeller && listing.status === "activa" && (
             <AddToCartButton listingId={listing.id} inCart={inCart} />
           )}
@@ -150,6 +173,13 @@ export default async function ListingPage({
         {isSeller && ["activa", "reservada", "en_revision"].includes(listing.status) && (
           <section className="mt-8 rounded-2xl bg-white p-4 text-sm">
             <h2 className="font-medium">Tu publicación</h2>
+            {/* Lo que más le importa al vendedor y nadie le decía (hallazgo de
+                QA, 2026-09-13): cuánto le queda después de la comisión. */}
+            <p className="mt-1 text-muted">
+              Si se vende por {formatCop(listing.price_cop)}, te llegan{" "}
+              <b className="text-ink">{formatCop(sellerPayoutCop(listing.price_cop))}</b> después
+              de la comisión de 2venta ({formatCop(commissionCop(listing.price_cop))}).
+            </p>
 
             {/* RF-16 y RF-17. Sin esto, un error de dedo en el precio se queda para
                 siempre y un artículo vendido por fuera sigue apareciendo. */}

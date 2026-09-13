@@ -281,3 +281,18 @@ test("quien no es tienda no puede usar la carga en lote", async ({ browser }) =>
 
   await ctx.close();
 });
+
+// Hallazgo de la ronda de QA del 2026-09-13 (agente funcional).
+test("una razón social con teléfono o enlace se rechaza", async ({ browser }) => {
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  const { email } = await signUpVerified(page, "tienda", "Camila Vendedora");
+  await approveKycFor(email);
+
+  await page.goto("/tienda");
+  await page.getByLabel("Razón social").fill("Tienda 3004128805 S.A.S.");
+  await page.getByLabel("NIT").fill(freshNit());
+  await page.getByRole("button", { name: "Registrar la tienda" }).click();
+  await expect(alertIn(page)).toContainText("números de teléfono");
+  await ctx.close();
+});

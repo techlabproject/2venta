@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
-import { redact } from "@/features/chat/redact";
+import { CONTACT_REJECTED, hasContact, redact } from "@/features/chat/redact";
 
 export type ProfileResult = { error: string };
 
@@ -18,6 +18,23 @@ export async function updateProfile(
   if (alias.length < 2 || alias.length > 40) {
     return { error: "El alias tiene entre 2 y 40 caracteres." };
   }
+  // El alias es lo más público que hay: un teléfono ahí se ve en cada tarjeta
+  // (hallazgo de QA, 2026-09-13).
+  if (hasContact(alias)) return { error: `El alias ${CONTACT_REJECTED.charAt(0).toLowerCase()}${CONTACT_REJECTED.slice(1)}` };
+  // Un alias elegido no puede ser el de otra persona, sin distinguir mayúsculas
+  // (hallazgo de QA, 2026-09-13). No es un índice único: el alias inicial se
+  // deriva del nombre ("Catalina R.") y dos Catalinas R. son inevitables (D-04).
+  // Lo que se cierra es hacerse pasar a propósito por alguien concreto.
+  // Solo se comprueba al cambiarlo: quien guarda su perfil con el alias de
+  // siempre no tiene por qué chocar con otra "Camila V." que llegó después.
+  if (alias.toLowerCase() !== (user.alias ?? "").toLowerCase()) {
+    const alreadyUsed = await query<{ id: string }>(
+      `select id from "user" where lower(alias) = lower($1) and id <> $2 limit 1`,
+      [alias, user.id]
+    );
+    if (alreadyUsed.length) return { error: "Ese alias ya lo usa otra persona. Elige otro." };
+  }
+
 
   const zone = String(form.get("zone") ?? "").trim().slice(0, 60) || null;
   // La descripción es pública, así que pasa por el mismo filtro que el chat.
