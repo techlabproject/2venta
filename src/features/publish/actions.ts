@@ -128,6 +128,8 @@ export async function publishListing(
   if (initialStatus(category) === "activa") {
     await enqueueOrLog({ type: "avisar", listingId: rows[0].id });
   }
+  // S-30: convertir el video a un formato que reproduzca cualquier teléfono.
+  await enqueueOrLog({ type: "transcodificar", key: videoPath });
 
   revalidatePath("/");
   return { id: rows[0].id };
@@ -175,6 +177,7 @@ export async function publishDraft(
   if (initialStatus(draft.category) === "activa") {
     await enqueueOrLog({ type: "avisar", listingId: draft.id });
   }
+  await enqueueOrLog({ type: "transcodificar", key: videoPath });
 
   revalidatePath("/");
   revalidatePath("/tienda");

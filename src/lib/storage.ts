@@ -22,15 +22,22 @@ export const MAX_BYTES = 60 * 1024 * 1024;
 /** Cuánto vale una URL de subida. Corto a propósito: se pide justo antes de usarla. */
 const UPLOAD_TTL_SECONDS = 5 * 60;
 
-/** La forma exacta de una clave que generó este módulo. Nada más se acepta. */
+/** La forma exacta de una clave de subida que generó este módulo. */
 export const KEY_PATTERN = /^\d{4}-\d{2}\/[0-9a-f-]{36}\.(webm|mp4|jpg|png)$/;
+/** La salida de la transcodificación (S-30): la escribe MediaConvert, no un cliente. */
+export const OUTPUT_PATTERN = /^transcodificado\/\d{4}-\d{2}\/[0-9a-f-]{36}\.mp4$/;
 
 export function isAllowedType(type: string): boolean {
   return type.split(";")[0] in EXTENSION;
 }
 
-export function isValidKey(key: string): boolean {
+/** Lo único que un cliente puede reclamar como suyo. */
+export function isUploadKey(key: string): boolean {
   return KEY_PATTERN.test(key);
+}
+
+export function isValidKey(key: string): boolean {
+  return KEY_PATTERN.test(key) || OUTPUT_PATTERN.test(key);
 }
 
 function bucket(): string {

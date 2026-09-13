@@ -60,7 +60,7 @@ async function signUp(page: Page, prefix: string, name: string, rol: string) {
 }
 
 test("el circuito completo funciona contra la nube", async ({ browser }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(480_000);
 
   // --- Vendedor: registro, identidad, publicación ---
   const sellerCtx = await browser.newContext();
@@ -97,6 +97,22 @@ test("el circuito completo funciona contra la nube", async ({ browser }) => {
   const media = await seller.request.get(src!);
   expect(media.status()).toBe(200);
   expect(media.headers()["content-type"]).toContain("video/");
+
+  // S-30: en pocos minutos MediaConvert deja el MP4 y la ficha pasa a servirlo.
+  await expect
+    .poll(
+      async () => {
+        await seller.reload();
+        return seller.getByTestId("video-articulo").getAttribute("src");
+      },
+      { timeout: 240_000, intervals: [10_000] }
+    )
+    .toMatch(/\/transcodificado\/\d{4}-\d{2}\/.*\.mp4$/);
+  const mp4 = await seller.request.get(
+    (await seller.getByTestId("video-articulo").getAttribute("src"))!
+  );
+  expect(mp4.status()).toBe(200);
+  expect(mp4.headers()["content-type"]).toBe("video/mp4");
 
   // --- Comprador: registro y compra con el proveedor de prueba ---
   const buyerCtx = await browser.newContext();

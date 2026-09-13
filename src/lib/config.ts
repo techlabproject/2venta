@@ -86,6 +86,11 @@ export const REQUIREMENTS: Requirement[] = [
     optional: true,
   },
   {
+    name: "MEDIACONVERT_ROLE_ARN",
+    purpose: "rol con el que MediaConvert lee y escribe el bucket; sin él, el video no se convierte",
+    optional: true,
+  },
+  {
     name: "SMS_PROVIDER_TOKEN",
     purpose: "envío real de los códigos por SMS (en desarrollo salen por consola)",
     productionOnly: true,

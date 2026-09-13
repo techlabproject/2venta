@@ -13,6 +13,7 @@ locals {
     { name = "MEDIA_BASE_URL", value = "https://${aws_cloudfront_distribution.media.domain_name}" },
     { name = "SQS_QUEUE_URL", value = aws_sqs_queue.trabajos.url },
     { name = "BETTER_AUTH_URL", value = "https://${aws_cloudfront_distribution.app.domain_name}" },
+    { name = "MEDIACONVERT_ROLE_ARN", value = aws_iam_role.mediaconvert.arn },
   ]
 }
 

@@ -5,7 +5,7 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   testMatch: /nube\.spec\.ts/,
-  timeout: 240_000,
+  timeout: 480_000,
   retries: 0,
   workers: 1,
   use: {

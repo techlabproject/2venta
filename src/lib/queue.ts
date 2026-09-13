@@ -8,9 +8,11 @@ import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 
 export type Job =
   | { type: "liberar" }
-  | { type: "avisar"; listingId: string };
+  | { type: "avisar"; listingId: string }
+  | { type: "transcodificar"; key: string }
+  | { type: "video_listo"; original: string; salida: string };
 
-const TYPES = new Set<Job["type"]>(["liberar", "avisar"]);
+const TYPES = new Set<Job["type"]>(["liberar", "avisar", "transcodificar", "video_listo"]);
 
 /** Interpreta el cuerpo de un mensaje. Devuelve null si no tiene la forma esperada. */
 export function parseJob(body: string): Job | null {
@@ -24,6 +26,10 @@ export function parseJob(body: string): Job | null {
   const job = raw as Record<string, unknown>;
   if (!TYPES.has(job.type as Job["type"])) return null;
   if (job.type === "avisar" && typeof job.listingId !== "string") return null;
+  if (job.type === "transcodificar" && typeof job.key !== "string") return null;
+  if (job.type === "video_listo" && (typeof job.original !== "string" || typeof job.salida !== "string")) {
+    return null;
+  }
   return job as Job;
 }
 

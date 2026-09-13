@@ -1,4 +1,4 @@
-import { describe, isValidKey, MAX_BYTES, type StoredObject } from "@/lib/storage";
+import { describe, isUploadKey, MAX_BYTES, type StoredObject } from "@/lib/storage";
 
 export type Claimed = { error: string } | { key: string; object: StoredObject };
 
@@ -17,7 +17,7 @@ export async function claim(
   kind: "video" | "image"
 ): Promise<Claimed> {
   const key = String(raw ?? "");
-  if (!isValidKey(key)) return { error: "Falta el video del artículo." };
+  if (!isUploadKey(key)) return { error: "Falta el video del artículo." };
 
   const object = await describe(key);
   if (!object || object.ownerId !== ownerId) {
