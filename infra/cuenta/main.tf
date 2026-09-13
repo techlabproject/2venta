@@ -61,10 +61,16 @@ data "aws_iam_policy_document" "github_trust" {
     }
     # Solo este repositorio puede asumir el rol: desde la rama main, o desde un
     # job que declara `environment: dev` (GitHub cambia el `sub` en ese caso).
+    # GitHub incluye en el `sub` los ids numéricos del dueño y del repositorio
+    # (`dueño@id/repo@id`); son inmutables aunque se renombre, y por eso se
+    # confían tal cual. Se dejan también las formas sin id por si el formato
+    # cambia de vuelta.
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
+        "repo:techlabproject@328214832/2venta@1366891746:ref:refs/heads/main",
+        "repo:techlabproject@328214832/2venta@1366891746:environment:dev",
         "repo:techlabproject/2venta:ref:refs/heads/main",
         "repo:techlabproject/2venta:environment:dev",
       ]
