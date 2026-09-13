@@ -11,6 +11,7 @@ import { REDACTION_NOTICE } from "@/features/chat/redact";
 import { MessageForm, OfferDecision, OfferForm } from "@/features/chat/ChatForms";
 import { AppHeader } from "@/components/AppHeader";
 import { formatCop } from "@/lib/money";
+import { mediaUrl } from "@/lib/media";
 
 // Pantalla 1h del mockup: chat interno con los pagos fuera de la app bloqueados.
 export const dynamic = "force-dynamic";
@@ -42,12 +43,41 @@ export default async function Chat({ params }: { params: Promise<{ id: string }>
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Link href={`/producto/${conversation.listing_id}`} className="text-sm text-ink2 underline">
-          {conversation.listing_title}
+        {/* El artículo, con su foto, encabeza la conversación: sin él el chat era
+            una lista de burbujas sin contexto, y no se sabía de qué se hablaba ni
+            con quién. */}
+        <Link
+          href={`/producto/${conversation.listing_id}`}
+          className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-line transition hover:ring-brand/30"
+        >
+          <img
+            src={mediaUrl(conversation.listing_poster_path)}
+            alt=""
+            className="h-14 w-14 shrink-0 rounded-xl bg-ph object-cover"
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium">
+              {conversation.listing_title}
+            </span>
+            <span className="block font-title text-base font-semibold tabular-nums">
+              {formatCop(conversation.listing_price_cop)}
+            </span>
+          </span>
         </Link>
-        <p className="mt-1 text-sm text-muted">
-          {formatCop(conversation.listing_price_cop)}
+
+        <p className="mt-3 text-sm text-muted">
+          Hablas con{" "}
+          <span className="font-medium text-ink">
+            {isBuyer ? conversation.seller_alias : conversation.buyer_alias}
+          </span>
         </p>
+
+        {messages.length === 0 && (
+          <p className="mt-6 rounded-2xl bg-white p-4 text-sm text-ink2">
+            Todavía no se han escrito. Pregúntale lo que necesites saber antes de
+            comprar: en qué estado está, por qué lo vende, si tiene la caja.
+          </p>
+        )}
 
         <ol className="mt-6 flex flex-col gap-3">
           {messages.map((m) => {
@@ -58,7 +88,7 @@ export default async function Chat({ params }: { params: Promise<{ id: string }>
                 className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
                   mine
                     ? "self-end rounded-br-md bg-brand text-cream"
-                    : "self-start rounded-bl-md bg-white"
+                    : "self-start rounded-bl-md bg-white ring-1 ring-line"
                 }`}
               >
                 <p>{m.body}</p>
@@ -101,9 +131,12 @@ export default async function Chat({ params }: { params: Promise<{ id: string }>
           </div>
         )}
 
+        {/* Escribir es la acción principal y va primero. Ofertar queda debajo y
+            en secundario: antes iba encima, y el ojo encontraba el campo de
+            precio antes que el de escribir. */}
         <div className="mt-6 flex flex-col gap-4">
-          {!pending && !accepted && <OfferForm conversationId={conversation.id} />}
           <MessageForm conversationId={conversation.id} />
+          {!pending && !accepted && <OfferForm conversationId={conversation.id} />}
         </div>
 
         <p className="mt-6 text-xs text-muted">

@@ -24,6 +24,10 @@ export type Conversation = {
   seller_id: string;
   listing_title: string;
   listing_price_cop: number;
+  listing_poster_path: string;
+  listing_status: string;
+  buyer_alias: string;
+  seller_alias: string;
 };
 
 /** Abre la conversación de ese comprador con ese artículo, o devuelve la que ya existe. */
@@ -47,8 +51,14 @@ export async function getConversation(id: string): Promise<Conversation | null> 
   if (!UUID.test(id)) return null;
   const rows = await query<Conversation>(
     `select c.id, c.listing_id, c.buyer_id, c.seller_id,
-            l.title as listing_title, l.price_cop as listing_price_cop
-       from conversations c join listings l on l.id = c.listing_id
+            l.title as listing_title, l.price_cop as listing_price_cop,
+            l.poster_path as listing_poster_path, l.status as listing_status,
+            coalesce(b.alias, b.name) as buyer_alias,
+            coalesce(s.alias, s.name) as seller_alias
+       from conversations c
+       join listings l on l.id = c.listing_id
+       join "user" b   on b.id = c.buyer_id
+       join "user" s   on s.id = c.seller_id
       where c.id = $1`,
     [id]
   );
