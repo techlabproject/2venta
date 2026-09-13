@@ -16,6 +16,12 @@ Marketplace de segunda mano para Colombia. Bogotá, tres categorías, pago prote
   y la suite completa contra ella: `E2E_BASE_URL=http://localhost:3200 npx playwright test`.
   Migraciones dentro de la imagen: `docker compose --profile imagen run --rm app node db/migrate.mts`.
 
+- Nube: `infra/` es Terraform; `dev` se despliega solo al hacer push a `main`
+  (GitHub Actions: `verificar` → `desplegar-dev`). A mano: ver `infra/LEEME.md`.
+  Perfil de la CLI: `AWS_PROFILE=2venta`.
+- Prueba de humo contra la nube (registro → publicar → comprar):
+  `NUBE_URL=https://d13g2bd9j8wj8k.cloudfront.net AWS_PROFILE=2venta npx playwright test --config playwright.nube.config.ts`
+
 `verify` vuelve a sembrar la base a propósito. Las pruebas crean artículos y
 cuentas que se acumulan, y sin reiniciar, cualquier aserción sobre rangos de precio
 o sobre resultados de búsqueda empieza a fallar de forma intermitente.

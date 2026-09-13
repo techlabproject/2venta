@@ -521,3 +521,44 @@ falta. Un archivo empaquetado no depende de nada de eso.
 (`session.ts`, acciones de servidor). Hoy no lo hace; si lo hiciera, el paquete
 crecería hasta incluir Next y sería la señal de que algo está en el sitio
 equivocado.
+
+### D-60 — CloudFront delante de un ALB, en vez de App Runner
+Los dos entornos corren en ECS Fargate detrás de un ALB, con CloudFront delante.
+Reemplaza a la D-55 en lo que a App Runner se refiere.
+**Por qué.** App Runner siguió en `SubscriptionRequired` en la cuenta nueva
+sin fecha para activarse. Y lo que App Runner iba a resolver, el HTTPS sin
+dominio, CloudFront lo resuelve igual: certificado propio en `*.cloudfront.net`.
+**Lo que se gana.** Es el destino que la D-49 ya fijaba; se salta la escala
+intermedia y la migración posterior que traía. CloudFront además es donde va
+el WAF y donde se asociará el dominio cuando exista.
+**Cómo se protege el balanceador.** Solo acepta tráfico desde la lista de
+prefijos administrada de CloudFront, y solo por HTTP: el cifrado con el usuario
+lo hace CloudFront. Una petición directa al DNS del ALB no llega ni al puerto.
+**Un detalle que muerde.** CloudFront reenvía la cabecera `Host` tal cual
+(política `AllViewer`). Next compara `Origin` con `Host` en las acciones de
+servidor; con el DNS del balanceador en `Host` las rechazaría todas.
+
+### D-61 — En `dev` las tareas tienen IP pública; en `prod` no
+En `dev`, las tareas de ECS corren en subredes públicas con IP pública y sin NAT.
+En `prod`, en privadas con NAT y endpoints de VPC (ARQUITECTURA.md 5.6).
+**Por qué.** Un NAT cuesta ~33 USD/mes y los cinco endpoints de interfaz que lo
+reemplazan, ~36. Para un entorno de desarrollo es más que todo lo demás junto.
+**Qué lo hace aceptable.** Los grupos de seguridad no admiten nada de entrada
+salvo el ALB hacia la web en el puerto 3000; el worker no admite nada. RDS está
+en subredes privadas en los dos entornos y no es accesible desde fuera de la VPC.
+**Dónde no aplica.** Nunca en `prod`: ahí hay dinero y datos personales reales.
+
+### D-62 — El estado de Terraform contiene los secretos, y se sabe
+Los secretos de firma y cifrado y la contraseña de RDS los genera Terraform y
+quedan en el estado, en un bucket privado, versionado y cifrado, con bloqueo.
+**Por qué.** Es lo que permite que `terraform apply` sea el único camino a la
+infraestructura, sin pasos a mano. Es aceptable para un MVP con una persona.
+**Consecuencia.** Quien lea el bucket de estado lee los secretos. No se amplía
+el acceso al bucket sin pensarlo, y cuando haya equipo se mueve la generación
+fuera del estado (Secrets Manager con rotación propia).
+
+### D-63 — `prod` se define, no se aplica
+`infra/envs/prod` existe con Multi-AZ, NAT, WAF y dos tareas, y no se aplica.
+**Por qué.** Sin proveedor de SMS la aplicación se niega a arrancar en
+`produccion` (D-47): serían ~170 USD/mes por un servicio que no puede recibir a
+nadie. Se aplica cuando R-02 tenga respuesta y exista `SMS_PROVIDER_TOKEN`.

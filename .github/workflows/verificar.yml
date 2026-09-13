@@ -1,0 +1,66 @@
+# La misma verificación que en el portátil: tipos, linter, unitarias, siembra y
+# las pruebas de navegador de punta a punta. Postgres, MinIO y ElasticMQ salen
+# del mismo docker-compose.yml.
+name: verificar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+
+      - name: Servicios locales
+        run: docker compose up -d --wait
+
+      - name: Dependencias
+        run: npm ci
+
+      - name: Navegadores de Playwright
+        run: npx playwright install --with-deps chromium
+
+      # Los secretos de desarrollo se generan para la corrida: no protegen nada
+      # real y cambian cada vez.
+      - name: Configuración de desarrollo
+        run: |
+          gen() { openssl rand -hex 24; }
+          cat > .env.local <<EOF
+          DATABASE_URL=postgres://2venta:local@localhost:5433/2venta
+          BETTER_AUTH_SECRET=$(gen)
+          BETTER_AUTH_URL=http://localhost:3100
+          PHONE_CODE_SECRET=$(gen)
+          PICKUP_CODE_SECRET=$(gen)
+          KYC_WEBHOOK_SECRET=$(gen)
+          PAYMENTS_WEBHOOK_SECRET=$(gen)
+          SHIPPING_WEBHOOK_SECRET=$(gen)
+          CRON_SECRET=$(gen)
+          AWS_REGION=us-east-1
+          AWS_ACCESS_KEY_ID=local
+          AWS_SECRET_ACCESS_KEY=localminio
+          S3_BUCKET=2venta-media
+          S3_ENDPOINT=http://localhost:9000
+          MEDIA_BASE_URL=http://localhost:9000/2venta-media
+          SQS_ENDPOINT=http://localhost:9324
+          SQS_QUEUE_URL=http://localhost:9324/000000000000/2venta-trabajos
+          EOF
+
+      - name: Verificación completa
+        run: npm run verify
+
+      - name: Evidencia de las pruebas que fallaron
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7

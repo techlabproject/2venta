@@ -35,8 +35,8 @@ async function main() {
   );
   await pool.query('truncate listings, categories, kyc_verifications, "user" restart identity cascade');
 
-  // D-05b: las tres categorías de la versión 1 salen de los mockups. Cambiar el
-  // conjunto es editar estas filas, no migrar el esquema.
+  // D-05b: las tres categorías de la versión 1. Las crea la migración 0008; se
+  // repiten aquí porque el truncate de arriba las borró.
   await pool.query(
     `insert into categories (slug, label, position) values
        ('tecnologia', 'Tecnología', 1),

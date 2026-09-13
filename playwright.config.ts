@@ -8,6 +8,8 @@ export const baseURL = external ?? "http://localhost:3100";
 
 export default defineConfig({
   testDir: "./e2e",
+  // La prueba de humo contra la nube tiene su propia configuración.
+  testIgnore: /nube\.spec\.ts/,
   // Compila las rutas antes de empezar: ver e2e/global-setup.ts.
   globalSetup: "./e2e/global-setup.ts",
   // Las pruebas de compra y envío abren varios contextos de navegador y graban

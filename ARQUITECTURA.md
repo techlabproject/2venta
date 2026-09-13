@@ -138,6 +138,11 @@ menos piezas y sin ALB. Se pierde el control fino del balanceador y la conexión
 directa de WAF. Válido mientras no haya tráfico; migrar a Fargate después es
 recrear infraestructura, no cambiar código.
 
+> **Lo que pasó (S-29, D-60).** App Runner no se activó en la cuenta nueva y se
+> fue directo a Fargate + ALB con CloudFront delante. CloudFront da el HTTPS sin
+> dominio que App Runner iba a dar. El estudio se mantiene como estaba; esta nota
+> dice qué se construyó.
+
 **Descartado:** EC2 administrado a mano (carga operativa sin beneficio a este
 tamaño) y EKS (Kubernetes para un servicio es un pasatiempo, no una arquitectura).
 
@@ -344,6 +349,15 @@ Empezar en App Runner en vez de Fargate + ALB quita unos 40 al mes mientras no h
 tráfico.
 
 ---
+
+## 8b. Lo que está construido (S-26 a S-29)
+
+Todo lo de la sección 5 está en `infra/` como Terraform, y `dev` está aplicado.
+Diferencias respecto al estudio: CloudFront + ALB en vez de App Runner (D-60);
+en `dev` las tareas tienen IP pública en vez de NAT (D-61); `prod` está definido
+y sin aplicar hasta que exista proveedor de SMS (D-63). Lo que sigue simulado:
+pagos, identidad, transportadora, SMS, correo. Lo que falta de la 5.4: la
+transcodificación con MediaConvert.
 
 ## 9. Lo que falta en el código
 

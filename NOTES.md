@@ -15,15 +15,19 @@ llevando a AWS siguiendo `ARQUITECTURA.md`:
 - S-27 archivos en S3 con URL prefirmada (D-50, D-57): HECHA. MinIO en el
   portátil, bucket real en S-29.
 - S-28 worker y cola SQS (D-51, D-58, D-59): HECHA. ElasticMQ en el portátil.
-- S-29 Terraform con `dev` y `prod` en la misma cuenta (D-53) + GitHub Actions:
-  siguiente. Es el primer despliegue real.
-- Después: transcodificar el video con MediaConvert (necesita el bucket real).
+- S-29 infraestructura y primer despliegue (D-60 a D-63): HECHA. `dev` corre en
+  AWS: https://d13g2bd9j8wj8k.cloudfront.net . La prueba de humo
+  `e2e/nube.spec.ts` recorre registro → identidad → publicar con video → compra
+  contra la nube. `prod` definido, sin aplicar.
+- Siguiente: transcodificar el video con MediaConvert (ya hay bucket real).
 
 Cuenta de AWS `681842289811`, perfil de CLI `2venta` (usuario `nicolas-cli`,
 `AdministratorAccess`, región `us-east-1`). MFA en la raíz activa, presupuesto de
-50 USD/mes con alertas a dos correos. App Runner aún decía `SubscriptionRequired`
-el 2026-09-13 (cuenta nueva); comprobar antes de S-29. Repositorio remoto:
-`github.com/techlabproject/2venta`, público por decisión de Nicolás.
+50 USD/mes con alertas a dos correos. **La cuenta está en el plan gratuito de
+AWS**: por eso App Runner dice `SubscriptionRequired` y RDS no admite más de un
+día de respaldo (`FreeTierRestrictionError`). Pasarla a plan de pago (Billing →
+Account plan) quita las dos restricciones; hasta entonces `dev` corre con 1 día
+de respaldo. Repositorio: `github.com/techlabproject/2venta`, público.
 
 De lo que queda a medias, ya casi nada es código propio: son proveedores por
 conectar y cuentas por crear.
@@ -122,6 +126,17 @@ conectar y cuentas por crear.
   propia, y una prueba de punta a punta por rebanada en `e2e/`.
 
 ## Qué aprendí que no está en ningún otro archivo
+
+- Las categorías (D-05b) solo las creaba `db/seed.ts`. En la nube la tabla
+  estaba vacía y no se podía publicar. Ahora las crea la migración 0008; el
+  dato de referencia del producto va en migraciones, el de prueba en el seed.
+- Los nombres de RDS (instancia y grupo de subredes) no pueden empezar por
+  dígito; por eso son `dosventa-*` y no `2venta-*`.
+- Desde esta red, `scheduler.us-east-1.amazonaws.com` a veces no responde
+  (`terraform plan` falla al refrescar el programador). Reintentar o `-target`.
+- El primer `apply` de un entorno deja las tareas de ECS caídas porque el
+  secreto no tiene valor hasta que RDS existe; se arregla con
+  `aws ecs update-service --force-new-deployment` después de migrar.
 
 - Las pruebas corren en paralelo y comparten la cola: el `--una-vez` de una
   prueba puede tomar el mensaje de otra. `runWorkerOnce()` espera a que no quede

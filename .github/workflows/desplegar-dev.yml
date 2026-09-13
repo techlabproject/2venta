@@ -1,0 +1,95 @@
+# Despliegue a dev (ARQUITECTURA.md 5.8): verificar → imagen a ECR → migraciones
+# como tarea aparte → Terraform con la etiqueta nueva. Entra a AWS con OIDC; no
+# hay llaves guardadas en el repositorio.
+name: desplegar-dev
+
+on:
+  workflow_run:
+    workflows: [verificar]
+    branches: [main]
+    types: [completed]
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: desplegar-dev
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  ECR: 681842289811.dkr.ecr.us-east-1.amazonaws.com/2venta
+
+jobs:
+  desplegar:
+    # Solo si la verificación pasó. Un despliegue que no pasó las pruebas no sale.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROL_DESPLIEGUE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Etiqueta de la imagen
+        run: echo "TAG=main-$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+
+      - name: Construir y subir la imagen
+        run: |
+          docker build --platform linux/amd64 -t "$ECR:$TAG" .
+          docker push "$ECR:$TAG"
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.1"
+          terraform_wrapper: false
+
+      - name: Terraform init
+        working-directory: infra/envs/dev
+        run: terraform init -input=false
+
+      # Las migraciones corren con la imagen nueva ANTES de actualizar los
+      # servicios, como tarea aparte. Primero se registra la definición con la
+      # imagen nueva (solo esa), luego se lanza y se espera a que termine bien.
+      - name: Migraciones
+        working-directory: infra/envs/dev
+        run: |
+          terraform apply -input=false -auto-approve -var image_tag="$TAG" \
+            -target=module.entorno.aws_ecs_task_definition.migrar
+          CLUSTER=$(terraform output -raw cluster)
+          TASKDEF=$(terraform output -raw task_migrar)
+          SUBNETS=$(terraform output -json subredes_tareas | jq -r 'join(",")')
+          SG=$(terraform output -raw sg_web)
+          IP=$(terraform output -raw asignar_ip_publica)
+          ARN=$(aws ecs run-task --cluster "$CLUSTER" --task-definition "$TASKDEF" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SG],assignPublicIp=$IP}" \
+            --query 'tasks[0].taskArn' --output text)
+          aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$ARN"
+          CODIGO=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$ARN" \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          echo "La tarea de migración terminó con código $CODIGO"
+          test "$CODIGO" = "0"
+
+      - name: Terraform apply
+        working-directory: infra/envs/dev
+        run: terraform apply -input=false -auto-approve -var image_tag="$TAG"
+
+      - name: Esperar a que los servicios queden estables
+        run: |
+          aws ecs wait services-stable --cluster 2venta-dev --services web worker
+
+      - name: Comprobar salud desde CloudFront
+        working-directory: infra/envs/dev
+        run: |
+          URL=$(terraform output -raw url)
+          curl --fail --silent --show-error "$URL/api/salud"
