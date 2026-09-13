@@ -35,6 +35,10 @@ COPY --from=build --chown=app:app /app/db/migrate.mts ./db/migrate.mts
 COPY --from=build --chown=app:app /app/db/migrations ./db/migrations
 # El worker: el mismo código, empaquetado en un archivo (D-51).
 COPY --from=build --chown=app:app /app/dist/worker.cjs ./worker.cjs
+# La demostración (cuentas de prueba y artículos con fotos), para cargarla en un
+# entorno de desarrollo como tarea aparte. Se niega a correr en producción.
+COPY --from=build --chown=app:app /app/dist/demo.cjs ./demo.cjs
+COPY --from=build --chown=app:app /app/db/demo/media ./db/demo/media
 # La CA de RDS: la conexión a la base verifica el certificado del servidor
 # (sslmode=verify-full&sslrootcert=/app/rds-ca.pem). Sin esto, `pg` no comprueba nada.
 ADD --chown=app:app https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem ./rds-ca.pem

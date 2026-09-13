@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && npm run build:worker",
+    "build": "next build && npm run build:worker && npm run build:demo",
     "build:worker": "esbuild src/worker/index.ts --bundle --platform=node --target=node26 --format=cjs --outfile=dist/worker.cjs --external:pg-native --log-level=warning",
     "worker": "tsx src/worker/index.ts",
+    "demo": "node --env-file=.env.local --import tsx db/demo.mts",
+    "build:demo": "esbuild db/demo.mts --bundle --platform=node --target=node26 --format=cjs --outfile=dist/demo.cjs --external:pg-native --log-level=warning",
     "start": "next start",
     "lint": "eslint",
     "db:up": "docker compose up -d --wait db minio elasticmq && docker compose run --rm minio-init",

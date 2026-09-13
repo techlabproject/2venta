@@ -7,6 +7,11 @@ Marketplace de segunda mano para Colombia. Bogotá, tres categorías, pago prote
 - Desarrollo: `npm run dev`
 - Base, bucket y cola locales: `docker compose up -d` (Postgres 5433, MinIO 9000, ElasticMQ 9324)
 - Worker en desarrollo: `npm run worker` (o `-- --una-vez` para vaciar la cola y salir)
+- Demostración con fotos y cuentas de prueba (con `npm run dev` corriendo):
+  `BETTER_AUTH_URL=http://localhost:3100 npm run demo -- --limpiar-pruebas`.
+  Cuentas: `camila@`, `andres@` (vendedores verificados), `laura@` (compradora),
+  `admin@2venta.demo`, todas con contraseña `Demo2venta.2026`. En la nube se corre
+  como tarea de ECS con la definición `migrar` y el comando `node demo.cjs`.
 - Migraciones: `npm run db:migrate`
 - Datos de prueba: `npm run db:seed`
 - Verificación completa antes de confirmar cambios: `npm run verify`
