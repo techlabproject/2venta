@@ -90,6 +90,13 @@ resource "aws_iam_role_policy" "web" {
         Action   = ["s3:PutObject", "s3:GetObject"]
         Resource = "${aws_s3_bucket.media.arn}/*"
       },
+      # Sin ListBucket, un HeadObject sobre una clave que no existe devuelve 403
+      # en vez de 404, y describe() no puede distinguir "no existe" de "no puedo".
+      {
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
+        Resource = aws_s3_bucket.media.arn
+      },
       {
         Effect   = "Allow"
         Action   = ["sqs:SendMessage"]

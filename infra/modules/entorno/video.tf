@@ -60,6 +60,12 @@ resource "aws_iam_role_policy" "worker_video" {
         Action   = ["s3:GetObject"]
         Resource = "${aws_s3_bucket.media.arn}/*"
       },
+      # Ver el comentario equivalente en ecs.tf: HeadObject sin ListBucket da 403.
+      {
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
+        Resource = aws_s3_bucket.media.arn
+      },
       {
         Effect   = "Allow"
         Action   = ["sqs:SendMessage"]

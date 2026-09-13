@@ -108,6 +108,9 @@ el número y se le manda el código antes de dejarlo comprar o escribir.
   tienen que pasarle la ruta explícita. Las unitarias lo cargan con
   `node --env-file`, porque `claim.test.ts` habla con MinIO.
 - Las imágenes de MinIO viven en `quay.io/minio/*`; las de Docker Hub ya no existen.
+- En S3 de verdad, `HeadObject` sobre una clave inexistente devuelve **403, no 404**,
+  si el rol no tiene `s3:ListBucket` sobre el bucket. MinIO no lo hace. Los roles
+  de web y worker lo tienen por eso; no quitarlo.
 - Al firmar con `getSignedUrl`, las cabeceras que deban quedar dentro de la firma
   van en `signableHeaders` **y** `unhoistableHeaders`; si no, el SDK las mueve a la
   URL y S3 rechaza el PUT por "cabeceras sin firmar".
