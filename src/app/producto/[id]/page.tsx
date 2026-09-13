@@ -145,37 +145,70 @@ export default async function ListingPage({
               {listing.description}
             </p>
 
-            <div className="mt-6 rounded-2xl bg-white p-4 text-sm">
-              <p className="font-medium">Pago protegido</p>
-              <p className="mt-1 text-muted">
-                Guardamos tu plata hasta que confirmes que recibiste el
-                producto.
-              </p>
-              {listing.status === "activa" ? (
-                <BuyButton listingId={listing.id} />
-              ) : (
-                // Vendida o reservada: la ficha se ve (el enlace pudo compartirse),
-                // pero no se invita a comprar lo que ya no está (hallazgo de QA).
-                <p
-                  role="status"
-                  className="mt-4 rounded-xl bg-ph px-4 py-3 text-sm text-ink2"
+            {/* El pago protegido es, con el video, la razón de existir del
+                producto. Tenía la misma tarjeta blanca que las preguntas de más
+                abajo: se leía como una caja de ayuda. Ahora lleva el verde de
+                marca y es el punto focal de la columna de compra. */}
+            <div className="mt-6 overflow-hidden rounded-2xl shadow-sm">
+              <div className="flex items-start gap-3 bg-brand p-5 text-cream">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="mt-0.5 h-7 w-7 shrink-0 text-accent"
+                  aria-hidden="true"
                 >
-                  {listing.status === "vendida"
-                    ? "Este artículo ya se vendió."
-                    : listing.status === "reservada"
-                      ? "Este artículo está reservado para otra persona."
-                      : "Este artículo no está disponible."}
-                </p>
-              )}
-              {user && !isSeller && listing.status === "activa" && (
-                <AddToCartButton listingId={listing.id} inCart={inCart} />
-              )}
-              {!isSeller && <ChatButton listingId={listing.id} />}
-              {user && !isSeller && (
-                <div className="mt-3">
-                  <FavoriteButton listingId={listing.id} saved={favorited} />
-                </div>
-              )}
+                  <path
+                    d="M12 2 4 5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V5l-8-3Z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                  />
+                  <path
+                    d="M8.5 12.2l2.3 2.3 4.7-4.7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>
+                  <span className="block font-title text-lg font-semibold">
+                    Pago protegido
+                  </span>
+                  <span className="mt-1 block text-sm text-cream/85">
+                    Guardamos tu plata hasta que confirmes que recibiste el
+                    producto.
+                  </span>
+                </span>
+              </div>
+
+              <div className="bg-white p-4 text-sm">
+                {listing.status === "activa" ? (
+                  <BuyButton listingId={listing.id} />
+                ) : (
+                  // Vendida o reservada: la ficha se ve (el enlace pudo compartirse),
+                  // pero no se invita a comprar lo que ya no está (hallazgo de QA).
+                  <p
+                    role="status"
+                    className="mt-4 rounded-xl bg-ph px-4 py-3 text-sm text-ink2"
+                  >
+                    {listing.status === "vendida"
+                      ? "Este artículo ya se vendió."
+                      : listing.status === "reservada"
+                        ? "Este artículo está reservado para otra persona."
+                        : "Este artículo no está disponible."}
+                  </p>
+                )}
+                {user && !isSeller && listing.status === "activa" && (
+                  <AddToCartButton listingId={listing.id} inCart={inCart} />
+                )}
+                {!isSeller && <ChatButton listingId={listing.id} />}
+                {user && !isSeller && (
+                  <div className="mt-3">
+                    <FavoriteButton listingId={listing.id} saved={favorited} />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

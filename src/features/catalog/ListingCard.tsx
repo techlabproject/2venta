@@ -56,7 +56,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
             <span>{listing.seller_zone}</span>
             {listing.seller_verified && <VerifiedBadge />}
             {listing.seller_is_store && (
-              <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-medium text-accent-text">
+              <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand">
                 Tienda
               </span>
             )}
