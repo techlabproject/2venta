@@ -25,7 +25,7 @@ export function AskForm({ listingId }: { listingId: string }) {
       <div className="flex gap-2">
         <input name="body" aria-label="Tu pregunta" placeholder="Pregunta algo del producto"
           className={inputClass} required />
-        <Button type="submit" variant="outline" disabled={pending} className="w-auto px-5">
+        <Button type="submit" variant="outline" disabled={pending} size="inline">
           Preguntar
         </Button>
       </div>
@@ -54,7 +54,7 @@ export function AnswerForm({ questionId }: { questionId: string }) {
       <div className="flex gap-2">
         <input name="answer" aria-label="Tu respuesta" placeholder="Responder"
           className={inputClass} required />
-        <Button type="submit" variant="outline" disabled={pending} className="w-auto px-4">
+        <Button type="submit" variant="outline" disabled={pending} size="inline">
           Responder
         </Button>
       </div>

@@ -6,7 +6,21 @@ import type { ComponentProps, ReactNode } from "react";
 // se cambia aquí.
 
 const BASE =
-  "inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
+
+// El tamaño es una propiedad del botón, no algo que cada pantalla parchee por
+// fuera. Pasar "w-auto text-xs" en className NO funciona: Tailwind resuelve el
+// conflicto por el orden de la hoja de estilos, no por el del atributo, así que
+// el "w-full text-sm" de aquí ganaba siempre y los botones compactos salían
+// apilados y a todo el ancho (visto en la foto de /vender/metricas).
+const SIZE = {
+  /** El de siempre: ocupa la columna. */
+  md: "w-full px-4 py-3 text-sm",
+  /** Varios juntos en una fila, dentro de una tarjeta. */
+  sm: "w-auto px-3 py-2 text-xs",
+  /** Al lado de un campo de texto. */
+  inline: "w-auto px-5 py-3 text-sm",
+} as const;
 
 const VARIANT = {
   // El acento mostaza se reserva para la acción principal de cada pantalla.
@@ -17,21 +31,28 @@ const VARIANT = {
 } as const;
 
 type Variant = keyof typeof VARIANT;
+type Size = keyof typeof SIZE;
 
 export function Button({
   variant = "primary",
+  size = "md",
   className = "",
   ...props
-}: ComponentProps<"button"> & { variant?: Variant }) {
-  return <button className={`${BASE} ${VARIANT[variant]} ${className}`} {...props} />;
+}: ComponentProps<"button"> & { variant?: Variant; size?: Size }) {
+  return (
+    <button className={`${BASE} ${SIZE[size]} ${VARIANT[variant]} ${className}`} {...props} />
+  );
 }
 
 export function ButtonLink({
   variant = "primary",
+  size = "md",
   className = "",
   ...props
-}: ComponentProps<typeof Link> & { variant?: Variant }) {
-  return <Link className={`${BASE} ${VARIANT[variant]} ${className}`} {...props} />;
+}: ComponentProps<typeof Link> & { variant?: Variant; size?: Size }) {
+  return (
+    <Link className={`${BASE} ${SIZE[size]} ${VARIANT[variant]} ${className}`} {...props} />
+  );
 }
 
 export function Field({

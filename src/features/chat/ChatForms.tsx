@@ -30,7 +30,7 @@ export function MessageForm({ conversationId }: { conversationId: string }) {
           className={inputClass}
           required
         />
-        <Button type="submit" disabled={pending} className="w-auto px-5">
+        <Button type="submit" disabled={pending} size="inline">
           Enviar
         </Button>
       </div>
@@ -62,7 +62,7 @@ export function OfferForm({ conversationId }: { conversationId: string }) {
           className={inputClass}
           required
         />
-        <Button type="submit" variant="outline" disabled={pending} className="w-auto px-5">
+        <Button type="submit" variant="outline" disabled={pending} size="inline">
           Ofertar
         </Button>
       </div>

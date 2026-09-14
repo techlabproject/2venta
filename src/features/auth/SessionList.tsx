@@ -9,7 +9,7 @@ export function RevokeButton({ sessionId }: { sessionId: string }) {
   return (
     <form action={submit}>
       <input type="hidden" name="sessionId" value={sessionId} />
-      <Button type="submit" variant="ghost" disabled={pending} className="w-auto px-3 py-1.5">
+      <Button type="submit" variant="ghost" size="sm" disabled={pending}>
         Cerrar
       </Button>
     </form>

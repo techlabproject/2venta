@@ -95,8 +95,8 @@ export function StatusButton({
       <Button
         type="submit"
         variant={variant}
+        size={compact ? "sm" : "md"}
         disabled={pending}
-        className={compact ? "w-auto px-3 py-2 text-xs" : ""}
       >
         {pending ? "Guardando…" : compact ? LABEL_CORTA[status] : LABEL[status]}
       </Button>

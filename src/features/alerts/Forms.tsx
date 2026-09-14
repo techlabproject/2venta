@@ -29,7 +29,7 @@ export function SaveSearchForm({ params }: { params: string }) {
         <input name="label" aria-label="Nombre de la búsqueda" required
           placeholder="iPhone hasta 2 millones"
           className="flex-1 rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm" />
-        <Button type="submit" variant="outline" disabled={pending} className="w-auto px-5">
+        <Button type="submit" variant="outline" size="inline" disabled={pending}>
           Guardar
         </Button>
       </form>
