@@ -125,9 +125,14 @@ test("no se puede editar una publicación ajena", async ({ browser }) => {
   const otro = await otroCtx.newPage();
   await signUpVerified(otro, "ajeno", "Persona Ajena");
 
-  // La pantalla no existe para quien no es el dueño.
-  const res = await otro.goto(`/producto/${seller.listingId}/editar`);
-  expect(res?.status()).toBe(404);
+  // A quien no es el dueño se le dice que no es suya, no que no existe: la ficha es
+  // pública y le bastaba un clic para comprobar que «esto ya no está» era mentira
+  // (D-80). Lo que no puede es ver ni tocar el formulario.
+  await otro.goto(`/producto/${seller.listingId}/editar`);
+  await expect(
+    otro.getByRole("heading", { name: "Esta publicación no es tuya" })
+  ).toBeVisible();
+  await expect(otro.getByLabel("Título")).toHaveCount(0);
 
   // Y llamando la acción directamente tampoco cambia nada.
   await otro.goto(`/producto/${seller.listingId}`);

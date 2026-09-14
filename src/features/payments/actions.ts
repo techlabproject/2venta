@@ -8,6 +8,7 @@ import { getListing } from "@/features/catalog/queries";
 import { paymentProvider, newIdempotencyKey } from "./provider";
 import { createOrder, getOrder, transition } from "./orders";
 import { MIN_PRICE_COP, breakdown } from "./money";
+import { cancelPendingOrder, findOwnPendingOrder } from "./abandon";
 import { shippingProvider } from "@/features/shipping/provider";
 import { saveAddress } from "@/features/shipping/queries";
 import { getOffer } from "@/features/chat/queries";
@@ -103,6 +104,13 @@ export async function buyListing(
   }
 
   const ids = fromCart ? cart.map((i) => i.listing_id) : [listing.id];
+
+  // Antes de intentar reservar: si estos artículos ya están retenidos por un pedido
+  // sin pagar de esta misma persona, no es que «alguien se adelantó». Se la manda a
+  // su pedido, donde puede terminar de pagar o cancelarlo (ronda de usuario,
+  // 2026-09-14).
+  const propio = await findOwnPendingOrder(user.id, ids);
+  if (propio) redirect(`/pedido/${propio}`);
 
   // Los artículos se reservan en la misma consulta que comprueba que sigan activos.
   // Hacerlo en dos pasos deja una ventana en la que dos compradores pagan lo mismo.
@@ -225,5 +233,35 @@ export async function confirmReceipt(
   );
 
   revalidatePath(`/pedido/${order.id}`);
+  return { error: "" };
+}
+
+/**
+ * El comprador cancela su propio pedido sin pagar y suelta los artículos.
+ *
+ * Sin esto, cerrar la pestaña en la pasarela dejaba el artículo reservado y no
+ * había forma de soltarlo desde la interfaz: ni para quien lo reservó, ni para el
+ * vendedor. El barrido de `caducar` cubre a quien nunca vuelve; esto cubre a quien
+ * vuelve y ya decidió que no.
+ */
+export async function cancelCheckout(
+  _prev: BuyResult | null,
+  form: FormData
+): Promise<BuyResult> {
+  const user = await activeUser();
+
+  const orderId = String(form.get("orderId") ?? "");
+  const order = await getOrder(orderId);
+  // El mismo mensaje para "no existe" y "no es tuyo": decir cuál de los dos es
+  // confirma la existencia de pedidos ajenos a quien prueba identificadores.
+  if (!order || order.buyer_id !== user.id) return { error: "Ese pedido no existe." };
+  if (order.status !== "pendiente_pago") {
+    return { error: "Ese pedido ya no se puede cancelar." };
+  }
+
+  await cancelPendingOrder(orderId, "comprador", "El comprador canceló antes de pagar");
+
+  revalidatePath(`/pedido/${orderId}`);
+  revalidatePath("/");
   return { error: "" };
 }

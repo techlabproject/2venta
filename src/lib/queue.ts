@@ -8,11 +8,18 @@ import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 
 export type Job =
   | { type: "liberar" }
+  | { type: "caducar" }
   | { type: "avisar"; listingId: string }
   | { type: "transcodificar"; key: string }
   | { type: "video_listo"; original: string; salida: string };
 
-const TYPES = new Set<Job["type"]>(["liberar", "avisar", "transcodificar", "video_listo"]);
+const TYPES = new Set<Job["type"]>([
+  "liberar",
+  "caducar",
+  "avisar",
+  "transcodificar",
+  "video_listo",
+]);
 
 /** Interpreta el cuerpo de un mensaje. Devuelve null si no tiene la forma esperada. */
 export function parseJob(body: string): Job | null {

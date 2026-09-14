@@ -9,6 +9,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { Price } from "@/components/Price";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { BuyButton } from "@/features/payments/BuyButton";
+import { findOwnPendingOrder } from "@/features/payments/abandon";
 import { AskForm, AnswerForm, ChatButton } from "@/features/chat/QuestionForms";
 import { listQuestions } from "@/features/chat/queries";
 import { ReportForm } from "@/features/moderation/Forms";
@@ -54,6 +55,15 @@ export default async function ListingPage({
 
   const questions = await listQuestions(listing.id);
   const promotion = isSeller ? await getActivePromotion(listing.id) : null;
+
+  // Si está reservado, puede estarlo por un pago sin terminar de quien está mirando.
+  // Decirle a esa persona que el artículo «está reservado para otra persona» era
+  // mentira y la dejaba sin salida: ni comprar, ni soltar lo que ella misma apartó
+  // (ronda de usuario, 2026-09-14).
+  const pedidoPropio =
+    user && !isSeller && listing.status === "reservada"
+      ? await findOwnPendingOrder(user.id, [listing.id])
+      : null;
   // S-15: no cuenta las vistas del propio vendedor, que si no vería su publicación
   // llena de visitas suyas y creería que interesa.
   await recordView(listing.id, user?.id ?? null, listing.seller_id);
@@ -194,6 +204,21 @@ export default async function ListingPage({
                   </p>
                 ) : listing.status === "activa" ? (
                   <BuyButton listingId={listing.id} signedIn={Boolean(user)} />
+                ) : pedidoPropio ? (
+                  <div className="rounded-xl bg-warn/10 px-4 py-3 text-sm">
+                    <p className="font-medium text-warn">
+                      Lo tienes apartado con un pago sin terminar
+                    </p>
+                    <p className="mt-1 text-ink2">
+                      Nadie más puede comprarlo mientras tanto. Termina el pago o
+                      suéltalo desde tu pedido.
+                    </p>
+                    <p className="mt-2">
+                      <Link href={`/pedido/${pedidoPropio}`} className="text-brand underline">
+                        Ir a tu pedido
+                      </Link>
+                    </p>
+                  </div>
                 ) : (
                   // Vendida o reservada: la ficha se ve (el enlace pudo compartirse),
                   // pero no se invita a comprar lo que ya no está (hallazgo de QA).

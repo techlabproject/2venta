@@ -57,3 +57,18 @@ resource "aws_scheduler_schedule" "liberar" {
     input    = jsonencode({ type = "liberar" })
   }
 }
+
+# El barrido de pedidos abandonados va más seguido que la liberación: mientras uno
+# de esos pedidos vive, el artículo del vendedor está bloqueado y no se puede
+# comprar. Cada diez minutos con una caducidad de treinta deja el peor caso en
+# cuarenta, que es tolerable.
+resource "aws_scheduler_schedule" "caducar" {
+  name                = "${local.nombre}-caducar-cada-10-min"
+  schedule_expression = "rate(10 minutes)"
+  flexible_time_window { mode = "OFF" }
+  target {
+    arn      = aws_sqs_queue.trabajos.arn
+    role_arn = aws_iam_role.scheduler.arn
+    input    = jsonencode({ type = "caducar" })
+  }
+}

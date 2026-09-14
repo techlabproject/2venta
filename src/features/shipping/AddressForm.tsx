@@ -1,9 +1,32 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { buyListing, type BuyResult } from "@/features/payments/actions";
 import { Button, ErrorNote, Field } from "@/components/ui";
 import { formatCop } from "@/lib/money";
+
+// Los datos de entrega se recuerdan en este navegador mientras se arma la compra.
+//
+// Quien entraba al pago y le daba a «atrás» volvía a un formulario en blanco y
+// tenía que reescribir nombre, celular y dirección, sin que nadie le avisara de que
+// se iban a perder (ronda de usuario, 2026-09-14). Es una comodidad de este
+// dispositivo y nada más: no sale del navegador, y si el almacenamiento está
+// bloqueado —ventana privada, permisos— el formulario funciona igual, en blanco.
+const RECUERDO = "2venta:entrega";
+const RECORDADOS = [
+  "recipient",
+  "phone",
+  "line1",
+  "details",
+  "zone",
+  "notes",
+  "meetingZone",
+] as const;
+
+function campo(form: HTMLFormElement, nombre: string) {
+  const el = form.elements.namedItem(nombre);
+  return el instanceof HTMLInputElement || el instanceof HTMLSelectElement ? el : null;
+}
 
 export function AddressForm({
   listingId,
@@ -29,8 +52,43 @@ export function AddressForm({
   const [presencial, setPresencial] = useState(false);
   const envio = presencial ? 0 : shippingCop;
 
+  const form = useRef<HTMLFormElement>(null);
+
+  // Se repite al cambiar de modo porque los campos de dirección se montan y se
+  // desmontan con él: sin eso, volver a «te lo enviamos» los dejaría vacíos.
+  useEffect(() => {
+    const el = form.current;
+    if (!el) return;
+    try {
+      const guardado = JSON.parse(localStorage.getItem(RECUERDO) ?? "{}");
+      for (const nombre of RECORDADOS) {
+        const valor = guardado?.[nombre];
+        const input = campo(el, nombre);
+        if (input && typeof valor === "string" && valor) input.value = valor;
+      }
+    } catch {
+      // Ventana privada o almacenamiento bloqueado: se sigue con el formulario
+      // en blanco, que es exactamente lo que había antes.
+    }
+  }, [presencial]);
+
+  function recordar() {
+    const el = form.current;
+    if (!el) return;
+    try {
+      const datos: Record<string, string> = {};
+      for (const nombre of RECORDADOS) {
+        const input = campo(el, nombre);
+        if (input) datos[nombre] = input.value;
+      }
+      localStorage.setItem(RECUERDO, JSON.stringify(datos));
+    } catch {
+      // Igual que arriba: no poder recordar no puede impedir comprar.
+    }
+  }
+
   return (
-    <form action={submit} className="flex flex-col gap-4">
+    <form ref={form} action={submit} onChange={recordar} className="flex flex-col gap-4">
       {result?.error && <ErrorNote>{result.error}</ErrorNote>}
       <input type="hidden" name="listingId" value={listingId} />
       {offerId && <input type="hidden" name="offerId" value={offerId} />}

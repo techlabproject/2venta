@@ -27,6 +27,11 @@ export function PublishForm({
   // Lo que le queda al vendedor, calculado mientras escribe el precio. Es el
   // dato que más le importa y nadie se lo decía (hallazgo de QA, 2026-09-13).
   const [price, setPrice] = useState<number | null>(null);
+  // Cuántas fotos eligió. El control nativo de archivos dibuja su propio texto en
+  // el idioma del navegador —«Choose Files · No file chosen»— y no hay forma de
+  // traducirlo, así que se esconde y se dibuja encima uno propio. Es la única
+  // pantalla del producto que estaba en inglés.
+  const [photoCount, setPhotoCount] = useState(0);
 
   const [uploading, setUploading] = useState(false);
 
@@ -80,8 +85,25 @@ export function PublishForm({
         <label htmlFor="photos" className="text-sm font-medium">
           Fotos <span className="font-normal text-muted">(opcional)</span>
         </label>
-        <input id="photos" name="photos" type="file" accept="image/*" multiple
-          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm" />
+        <input
+          id="photos"
+          name="photos"
+          type="file"
+          accept="image/*"
+          multiple
+          className="peer sr-only"
+          onChange={(e) => setPhotoCount(e.target.files?.length ?? 0)}
+        />
+        <label
+          htmlFor="photos"
+          className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-brand/25 bg-white px-4 py-3 text-sm font-medium text-ink transition hover:bg-ph peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand"
+        >
+          {photoCount === 0
+            ? "Elegir fotos"
+            : photoCount === 1
+              ? "1 foto elegida · cambiar"
+              : `${photoCount} fotos elegidas · cambiar`}
+        </label>
         <p className="text-xs text-muted">
           Hasta {MAX_PHOTOS}. Estas sí las puedes subir de la galería: el video ya
           prueba que el artículo existe, las fotos son para que se vea bien.

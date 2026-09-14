@@ -148,6 +148,12 @@ el número y se le manda el código antes de dejarlo comprar o escribir.
 - `dotenv` no lee `.env.local`, eso solo lo hace Next. Los scripts fuera de Next
   tienen que pasarle la ruta explícita. Las unitarias lo cargan con
   `node --env-file`, porque `claim.test.ts` habla con MinIO.
+- El worker de `docker compose` corre una **imagen construida, no el código fuente**, y
+  compite por los mensajes con el `runWorkerOnce()` de las pruebas. Al agregar un tipo
+  de trabajo nuevo hay que `docker compose up -d --build worker`: si no, el contenedor
+  se come el mensaje y lo descarta con «mensaje sin forma conocida», la prueba falla
+  sin decir por qué, y el error no aparece en la salida de Playwright sino en
+  `docker compose logs worker`.
 - Las imágenes de MinIO viven en `quay.io/minio/*`; las de Docker Hub ya no existen.
 - En S3 de verdad, `HeadObject` sobre una clave inexistente devuelve **403, no 404**,
   si el rol no tiene `s3:ListBucket` sobre el bucket. MinIO no lo hace. Los roles

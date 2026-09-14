@@ -667,3 +667,65 @@ la D-02 le pide solo a quien vende.
 **Por qué una columna nueva y no `"image"`.** Esa columna es de Better Auth y la
 escribe el proveedor externo; entrar con Google borraría la foto que la persona
 subió. Son dos cosas distintas y se guardan aparte.
+
+### D-75 — La comisión la paga el vendedor (confirmado)
+Se mantiene la D-09: el comprador paga el precio publicado más el envío, y la
+comisión se descuenta de lo que recibe el vendedor.
+**Por qué se vuelve a anotar.** El mockup del checkout (06/07) muestra «Protección
+de pago (5%)» sumada al total del comprador, que es el producto contrario. Nicolás
+lo resolvió el 2026-09-14 a favor de la D-09. **Esa pantalla del mockup no se
+sigue**, y queda dicho aquí para que nadie la implemente creyendo que el código
+está mal.
+
+### D-76 — La identidad se comprueba otra vez al momento de cobrar
+El KYC de registro (D-02) no reemplaza una segunda comprobación: cuando el vendedor
+retire dinero —o cambie su cuenta bancaria— se le pide una selfie y se compara con
+la de su registro.
+**Por qué.** Es lo que pide el RF-06 y lo que dicen los mockups en dos sitios. El
+KYC de registro prueba quién abrió la cuenta; la comprobación al cobrar prueba que
+quien saca la plata es esa misma persona, que es un riesgo distinto: una cuenta
+robada meses después pasa el primero y no el segundo.
+**Estado.** Sin construir, y no se puede construir todavía: no existe el retiro de
+dinero ni el proveedor real de identidad. Va con esa rebanada, no antes.
+
+### D-77 — En móvil la navegación va abajo, como en el mockup
+Barra fija inferior con cinco destinos: Inicio, Buscar, Publicar, Chats y Perfil.
+El centro es publicar, en mostaza, porque es la acción que hace crecer el catálogo.
+**Por qué.** Estaba en los mockups desde el principio (pantalla 1d) y no se había
+construido. En un teléfono el pulgar llega abajo y no arriba, y la D-08 dice que el
+móvil manda.
+**Qué pasa con la cabecera.** Sigue siendo la navegación del escritorio. En móvil se
+queda con la marca y la sesión, y suelta los destinos que ahora viven abajo.
+
+### D-78 — Un pedido sin pagar caduca a los treinta minutos
+Reservar el artículo al empezar el checkout se mantiene: es lo que impide que dos
+compradores paguen lo mismo. Lo que se agrega es la vuelta atrás. Un pedido que se
+queda en `pendiente_pago` treinta minutos se cancela solo y su artículo vuelve al
+catálogo; el barrido (`caducar`) corre cada diez minutos por la cola.
+**Por qué treinta.** De sobra para volver de la pasarela, pagar con PSE o pedirle la
+tarjeta a alguien; poco para el vendedor, cuyo artículo está bloqueado mientras tanto.
+**Lo que faltaba de verdad.** No había ninguna forma de soltar la reserva: ni
+automática, ni para el comprador, ni para el vendedor. Y a quien abandonaba su propio
+pago se le decía «alguien más se adelantó» cuando volvía a intentarlo. Lo encontró la
+ronda de usuario del 2026-09-14.
+**Consecuencia.** El comprador puede terminar el pago o cancelarlo desde su pedido, y
+la ficha le dice que es él quien lo tiene apartado.
+
+### D-79 — La comisión por categoría se reparte a prorrata
+En el informe de negocio, la comisión de un pedido se reparte entre sus renglones
+según el precio de cada uno.
+**Por qué.** La comisión es del pedido y el desglose es por categoría; sumarla tal
+cual sobre un `join` de renglones la multiplicaba por el número de artículos. Un
+pedido de dos cosas reportaba el doble de comisión que el resumen de la misma
+pantalla (ronda de usuario, 2026-09-14).
+**Qué se gana.** La suma de las categorías vuelve a dar la comisión del periodo,
+incluso cuando un pedido cruza dos categorías.
+
+### D-80 — Una pantalla ajena no se disfraza de artículo vendido
+El 404 deja de afirmar que lo que falta es un artículo. Y al intentar editar una
+publicación que no es tuya se dice así, **siempre que la publicación ya sea pública**;
+de una en revisión o rechazada no se confirma ni que exista.
+**Por qué.** Decirle «pudo venderse» a quien pidió una pantalla sin permiso lo manda a
+buscar una explicación falsa, y le basta abrir la ficha para ver que era mentira. Pero
+confirmar la existencia de lo que todavía no es público sí filtraría algo, así que la
+línea se traza en si el artículo ya se puede ver o no.

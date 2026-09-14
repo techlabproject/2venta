@@ -15,6 +15,10 @@ import { OpenClaimForm, ReplyClaimForm } from "@/features/claims/Forms";
 import { hasRated } from "@/features/ratings/queries";
 import { RateForm } from "@/features/ratings/RateForm";
 import { formatCop } from "@/lib/money";
+import { paymentProvider } from "@/features/payments/provider";
+import { CancelCheckoutButton } from "@/features/payments/CancelCheckoutButton";
+import { CHECKOUT_TTL_MINUTES } from "@/features/payments/abandon";
+import { ButtonLink } from "@/components/ui";
 
 // Pantalla 1j del mockup: seguimiento y liberación del pago.
 export const dynamic = "force-dynamic";
@@ -101,7 +105,9 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
           <dd>{formatCop(order.shipping_cop)}</dd>
           {isBuyer && (
             <>
-              <dt className="text-muted">Pagaste</dt>
+              <dt className="text-muted">
+                {order.status === "pendiente_pago" ? "Vas a pagar" : "Pagaste"}
+              </dt>
               <dd data-testid="total" className="font-medium">
                 {formatCop(money.buyerTotalCop)}
               </dd>
@@ -118,6 +124,37 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
             </>
           )}
         </dl>
+
+        {/* Un pago a medias dejaba el artículo apartado sin decírselo a nadie y sin
+            forma de soltarlo: ni para quien lo apartó —a quien además le decían
+            «alguien más se adelantó» cuando volvía a intentarlo— ni para el
+            vendedor (ronda de usuario, 2026-09-14). */}
+        {isBuyer && order.status === "pendiente_pago" && (
+          <section className="mt-6 rounded-2xl bg-white p-5 ring-1 ring-warn/40">
+            <h2 className="font-title font-semibold">Te falta terminar el pago</h2>
+            <p className="mt-2 text-sm text-ink2">
+              Mientras tanto el artículo queda apartado para ti y nadie más puede
+              comprarlo. Si no terminas en {CHECKOUT_TTL_MINUTES} minutos, se suelta
+              solo y vuelve al catálogo.
+            </p>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              {order.provider_ref && (
+                <ButtonLink
+                  href={paymentProvider.checkoutUrl({
+                    orderId: order.id,
+                    reference: order.provider_ref,
+                  })}
+                  className="sm:w-auto"
+                >
+                  Terminar el pago
+                </ButtonLink>
+              )}
+              <div className="sm:w-auto">
+                <CancelCheckoutButton orderId={order.id} />
+              </div>
+            </div>
+          </section>
+        )}
 
         {presencial && (
           <p className="mt-4 rounded-2xl bg-white p-4 text-sm">

@@ -87,6 +87,8 @@ test("la pantalla de no encontrado está en español y ofrece a dónde ir", asyn
   // un artículo ya vendido llega aquí.
   const res = await page.goto("/producto/00000000-0000-4000-8000-000000000000");
   expect(res?.status()).toBe(404);
-  await expect(page.getByRole("heading", { name: "Esto ya no está" })).toBeVisible();
+  // El texto no afirma que se trate de un artículo vendido: aquí también acaba
+  // quien pide una pantalla que no le corresponde (D-80).
+  await expect(page.getByRole("heading", { name: "No pudimos abrir esto" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Ver lo que hay ahora" })).toBeVisible();
 });

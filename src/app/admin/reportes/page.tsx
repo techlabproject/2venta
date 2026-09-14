@@ -84,7 +84,11 @@ export default async function Reportes({
         <dl data-testid="cifras" className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Cifra label="Ventas" value={String(report.sales)} />
           <Cifra label="Volumen" value={formatCop(report.gmvCop)} />
-          <Cifra label="Comisiones" value={formatCop(report.commissionCop)} />
+          <Cifra
+            label="Comisiones"
+            value={formatCop(report.commissionCop)}
+            testid="comisiones"
+          />
           <Cifra label="Ticket promedio" value={formatCop(report.averageTicketCop)} />
         </dl>
 
@@ -108,7 +112,9 @@ export default async function Reportes({
                     <td className="py-2">{c.label}</td>
                     <td className="py-2 text-right">{c.sales}</td>
                     <td className="py-2 text-right">{formatCop(c.gmvCop)}</td>
-                    <td className="py-2 text-right">{formatCop(c.commissionCop)}</td>
+                    <td data-testid="comision-categoria" className="py-2 text-right">
+                      {formatCop(c.commissionCop)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -120,11 +126,21 @@ export default async function Reportes({
   );
 }
 
-function Cifra({ label, value }: { label: string; value: string }) {
+function Cifra({
+  label,
+  value,
+  testid,
+}: {
+  label: string;
+  value: string;
+  testid?: string;
+}) {
   return (
     <div className="rounded-2xl bg-white p-4">
       <dt className="text-xs text-muted">{label}</dt>
-      <dd className="mt-0.5 font-title text-xl font-semibold">{value}</dd>
+      <dd data-testid={testid} className="mt-0.5 font-title text-xl font-semibold">
+        {value}
+      </dd>
     </div>
   );
 }

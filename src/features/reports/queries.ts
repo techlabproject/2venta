@@ -46,10 +46,20 @@ export async function businessReport(period: Period): Promise<BusinessReport> {
     gmv: string;
     commission: string;
   }>(
+    // La comisión es del PEDIDO, no de la línea, y aquí hay una fila por línea:
+    // sumarla tal cual la multiplicaba por el número de artículos. Un pedido de
+    // dos cosas reportaba el doble de comisión que el resumen de arriba, que sí
+    // suma por pedido (hallazgo de la ronda de usuario, 2026-09-14).
+    //
+    // Se reparte a prorrata del precio de cada línea: es lo único que hace que la
+    // suma de las categorías vuelva a dar la comisión del pedido cuando un pedido
+    // cruza dos categorías.
     `select c.label,
             count(distinct o.id)::text as sales,
             coalesce(sum(i.price_cop), 0)::text as gmv,
-            coalesce(sum(o.commission_cop), 0)::text as commission
+            coalesce(
+              round(sum(o.commission_cop::numeric * i.price_cop / o.subtotal_cop)), 0
+            )::text as commission
        from orders o
        join order_items i on i.order_id = o.id
        join listings l    on l.id = i.listing_id

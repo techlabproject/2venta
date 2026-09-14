@@ -58,6 +58,56 @@ de respaldo. Repositorio: `github.com/techlabproject/2venta`, público.
 De lo que queda a medias, ya casi nada es código propio: son proveedores por
 conectar y cuentas por crear.
 
+## Ronda de usuario (2026-09-14)
+
+Informe del agente en `qa/ronda-usuario/` y la respuesta en
+`respuesta-2026-09-14.md`. Seis hallazgos, todos reales y todos cerrados con prueba
+(`e2e/pago-abandonado.spec.ts`): el total que mostraba la pasarela de prueba, la
+reserva que no se soltaba al abandonar el pago (D-78), la comisión duplicada en el
+informe por categoría (D-79), la falta de confirmación al cerrar una sesión, los
+errores de permisos disfrazados de artículo inexistente (D-80) y los datos de entrega
+que se perdían.
+
+Dos cosas más salieron de perseguirlos, y ninguna estaba en el informe:
+
+- `otp.test.ts` fallaba **una vez de cada 256**: alteraba el dato cambiando los dos
+  últimos caracteres por «ff», y cuando ya terminaba en «ff» comprobaba que un dato
+  intacto se descifra. Arreglado y repetido cincuenta veces por corrida.
+- El selector de fotos de `/publicar` era el control nativo, que dibuja «Choose Files ·
+  No file chosen» **en inglés** y no se puede traducir. Era la única pantalla del
+  producto en otro idioma.
+
+## Repaso de los documentos contra el código (2026-09-14)
+
+Se releyeron `Requisitos Funcionales.docx` (42 requisitos) y `mockups.pdf` (13
+pantallas móviles, 1 panel web). Nicolás resolvió las tres preguntas el mismo día:
+
+1. **Quién paga la comisión: el vendedor** (confirma la D-09). El checkout del
+   mockup, que se la suma al comprador, es el que está equivocado; no se sigue.
+2. **El RF-06 no estaba invertido, estaba a medias.** Pide que la identidad se
+   compruebe **otra vez al momento de cobrar**, no que el KYC se mueva hasta allá.
+   El KYC de registro existe (D-02); la segunda comprobación no, y va con el retiro
+   de dinero, que tampoco existe (D-76). Los mockups ya lo decían en dos sitios:
+   «Guardamos esta selfie para compararla cuando retires plata» y «Te pedimos una
+   selfie y la comparamos con la de tu registro».
+3. **La barra inferior de navegación del mockup se construye** (D-77).
+
+Lo que sigue abierto de ese repaso:
+
+- **El RF-19 sí sigue invertido**, y a propósito: dice que un vendedor no
+  verificado publique con normalidad, y la D-02 lo impide. Está escrito en la
+  propia decisión y los mockups le dan la razón a la D-02.
+- **`SPEC.md` dice que la tercera categoría es «hogar»**; la migración 0008, la base,
+  las pantallas y los mockups dicen «niños». El documento de alcance es el
+  desactualizado.
+- **El IMEI se recoge, se valida y nunca se le muestra al comprador.** La ficha del
+  mockup lleva un distintivo «IMEI validado». Es trabajo hecho cuyo valor no se está
+  cobrando.
+- Menores, del mockup y sin construir: filtro por distancia en kilómetros (no hay
+  coordenadas), atributo «Batería 89%», tiempo de respuesta en el perfil, estado
+  «En reparto» en el seguimiento, y las secciones «Resumen» y «Verificaciones KYC»
+  del panel de administración.
+
 ## Por confirmar
 
 - **React avisó de dos hijos con la misma llave** durante las pruebas visuales del

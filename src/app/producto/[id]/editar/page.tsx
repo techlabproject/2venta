@@ -29,8 +29,37 @@ export default async function Editar({ params }: { params: Promise<{ id: string 
     [id, user.id]
   );
   const listing = rows[0];
-  // Sin pantalla para quien no es el dueño, y sin pista de que exista.
-  if (!listing) notFound();
+
+  if (!listing) {
+    // A quien no es el dueño se le decía «esto ya no está», y le bastaba un clic en
+    // la ficha pública para comprobar que era mentira (ronda de usuario,
+    // 2026-09-14). Se le dice la verdad, pero solo cuando la publicación ya es
+    // pública: de una en revisión o rechazada no se confirma ni que exista, porque
+    // ahí sí habría algo que filtrar.
+    const ajena = await query<{ status: string }>(
+      `select status from listings
+        where id = $1 and status in ('activa','reservada','vendida')`,
+      [id]
+    );
+    if (!ajena[0]) notFound();
+
+    return (
+      <>
+        <AppHeader />
+        <main className="mx-auto max-w-md px-5 py-16">
+          <h1 className="font-title text-2xl font-semibold">Esta publicación no es tuya</h1>
+          <p className="mt-2 text-ink2">
+            Solo quien publicó un artículo puede cambiarle el precio o el estado.
+          </p>
+          <p className="mt-6">
+            <Link href={`/producto/${id}`} className="text-brand underline">
+              Ver la publicación
+            </Link>
+          </p>
+        </main>
+      </>
+    );
+  }
 
   return (
     <>

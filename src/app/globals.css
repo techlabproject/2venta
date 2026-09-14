@@ -42,3 +42,15 @@ h3 {
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;
 }
+
+/* La barra de navegación inferior (D-77) es fija, así que sin este hueco el final
+   de cualquier página queda debajo de ella y no se puede tocar. Va aquí y no como
+   un separador dentro del componente porque la cabecera se dibuja antes que el
+   contenido: un separador ahí reservaría el espacio arriba, que es donde no falta.
+   El `:has` lo aplica solo cuando la barra existe de verdad, que es en móvil y con
+   sesión iniciada. */
+@media (max-width: 767px) {
+  body:has(nav[aria-label="Navegación principal"]) {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+}

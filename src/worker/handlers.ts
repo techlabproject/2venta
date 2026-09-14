@@ -1,5 +1,6 @@
 import type { Job } from "@/lib/queue";
 import { releaseExpiredOrders } from "@/features/payments/release";
+import { expireAbandonedCheckouts } from "@/features/payments/abandon";
 import { notifyForListing } from "@/features/alerts/queries";
 import { markVideoReady, requestTranscode } from "@/features/video/queries";
 
@@ -10,6 +11,10 @@ export async function handle(job: Job): Promise<string> {
     case "liberar": {
       const n = await releaseExpiredOrders();
       return `liberados: ${n}`;
+    }
+    case "caducar": {
+      const n = await expireAbandonedCheckouts();
+      return `pedidos caducados: ${n}`;
     }
     case "avisar": {
       const n = await notifyForListing(job.listingId);

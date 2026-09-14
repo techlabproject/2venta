@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { sendVerificationCode } from "@/lib/sms";
@@ -138,5 +139,10 @@ export async function revokeSession(
     String(form.get("sessionId") ?? ""),
     user.id,
   ]);
+
+  // Sin esto la fila seguía en pantalla hasta que la persona recargara: cerraba una
+  // sesión, no pasaba nada visible, y se quedaba sin saber si había funcionado
+  // (ronda de usuario, 2026-09-14). Que la fila desaparezca ES la confirmación.
+  revalidatePath("/cuenta");
   return { error: "" };
 }

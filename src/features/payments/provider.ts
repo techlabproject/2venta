@@ -20,6 +20,16 @@ export type PaymentProvider = {
     idempotencyKey: string;
   }): Promise<{ reference: string; redirectUrl: string }>;
 
+  /**
+   * A dónde volver para terminar un pago que quedó a medias.
+   *
+   * Existe porque un comprador que cierra la pestaña en la pasarela tiene que poder
+   * retomar; sin esto, su única salida era cancelar y empezar de cero. Un proveedor
+   * real puede necesitar recrear la sesión a partir de la referencia: eso se
+   * resuelve dentro de su implementación, no en las pantallas.
+   */
+  checkoutUrl(input: { orderId: string; reference: string }): string;
+
   /** Libera hacia el vendedor los fondos retenidos. */
   release(reference: string): Promise<void>;
 
@@ -39,6 +49,10 @@ export const testProvider: PaymentProvider = {
     // idempotencia. Aquí se deriva de la clave para imitar ese comportamiento.
     const reference = `pay_${idempotencyKey.slice(0, 24)}`;
     return { reference, redirectUrl: `/dev/pago/${orderId}` };
+  },
+
+  checkoutUrl({ orderId }) {
+    return `/dev/pago/${orderId}`;
   },
 
   async release() {
