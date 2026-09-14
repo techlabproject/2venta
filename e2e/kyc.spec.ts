@@ -159,7 +159,7 @@ test("un vendedor verificado llega a publicar y a sus publicaciones desde /vende
   await page.getByRole("button", { name: "Simular aprobación" }).click();
 
   await expect(page.getByRole("main")).toContainText("Identidad verificada");
-  await page.getByRole("link", { name: "Mis publicaciones" }).click();
+  await page.getByRole("link", { name: "Tus publicaciones" }).click();
   await expect(page).toHaveURL(/\/vender\/metricas/);
   await expect(page.getByRole("heading", { name: "Tus publicaciones" })).toBeVisible();
 

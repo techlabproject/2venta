@@ -2,6 +2,19 @@
 
 Marketplace de segunda mano para Colombia. Bogotá, tres categorías, pago protegido.
 
+# Dónde va el proyecto (2026-09-13)
+
+Todos los requisitos funcionales de `SPEC.md` están construidos y probados. El
+entorno `dev` corre en AWS —https://d13g2bd9j8wj8k.cloudfront.net— y se despliega
+solo al hacer push a `main`; `prod` está definido en Terraform y sin aplicar.
+Lo que falta ya casi no es código propio: son proveedores por conectar (SMS, pagos
+reales, identidad, transportadora) y sacar la cuenta de AWS del plan gratuito.
+
+Si llegas nuevo a este repositorio, lee en este orden: `NOTES.md` (estado real y
+qué quedó a medias), `qa/` (lo último que encontró la verificación independiente)
+y `DECISIONS.md` (por qué las cosas son como son). **Este archivo no lleva el
+estado; lleva lo que no se puede adivinar leyendo el código.**
+
 # Comandos
 
 - Desarrollo: `npm run dev`
@@ -54,6 +67,10 @@ Cuando un hallazgo suyo sea real, escribir primero la prueba que lo reproduce y
 después el arreglo. Si no se puede reproducir, decirlo así en vez de darlo por
 cerrado.
 
+Hay una segunda Luna, que **usa la aplicación en vez de leer el código**: su prompt
+está en `qa/PROMPT-LUNA-USUARIO.md` y corre en ChatGPT contra el entorno `dev` de la
+nube. Sus informes llegan a `qa/ronda-usuario/informe-AAAA-MM-DD.md`.
+
 # Convenciones
 
 - Los montos de dinero son enteros en pesos colombianos. Nunca decimales, nunca
@@ -72,6 +89,21 @@ cerrado.
   (D-50). La acción de servidor recibe claves y las comprueba con `claim()` contra
   S3; nunca confía en el tipo o tamaño que declara el cliente. Las pantallas arman
   la dirección con `mediaUrl()` (servidor), nunca con `NEXT_PUBLIC_*`.
+
+# Diseño
+
+Los colores y las dos tipografías viven en `@theme` dentro de `src/app/globals.css`;
+las primitivas con la marca ya aplicada, en `src/components/ui.tsx`. Un color suelto
+en una pantalla es un error de revisión, no una opción.
+
+- El mostaza (`accent`) es para el dinero y para la acción principal de la pantalla.
+  Si aparece en un tercer sitio, deja de significar algo.
+- El precio se pinta con `<Price>`, nunca con `formatCop` a mano.
+- El escritorio no es el móvil estirado (D-70): catálogo, gestión y paneles usan
+  `max-w-6xl` y varias columnas. Solo lo que se lee y los formularios siguen
+  angostos, porque una línea de texto de 1152 px no se lee.
+- La navegación está en `AppHeader`: en móvil es un menú, en escritorio una barra.
+  Ninguna pantalla escribe su propia cabecera.
 
 # Zonas donde hay que bajar la velocidad
 

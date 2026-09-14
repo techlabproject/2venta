@@ -7,6 +7,12 @@
 Las tres fases del plan más catorce rebanadas posteriores. 257 pruebas de navegador
 y 103 unitarias (seis de ellas contra MinIO), más 50 comparaciones visuales.
 
+**S-31 — panel, navegación y foto de perfil (2026-09-13):** la cabecera pasa de
+seis enlaces subrayados a navegación con menú (D-72), `/vender/metricas` deja de ser
+un tablero de cifras y pasa a ser gestión de publicaciones (D-73), y hay foto de
+perfil subida por URL prefirmada sin exigir identidad verificada (D-74). `/vender`,
+`/vender/metricas` y `/cuenta` dejan de dibujarse en una columna de móvil.
+
 **Ronda de diseño y flujos (2026-09-13):** informes en `qa/ronda-diseno/` y la
 respuesta en `respuesta.md`. Nicolás reportó que el diseño se veía plano y que un
 vendedor no encontraba sus productos; tres agentes (arte, flujo del vendedor,
@@ -51,6 +57,15 @@ de respaldo. Repositorio: `github.com/techlabproject/2venta`, público.
 
 De lo que queda a medias, ya casi nada es código propio: son proveedores por
 conectar y cuentas por crear.
+
+## Por confirmar
+
+- **React avisó de dos hijos con la misma llave** durante las pruebas visuales del
+  2026-09-13, en las pantallas de guardados o de vendedor. No se reproduce contra
+  los datos de la demostración (ni `favorites`, que tiene clave primaria compuesta,
+  ni los `join` de `LISTING_SELECT` duplican filas hoy). No rompe nada y ninguna
+  prueba falla por él; queda apuntado para la ronda de Luna usuaria, que es quien
+  puede toparse con el estado de datos que lo provoca.
 
 ## Qué quedó a medias
 

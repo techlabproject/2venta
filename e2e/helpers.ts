@@ -17,6 +17,18 @@ config({ path: ".env.local" });
 
 export const alertIn = (page: Page) => page.getByRole("main").getByRole("alert");
 
+/**
+ * Cierra la sesión desde la cabecera.
+ *
+ * «Salir» dejó de ser un enlace suelto en la barra y vive dentro del menú de la
+ * persona (D-72), así que hay que abrirlo primero. Está aquí y no repetido en cada
+ * prueba para que el próximo cambio de la cabecera se arregle en un solo sitio.
+ */
+export async function cerrarSesion(page: Page): Promise<void> {
+  await page.getByRole("banner").locator("summary").click();
+  await page.getByRole("button", { name: "Salir" }).click();
+}
+
 export function uniqueAccount(prefix: string) {
   const n = Math.floor(Math.random() * 900_000_000) + 100_000_000;
   return {

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { CONTACT_REJECTED, hasContact, redact } from "@/features/chat/redact";
+import { claim } from "@/features/publish/claim";
+import { AVATAR_MAX_BYTES } from "@/lib/storage";
 
 export type ProfileResult = { error: string };
 
@@ -86,4 +88,38 @@ export async function reportUser(
 
   revalidatePath(`/vendedor/${reportedId}`);
   return { error: "" };
+}
+
+/**
+ * Guarda la foto de perfil (S-31).
+ *
+ * La clave la eligió el navegador al subir el archivo directo al bucket (D-50), así
+ * que aquí no se confía en ella: `claim()` le pregunta a S3 si ese objeto existe, si
+ * es una imagen y si el dueño es quien la está guardando. Sin eso, cualquiera podría
+ * ponerse de foto el video de otra persona con solo mandar su clave.
+ */
+export async function saveAvatar(
+  _prev: ProfileResult | null,
+  form: FormData
+): Promise<ProfileResult> {
+  const user = await activeUser();
+
+  const claimed = await claim(form.get("avatar"), user.id, "image");
+  if ("error" in claimed) return { error: "No pudimos guardar esa foto. Intenta con otra." };
+  if (claimed.object.size > AVATAR_MAX_BYTES) {
+    return { error: "La foto pesa demasiado. El máximo son 8 MB." };
+  }
+
+  await query(`update "user" set avatar_path = $2 where id = $1`, [user.id, claimed.key]);
+
+  // La foto sale en la cabecera de todas las pantallas, no solo en la cuenta.
+  revalidatePath("/", "layout");
+  return { error: "" };
+}
+
+/** Quitar la foto deja las iniciales, que es el estado de siempre. */
+export async function removeAvatar(): Promise<void> {
+  const user = await activeUser();
+  await query(`update "user" set avatar_path = null where id = $1`, [user.id]);
+  revalidatePath("/", "layout");
 }

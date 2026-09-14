@@ -634,3 +634,36 @@ como «Grabado por el vendedor».
 justifica la comisión y el pago protegido. En el feed no se veía: la tarjeta era
 la de cualquier clasificado, con una foto fija. El diferenciador del negocio era
 invisible en la pantalla más vista.
+
+### D-72 — La cabecera es navegación, no una fila de enlaces
+Tres grupos: la marca, lo de cada día (`Explorar`, `Carrito`, `Guardados`,
+`Avisos`) y quién eres (foto, alias y un desplegable con la cuenta, las
+publicaciones, la actividad y salir). «Vender» queda aparte, en mostaza. En pantalla
+angosta todo lo que no es la marca cabe detrás de un solo botón.
+**Por qué.** Eran seis enlaces subrayados del mismo tamaño y el mismo color: nada
+decía cuál era importante, y en un celular la barra se partía en dos renglones.
+**Cómo.** Es un `<details>`, no un componente de cliente: funciona sin JavaScript,
+no hidrata nada y se cierra solo al navegar, porque la pantalla se vuelve a pintar.
+
+### D-73 — La pantalla de publicaciones del vendedor gestiona, no solo informa
+`/vender/metricas` mantiene su dirección y cambia de contenido: cada publicación
+lleva su portada, su precio, su estado y las acciones que ese estado permite
+(editar, reservar, republicar, marcar vendida, retirar).
+**Por qué.** Enseñaba tres cifras por artículo y ninguna forma de actuar sobre lo
+que esas cifras decían. Para bajar un precio o reservar algo había que salir, buscar
+la publicación en el catálogo público y entrar por su ficha, que es el camino de un
+comprador, no el de su dueño.
+**Qué no cambia.** Las transiciones y quién puede hacerlas siguen en
+`setListingStatus`, comprobadas en el servidor y en la misma consulta que escribe.
+La pantalla no decide nada: solo deja de esconder lo que ya se podía hacer.
+
+### D-74 — Hay foto de perfil, y no exige identidad verificada
+`user.avatar_path` guarda la clave del objeto en el bucket (no una dirección: la
+arma `mediaUrl()` en cada entorno). Se sube con URL prefirmada como todo lo demás
+(D-50) y el servidor comprueba la clave contra S3 con `claim()` antes de guardarla.
+**Por qué sin KYC.** Subir una foto de perfil no es publicar. Un comprador también
+tiene cara, y pedirle la cédula para ponerla sería exigirle a todo el mundo lo que
+la D-02 le pide solo a quien vende.
+**Por qué una columna nueva y no `"image"`.** Esa columna es de Better Auth y la
+escribe el proveedor externo; entrar con Google borraría la foto que la persona
+subió. Son dos cosas distintas y se guardan aparte.

@@ -19,6 +19,9 @@ const EXTENSION: Record<string, string> = {
 
 export const MAX_BYTES = 60 * 1024 * 1024;
 
+/** Una foto de perfil se muestra en 40 px de lado. Ocho megas ya son generosos. */
+export const AVATAR_MAX_BYTES = 8 * 1024 * 1024;
+
 /** Cuánto vale una URL de subida. Corto a propósito: se pide justo antes de usarla. */
 const UPLOAD_TTL_SECONDS = 5 * 60;
 

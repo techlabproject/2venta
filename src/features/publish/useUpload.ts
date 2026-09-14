@@ -8,7 +8,10 @@ import { requestUpload } from "./upload";
 
 export class UploadError extends Error {}
 
-export async function uploadBlob(blob: Blob, kind: "video" | "image"): Promise<string> {
+export async function uploadBlob(
+  blob: Blob,
+  kind: "video" | "image" | "avatar"
+): Promise<string> {
   // MediaRecorder produce tipos como "video/webm;codecs=vp8,opus". Los parámetros
   // sobran y romperían la comparación de tipo al firmar.
   const contentType = blob.type.split(";")[0];

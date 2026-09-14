@@ -2,6 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { Client } from "pg";
 import { config } from "dotenv";
 import { decryptCode } from "../src/features/auth/otp";
+import { cerrarSesion } from "./helpers";
 
 config({ path: ".env.local" });
 
@@ -75,7 +76,7 @@ test("registro completo: crea la cuenta, confirma el celular y queda con sesión
   await page.getByRole("button", { name: "Confirmar celular" }).click();
 
   // D-04: la cabecera muestra el alias público, no el nombre completo.
-  await expect(page.getByTestId("usuario")).toHaveText("Catalina R.");
+  await expect(page.getByTestId("usuario")).toContainText("Catalina R.");
 });
 
 test("cerrar sesión y volver a entrar con las mismas credenciales", async ({ page }) => {
@@ -86,14 +87,14 @@ test("cerrar sesión y volver a entrar con las mismas credenciales", async ({ pa
   await page.getByRole("button", { name: "Confirmar celular" }).click();
   await expect(page.getByTestId("usuario")).toBeVisible();
 
-  await page.getByRole("button", { name: "Salir" }).click();
+  await cerrarSesion(page);
   await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible();
 
   await page.goto("/ingresar");
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await expect(page.getByTestId("usuario")).toHaveText("Catalina R.");
+  await expect(page.getByTestId("usuario")).toContainText("Catalina R.");
 });
 
 test("un código equivocado se rechaza y deja reintentar", async ({ page }) => {

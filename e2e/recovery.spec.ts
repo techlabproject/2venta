@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { alertIn, signUpVerified, uniqueAccount, withDb } from "./helpers";
+import { alertIn, cerrarSesion, signUpVerified, uniqueAccount, withDb } from "./helpers";
 import { decryptCode } from "../src/features/auth/otp";
 
 // La prueba de punta a punta de la rebanada S-20.
@@ -47,7 +47,7 @@ test("se recupera la contraseña con un código al celular", async ({ browser })
   const page = await ctx.newPage();
   const { email, phoneDigits, phone } = await account(page);
 
-  await page.getByRole("button", { name: "Salir" }).click();
+  await cerrarSesion(page);
   await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible();
 
   await page.goto("/recuperar");
@@ -74,7 +74,7 @@ test("la contraseña vieja deja de servir", async ({ browser }) => {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   const { email, phoneDigits, phone } = await account(page);
-  await page.getByRole("button", { name: "Salir" }).click();
+  await cerrarSesion(page);
 
   await page.goto("/recuperar");
   await page.getByLabel("Tu celular").fill(phoneDigits);
@@ -146,7 +146,7 @@ test("un código de recuperación equivocado se rechaza y dice cuántos quedan",
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   const { phoneDigits, phone } = await account(page);
-  await page.getByRole("button", { name: "Salir" }).click();
+  await cerrarSesion(page);
 
   await page.goto("/recuperar");
   await page.getByLabel("Tu celular").fill(phoneDigits);
@@ -167,7 +167,7 @@ test("un código de recuperación vencido se rechaza", async ({ browser }) => {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   const { phoneDigits, phone } = await account(page);
-  await page.getByRole("button", { name: "Salir" }).click();
+  await cerrarSesion(page);
 
   await page.goto("/recuperar");
   await page.getByLabel("Tu celular").fill(phoneDigits);
@@ -193,7 +193,7 @@ test("una contraseña nueva demasiado corta se rechaza", async ({ browser }) => 
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   const { phoneDigits, phone } = await account(page);
-  await page.getByRole("button", { name: "Salir" }).click();
+  await cerrarSesion(page);
 
   await page.goto("/recuperar");
   await page.getByLabel("Tu celular").fill(phoneDigits);

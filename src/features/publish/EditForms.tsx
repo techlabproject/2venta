@@ -61,14 +61,26 @@ const LABEL: Record<string, string> = {
   retirada: "Retirar la publicación",
 };
 
+// En el panel del vendedor conviven tres o cuatro de estos botones en una tarjeta
+// del ancho de una tarjeta: ahí la etiqueta larga no cabe y no hace falta, porque
+// el contexto ya dice de qué publicación se habla.
+const LABEL_CORTA: Record<string, string> = {
+  reservada: "Reservar",
+  activa: "Republicar",
+  vendida: "Vendida",
+  retirada: "Retirar",
+};
+
 export function StatusButton({
   listingId,
   status,
   variant = "outline",
+  compact = false,
 }: {
   listingId: string;
   status: keyof typeof LABEL;
   variant?: "outline" | "ghost";
+  compact?: boolean;
 }) {
   const [result, submit, pending] = useActionState<EditResult | null, FormData>(
     setListingStatus,
@@ -76,12 +88,17 @@ export function StatusButton({
   );
 
   return (
-    <form action={submit} className="flex flex-col gap-2">
+    <form action={submit} className={compact ? "contents" : "flex flex-col gap-2"}>
       {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
       <input type="hidden" name="listingId" value={listingId} />
       <input type="hidden" name="status" value={status} />
-      <Button type="submit" variant={variant} disabled={pending}>
-        {pending ? "Guardando…" : LABEL[status]}
+      <Button
+        type="submit"
+        variant={variant}
+        disabled={pending}
+        className={compact ? "w-auto px-3 py-2 text-xs" : ""}
+      >
+        {pending ? "Guardando…" : compact ? LABEL_CORTA[status] : LABEL[status]}
       </Button>
     </form>
   );

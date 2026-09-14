@@ -1,5 +1,5 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
-import { alertIn, makeAdmin, sellerWithListing, signUpVerified, withDb } from "./helpers";
+import { alertIn, cerrarSesion, makeAdmin, sellerWithListing, signUpVerified, withDb } from "./helpers";
 
 // La prueba de punta a punta de la rebanada S-24.
 // Ver slices/24-cruces.md
@@ -114,7 +114,7 @@ test("una cuenta suspendida no puede volver a entrar", async ({ browser }) => {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   const { email } = await signUpVerified(page, "vuelve", "Laura Compradora");
-  await page.getByRole("button", { name: "Salir" }).click();
+  await cerrarSesion(page);
   await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible();
 
   await suspend(email, "Intento de estafa");
