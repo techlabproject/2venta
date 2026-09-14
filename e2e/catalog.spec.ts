@@ -6,7 +6,9 @@ import { test, expect, type Page } from "@playwright/test";
 // Desde que la tarjeta del feed muestra los mismos datos que la ficha, buscar
 // texto suelto encuentra ambas. Cada aserción dice explícitamente en qué región
 // de la página espera encontrar el dato.
-const detail = (page: Page) => page.getByRole("main").getByRole("definition");
+// Los atributos del artículo, que desde la S-32 son distintivos y ya no una
+// lista de etiqueta y valor (D-81).
+const atributos = (page: Page) => page.getByTestId("atributos");
 
 test("la lista muestra los productos sembrados con precio en pesos", async ({ page }) => {
   await page.goto("/");
@@ -31,11 +33,13 @@ test("la ficha muestra el detalle y el alias del vendedor", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "iPhone 13 128 GB" })).toBeVisible();
   await expect(page.getByRole("main")).toContainText("$ 1.850.000");
   // D-04: alias y zona, nunca nombre completo ni dirección exacta.
-  await expect(detail(page)).toContainText([
-    "Tecnología",
-    "Usado, buen estado",
-    "Camila R.",
-  ]);
+  await expect(atributos(page)).toContainText("Usado, buen estado");
+  await expect(atributos(page)).toContainText("Tecnología");
+  // El sembrado le pone IMEI a la electrónica, así que aquí se ve la señal que la
+  // S-32 sacó a la luz sin tener que preparar nada.
+  await expect(atributos(page)).toContainText("IMEI validado");
+  // D-04: alias y zona, nunca nombre completo ni dirección exacta.
+  await expect(page.getByRole("main")).toContainText("Camila R.");
   await expect(page.getByRole("main")).toContainText("Chapinero");
 });
 
@@ -55,7 +59,7 @@ test("la ficha se sirve como HTML, sin depender de JavaScript del cliente", asyn
     .getAttribute("href");
   await page.goto(href!);
   await expect(page.getByRole("heading", { name: "iPhone 13 128 GB" })).toBeVisible();
-  await expect(detail(page)).toContainText(["Tecnología"]);
+  await expect(atributos(page)).toContainText("Tecnología");
   await context.close();
 });
 

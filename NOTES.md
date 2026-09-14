@@ -100,9 +100,9 @@ Lo que sigue abierto de ese repaso:
 - **`SPEC.md` dice que la tercera categoría es «hogar»**; la migración 0008, la base,
   las pantallas y los mockups dicen «niños». El documento de alcance es el
   desactualizado.
-- **El IMEI se recoge, se valida y nunca se le muestra al comprador.** La ficha del
-  mockup lleva un distintivo «IMEI validado». Es trabajo hecho cuyo valor no se está
-  cobrando.
+- (RESUELTO en S-32) El IMEI validado, la reputación del vendedor y los atributos
+  como distintivos ya están en la ficha (D-81), y un vendedor sin ventas dice que es
+  nuevo en vez de mostrar ceros (D-82), que era lo que la D-17 dejó pendiente.
 - Menores, del mockup y sin construir: filtro por distancia en kilómetros (no hay
   coordenadas), atributo «Batería 89%», tiempo de respuesta en el perfil, estado
   «En reparto» en el seguimiento, y las secciones «Resumen» y «Verificaciones KYC»

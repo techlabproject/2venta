@@ -729,3 +729,25 @@ de una en revisión o rechazada no se confirma ni que exista.
 buscar una explicación falsa, y le basta abrir la ficha para ver que era mentira. Pero
 confirmar la existencia de lo que todavía no es público sí filtraría algo, así que la
 línea se traza en si el artículo ya se puede ver o no.
+
+### D-81 — La ficha muestra lo que 2venta comprobó, y nada que no tenga
+En la columna de compra, los atributos del artículo van como distintivos y el
+vendedor lleva su foto, su verificación y su reputación (calificación, ventas y
+tasa de disputa), con enlace al perfil.
+**Por qué.** Es la pantalla donde se decide pagarle a un desconocido, y era la que
+más se alejaba del mockup (1f). El «IMEI validado» es el caso claro: se le pide al
+vendedor, se valida con dígito de verificación y se guarda desde S-01, y al
+comprador —que es a quien le sirve— nunca se le decía.
+**Qué no se muestra.** El número de IMEI, nunca: identifica un equipo concreto y con
+él se rastrea a su dueño. Solo el hecho de que exista y esté validado. Y el «Batería
+89%» del mockup se queda fuera: no es un dato que el producto recoja, e inventarlo
+sería mentir sobre el estado del artículo.
+
+### D-82 — Un vendedor sin ventas dice que es nuevo, no muestra ceros
+Cierra lo que la D-17 dejó pendiente. Con cero ventas no se enseñan «0 ventas · 0%
+disputas» en ninguna parte: el perfil ya lo explicaba con una frase entera, y ahora
+la ficha dice «Primera venta en 2venta» y, si la tiene, que su identidad está
+verificada.
+**Por qué.** Un cero se lee como mal desempeño cuando solo significa que es nuevo, y
+al arrancar la plataforma lo son todos. La identidad verificada es la única señal
+real que un vendedor nuevo sí tiene, así que es la que se muestra en su lugar.

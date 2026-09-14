@@ -23,6 +23,8 @@ import { AddToCartButton } from "@/features/cart/Forms";
 import { isInCart } from "@/features/cart/queries";
 import { listPhotos } from "@/features/publish/photo-queries";
 import { currentUser } from "@/lib/session";
+import { Avatar } from "@/components/Avatar";
+import { getReputation } from "@/features/ratings/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +57,9 @@ export default async function ListingPage({
 
   const questions = await listQuestions(listing.id);
   const promotion = isSeller ? await getActivePromotion(listing.id) : null;
+  // La reputación va donde se decide la compra, no solo en el perfil: el mockup 1f
+  // la pone junto al vendedor y era de lo poco que faltaba de esa pantalla.
+  const reputation = await getReputation(listing.seller_id);
 
   // Si está reservado, puede estarlo por un pago sin terminar de quien está mirando.
   // Decirle a esa persona que el artículo «está reservado para otra persona» era
@@ -131,28 +136,71 @@ export default async function ListingPage({
             <Price cop={listing.price_cop} size="lg" />
             <h1 className="mt-1 text-lg font-medium">{listing.title}</h1>
 
-            <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-              <dt className="text-muted">Categoría</dt>
-              <dd>{listing.category_label}</dd>
-              <dt className="text-muted">Estado</dt>
-              <dd>{CONDITION_LABEL[listing.condition]}</dd>
-              <dt className="text-muted">Vendedor</dt>
-              {/* D-04: alias y zona. Nunca nombre completo ni dirección exacta. */}
-              <dd className="flex flex-wrap items-center gap-x-2">
-                <Link
-                  href={`/vendedor/${listing.seller_id}`}
-                  className="underline"
-                >
-                  {listing.seller_alias}
-                </Link>
-                <span className="text-muted">· {listing.seller_zone}</span>
-                {listing.seller_verified && <VerifiedBadge />}
-              </dd>
-            </dl>
+            {/* Los atributos eran una lista de etiqueta y valor que se leía como
+                una ficha técnica. Como distintivos se leen de un vistazo, que es lo
+                que hace alguien decidiendo si comprar (mockup 1f). */}
+            <ul data-testid="atributos" className="mt-4 flex flex-wrap gap-2">
+              <Atributo>{CONDITION_LABEL[listing.condition]}</Atributo>
+              <Atributo>{listing.category_label}</Atributo>
+              {listing.has_imei && (
+                // Se le pide al vendedor, se valida con dígito de verificación y se
+                // guarda desde la primera rebanada; al comprador, que es a quien le
+                // sirve, no se le decía. Nunca el número: eso identifica el equipo.
+                <Atributo destacado>IMEI validado</Atributo>
+              )}
+            </ul>
 
             <p className="mt-5 text-sm leading-relaxed text-ink2">
               {listing.description}
             </p>
+
+            {/* D-04: alias y zona. Nunca nombre completo ni dirección exacta. */}
+            <div className="mt-5 flex items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-line">
+              <Avatar
+                src={listing.seller_avatar_path ? mediaUrl(listing.seller_avatar_path) : null}
+                name={listing.seller_alias}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="flex flex-wrap items-center gap-x-2">
+                  <Link
+                    href={`/vendedor/${listing.seller_id}`}
+                    className="font-medium hover:underline"
+                  >
+                    {listing.seller_alias}
+                  </Link>
+                  {listing.seller_verified && <VerifiedBadge />}
+                </p>
+                {/* D-17: un vendedor sin ventas no muestra cifras en cero. «0 ventas,
+                    0% disputas» se lee como mal desempeño cuando solo significa que
+                    es nuevo, y al arrancar la plataforma lo son todos. */}
+                {reputation.sales > 0 ? (
+                  <p data-testid="reputacion-ficha" className="mt-0.5 text-sm text-muted">
+                    {reputation.average !== null && (
+                      <span className="font-medium text-ink">
+                        {reputation.average.toLocaleString("es-CO")} ★{" "}
+                      </span>
+                    )}
+                    {reputation.sales} {reputation.sales === 1 ? "venta" : "ventas"}
+                    {reputation.disputeRate !== null &&
+                      ` · ${reputation.disputeRate.toLocaleString("es-CO")}% disputas`}
+                    {" · "}
+                    {listing.seller_zone}
+                  </p>
+                ) : (
+                  <p data-testid="vendedor-nuevo" className="mt-0.5 text-sm text-muted">
+                    {listing.seller_verified
+                      ? `Primera venta en 2venta · identidad verificada · ${listing.seller_zone}`
+                      : `Primera venta en 2venta · ${listing.seller_zone}`}
+                  </p>
+                )}
+              </div>
+              <Link
+                href={`/vendedor/${listing.seller_id}`}
+                className="shrink-0 text-sm text-brand underline"
+              >
+                Ver perfil
+              </Link>
+            </div>
 
             {/* El pago protegido es, con el video, la razón de existir del
                 producto. Tenía la misma tarjeta blanca que las preguntas de más
@@ -342,5 +390,25 @@ export default async function ListingPage({
           )}
       </main>
     </>
+  );
+}
+
+/** Un dato del artículo, legible de un vistazo. El destacado es para lo que prueba
+ *  algo comprobado por 2venta y no declarado por el vendedor. */
+function Atributo({
+  children,
+  destacado = false,
+}: {
+  children: React.ReactNode;
+  destacado?: boolean;
+}) {
+  return (
+    <li
+      className={`rounded-full px-3 py-1 text-xs font-medium ${
+        destacado ? "bg-brand/10 text-brand ring-1 ring-brand/20" : "bg-ph text-ink2"
+      }`}
+    >
+      {children}
+    </li>
   );
 }

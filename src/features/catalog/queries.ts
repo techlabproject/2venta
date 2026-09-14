@@ -19,6 +19,13 @@ export type Listing = {
   /** Solo es cierto cuando el proveedor externo reportó "aprobado" (D-02). */
   seller_verified: boolean;
   seller_is_store: boolean;
+  /** La foto del vendedor, si puso una. Es una clave del bucket, no una dirección. */
+  seller_avatar_path: string | null;
+  /**
+   * Si la publicación registró IMEI. Solo el hecho, nunca el número: el IMEI
+   * identifica un equipo concreto y publicarlo deja rastrear a su dueño.
+   */
+  has_imei: boolean;
   promoted: boolean;
   status: string;
 };
@@ -42,6 +49,8 @@ export const LISTING_SELECT = `
          coalesce(u.zone, 'Bogotá') as seller_zone,
          (k.status = 'aprobado') as seller_verified,
          (st.user_id is not null) as seller_is_store,
+         u.avatar_path as seller_avatar_path,
+         (l.imei is not null) as has_imei,
          (pr.id is not null) as promoted
   from listings l
   -- Las publicaciones de una cuenta suspendida no se ven (RF-41).
