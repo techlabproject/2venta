@@ -835,3 +835,18 @@ frase que diga qué llenará ese espacio, y el camino para llenarlo.
 **Por qué.** «Todavía no has comprado nada» es cierto y es inútil: describe el problema
 y no ofrece la salida. Y es justo la pantalla que más gente ve al empezar, cuando
 todavía no ha decidido si el producto es para ella.
+
+### D-89 — «Tu actividad» lista pedidos, no artículos
+Un pedido aparece en un solo renglón, con el primero de sus artículos por nombre y
+«y N artículos más» al lado cuando trae varios.
+**Por qué.** La consulta unía `order_items` de frente, así que un pedido de dos
+artículos salía en dos renglones **con el total del pedido entero en cada uno**: quien
+compraba dos cosas de una vez veía su gasto duplicado en pantalla. Era además la causa
+del aviso de React de dos hijos con la misma clave, porque las dos filas traían el
+mismo `o.id`.
+**Cómo se encontró.** Por el indicador de problemas de Next colado en una captura de
+la suite visual, con dos renglones distintos mostrando el mismo importe al lado.
+**Por qué se nombra el primer artículo y no todos.** Elegido por `i.id` para que sea
+siempre el mismo y la lista no baile entre recargas. El importe es el del pedido
+entero, así que el renglón tiene que decir que hay más de una cosa: si no, la cifra
+parece el precio de lo único que se nombra.

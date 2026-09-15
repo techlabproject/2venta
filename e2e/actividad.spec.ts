@@ -129,3 +129,52 @@ test("sin sesión manda a ingresar", async ({ browser }) => {
   expect(res?.url()).toMatch(/\/ingresar/);
   await anonCtx.close();
 });
+
+test("un pedido de dos artículos sale una sola vez y con el total una sola vez", async ({
+  browser,
+}) => {
+  // El defecto: «Tu actividad» unía `order_items` de frente, así que un pedido de
+  // dos artículos salía en DOS renglones, cada uno con el total del pedido entero.
+  // Quien compraba dos cosas de una vez veía su gasto duplicado en pantalla.
+  const titulo = `Dos cosas ${Date.now()}`;
+  const { seller, ctx, buyer: page, orderId } = await purchase(browser, titulo);
+
+  // Se le agrega un segundo renglón al pedido ya pagado. Lo que se prueba es cómo
+  // se lista un pedido de varios artículos, no el circuito de la compra, que ya
+  // tiene sus propias pruebas.
+  await withDb(async (c) => {
+    const { rows } = await c.query<{ id: string }>(
+      `insert into listings (seller_id, title, description, category, condition,
+                             price_cop, video_path, poster_path, status)
+       select seller_id, $2, 'Segundo artículo del pedido.', category,
+              'usado_bueno', 40000, 'seed/demo.webm', 'seed/demo.jpg', 'vendida'
+         from listings where id = (select listing_id from order_items
+                                    where order_id = $1 limit 1)
+       returning id`,
+      [orderId, `Acompañante ${Date.now()}`]
+    );
+    await c.query(
+      `insert into order_items (order_id, listing_id, title_cop, price_cop)
+       values ($1, $2, 'Acompañante del pedido', 40000)`,
+      [orderId, rows[0].id]
+    );
+  });
+
+  await page.goto("/actividad");
+
+  // Un renglón por PEDIDO, no por artículo. Se filtra por el enlace al pedido y no
+  // por el título: con el defecto, el segundo renglón traía el título del segundo
+  // artículo, así que buscar por título contaba uno solo y no veía la duplicación.
+  const delPedido = page
+    .getByTestId("compras")
+    .getByRole("listitem")
+    .filter({ has: page.locator(`a[href="/pedido/${orderId}"]`) });
+  await expect(delPedido).toHaveCount(1);
+
+  // Y ese renglón avisa de que el pedido trae más de una cosa, porque el importe
+  // que muestra es el del pedido entero y no el del artículo que nombra.
+  await expect(delPedido).toContainText("y 1 artículo más");
+
+  await seller.context.close();
+  await ctx.close();
+});

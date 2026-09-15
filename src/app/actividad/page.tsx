@@ -160,7 +160,19 @@ function OrderRow({ order, role }: { order: OrderSummary; role: string }) {
         className="block rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
       >
         <div className="flex items-baseline justify-between gap-3">
-          <span className="font-medium">{order.title}</span>
+          <span className="font-medium">
+            {order.title}
+            {order.item_count > 1 && (
+              // El importe es el del pedido entero, así que el renglón tiene que
+              // decir que el pedido trae más de una cosa. Si no, la cifra parece
+              // el precio de lo único que se nombra.
+              <span className="font-normal text-muted">
+                {" "}
+                y {order.item_count - 1}{" "}
+                {order.item_count === 2 ? "artículo más" : "artículos más"}
+              </span>
+            )}
+          </span>
           <span className="shrink-0">{formatCop(money.buyerTotalCop)}</span>
         </div>
         <p className="mt-0.5 text-muted">

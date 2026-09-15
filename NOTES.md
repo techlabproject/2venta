@@ -29,12 +29,14 @@ Lo que salió de construir esta rebanada, y conviene no redescubrir:
   daba 1,88:1 contra la crema, por debajo del 3:1 de WCAG 1.4.11— y nadie lo había
   medido nunca. De paso el gris tenue pasó de 4,21:1 a 4,75:1 y dejó de incumplir AA.
 
-Abierto y sin explicar: en `/pedido/[id]` como vendedor, el navegador avisa de
-**dos hijos de React con la misma clave** (un UUID). No es mío —no toqué ninguna
-clave— y no hace fallar ninguna prueba. Se descartó la sospecha obvia: `order_items`
-no tiene restricción de unicidad sobre `(order_id, listing_id)`, pero en los datos de
-demostración no hay ninguna combinación repetida. Queda anotado sin arreglar, porque
-arreglar lo que no se entendió es peor que dejarlo escrito.
+**Un defecto de dinero, encontrado y arreglado de paso (D-89).** El aviso de React de
+«dos hijos con la misma clave» resultó no ser cosmético: `listPurchases`/`listSales`
+unían `order_items` de frente, así que un pedido de dos artículos salía en **dos
+renglones de «Tu actividad», cada uno con el total del pedido entero**. Quien compraba
+dos cosas de una vez veía su gasto duplicado. Lo delató el indicador de problemas de
+Next colado en una captura de la suite visual, con dos importes idénticos uno encima
+del otro. Arreglado con `join lateral` y probado: la prueba de regresión da
+«Expected: 1, Received: 2» contra el código viejo.
 
 Pendiente menor, no hecho: en `/vender/metricas` las tarjetas de una publicación
 vendida dejan un hueco donde irían sus acciones, porque la retícula iguala alturas y
