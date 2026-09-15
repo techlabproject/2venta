@@ -7,7 +7,7 @@ import { Button, ErrorNote } from "@/components/ui";
 export function ShipButton({ orderId }: { orderId: string }) {
   const [result, submit, pending] = useActionState<ShipResult | null, FormData>(
     createShipment,
-    null
+    null,
   );
 
   return (

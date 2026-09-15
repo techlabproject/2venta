@@ -55,7 +55,7 @@ export default async function Buscar({
 
         {listings.length === 0 ? (
           // Una lista vacía y muda deja al comprador sin saber qué hacer.
-          <div className="mt-4 rounded-2xl bg-white p-6 text-sm">
+          <div className="mt-4 rounded-2xl bg-white p-6 text-sm shadow-xs ring-1 ring-line">
             <p className="font-medium">No encontramos nada con eso.</p>
             <p className="mt-1 text-ink2">
               Prueba con menos filtros o con otra palabra. También puedes{" "}

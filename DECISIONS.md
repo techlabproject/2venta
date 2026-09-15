@@ -769,3 +769,69 @@ decide.
 **Lo que no se construyó.** El paso «En reparto en Bogotá» del mockup necesita que
 la transportadora lo reporte, y la nuestra es de prueba con dos estados. Va con R-04:
 decirle a alguien que su paquete se está moviendo sin saberlo es peor que no decirlo.
+
+### D-84 — La paleta es «petróleo y coral»
+Verde bosque y mostaza salen; entran petróleo (`#0F4C4A`) y coral (`#FF6B4A`), con la
+misma estructura de siempre: la marca sostiene cabecera, precios y superficies
+serias, y el acento se reserva para el dinero y la acción principal de cada pantalla.
+**Por qué.** Lo pidió Nicolás con la paleta en la mano (2026-09-15). Lo que la hace
+funcionar y no solo cambiar de tono es que el petróleo es más profundo y más frío que
+el verde, y deja que el coral —cálido y saturado— sea lo único que grita.
+**El coral lleva texto oscuro, no blanco.** Blanco sobre coral da 2,82:1 y WCAG pide
+4,5:1; con la tinta de marca da 5,78:1. No es una preferencia: es la única de las dos
+que se puede leer.
+**El coral lleva borde (`accent-edge`, `#D8431F`).** Contra la crema, el coral solo da
+2,57:1 y WCAG 1.4.11 pide 3:1 para el contorno de un control. Sin ese borde, un botón
+principal no tiene bordes visibles para quien ve poco contraste. La mostaza vieja daba
+1,88:1 y nadie lo había medido.
+**Los semánticos se separan del acento.** El aviso se va al ámbar y el peligro al
+carmesí. Tres naranjas seguidos no significan nada, y el color es lo único que
+distingue «cuidado» de «esto borra algo».
+**Los grises llevan una gota de petróleo.** Un gris neutro sobre una crema fría se ve
+sucio. De paso, el gris tenue pasa de 4,21:1 a 4,75:1 y deja de incumplir AA.
+
+### D-85 — El arco del logo se usa en grande como recurso gráfico
+El arco del isotipo —el ciclo de reuso— aparece al 15 % de opacidad en la franja de
+inicio y al 7 % en los estados vacíos.
+**Por qué.** Estaba solo dentro del logo, a 32 px, donde nadie lo lee como una forma.
+Una marca con personalidad repite su gesto en tamaños donde ya no es un logo sino una
+textura, y es lo que hace que una franja de color deje de ser un rectángulo.
+**Los límites.** Es decorativo y solo decorativo (`aria-hidden`, sin texto). Por
+encima del 15 % deja de ser textura y se convierte en una mancha encima del titular;
+se probó al 25 % y hubo que bajarlo.
+
+### D-86 — El movimiento tiene un vocabulario, y cada animación tiene un trabajo
+Tres curvas y tres duraciones viven en `@theme`, y ninguna pantalla inventa las
+suyas. Lo que se mueve: el hundimiento de todo control al tocarlo, el corazón al
+guardar, el punto del paso en curso del seguimiento, y el levantamiento de la tarjeta
+al pasar por encima.
+**Por qué así.** Si cada pantalla escribe su propia curva, el producto se siente hecho
+por cinco personas distintas.
+**Lo que se decidió NO animar.** La entrada escalonada de las tarjetas del catálogo.
+Retrasa el contenido que la persona vino a ver, y es el gesto que más delata a una
+interfaz decorada en vez de diseñada. Una animación que no confirma, guía ni explica
+no entra.
+**Quien pidió menos movimiento lo pidió en serio.** `prefers-reduced-motion` apaga
+todo y deja cada elemento en su estado final, nunca en el inicial: una animación de
+entrada mal apagada deja contenido invisible para siempre.
+
+### D-87 — No hay esqueletos de carga en el catálogo ni en la búsqueda
+Se construyeron, se probaron y se retiraron.
+**Por qué.** Un esqueleto de carga necesita `Suspense` con streaming, y el streaming
+manda el hueco primero y el contenido después, cosido con JavaScript. Sin JavaScript,
+el contenido nunca llega. La D-25 dice que el catálogo y la ficha tienen que existir
+como HTML del servidor para que un buscador los indexe, y de eso depende el argumento
+entero de la decisión de tecnología. Lo cazaron dos pruebas que ya existían
+(«la búsqueda funciona sin JavaScript del cliente», «la ficha se sirve como HTML»).
+**Qué sí es posible.** Las pantallas privadas —actividad, guardados, panel del
+vendedor— no las indexa nadie y ahí no hay conflicto. Queda anotado en `NOTES.md`
+como lo siguiente, no construido: cambiar la garantía de indexación por una animación
+de carga sería un mal negocio, pero no aplicarla donde no hay garantía que perder es
+solo trabajo pendiente.
+
+### D-88 — Un estado vacío dice qué va a aparecer ahí y cómo hacer que aparezca
+Tres piezas siempre: el arco de la marca para que el hueco se vea intencionado, una
+frase que diga qué llenará ese espacio, y el camino para llenarlo.
+**Por qué.** «Todavía no has comprado nada» es cierto y es inútil: describe el problema
+y no ofrece la salida. Y es justo la pantalla que más gente ve al empezar, cuando
+todavía no ha decidido si el producto es para ella.

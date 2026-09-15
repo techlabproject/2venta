@@ -45,7 +45,7 @@ export function BottomNav() {
                 <Link
                   href={href}
                   aria-label="Publicar un artículo"
-                  className="-mt-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-on-accent shadow-md transition hover:brightness-95"
+                  className="-mt-4 flex h-12 w-12 items-center justify-center rounded-full border border-accent-edge/50 bg-accent text-on-accent shadow-lg transition duration-200 ease-salida hover:brightness-[0.97] active:scale-90 active:shadow-md"
                 >
                   <Icono />
                 </Link>
@@ -58,12 +58,21 @@ export function BottomNav() {
               <Link
                 href={href}
                 aria-current={aqui ? "page" : undefined}
-                className={`flex flex-col items-center gap-1 rounded-lg py-2.5 text-[11px] transition ${
+                className={`relative flex flex-col items-center gap-1 rounded-lg py-2.5 text-[11px] transition duration-200 ease-salida active:scale-90 ${
                   aqui
                     ? "font-semibold text-brand"
                     : "text-muted hover:text-ink2"
                 }`}
               >
+                {/* El color solo no basta para decir dónde estás: quien no
+                    distingue el petróleo del gris se queda sin la señal. La
+                    barrita lo dice con forma además de con color. */}
+                {aqui && (
+                  <span
+                    aria-hidden
+                    className="absolute inset-x-3 top-0 h-0.5 rounded-full bg-accent"
+                  />
+                )}
                 <Icono />
                 {label}
               </Link>

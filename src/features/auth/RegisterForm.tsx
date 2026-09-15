@@ -8,7 +8,8 @@ import { Button, ErrorNote, Field } from "@/components/ui";
 
 export function RegisterForm() {
   const router = useRouter();
-  const rol = useSearchParams().get("rol") === "vendedor" ? "vendedor" : "comprador";
+  const rol =
+    useSearchParams().get("rol") === "vendedor" ? "vendedor" : "comprador";
 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -25,7 +26,9 @@ export function RegisterForm() {
     // La validación del navegador es comodidad, no control: el servidor vuelve a
     // comprobar todo. Esto solo evita un viaje de ida y vuelta inútil.
     if (!phone) {
-      setError("Escribe un celular colombiano de 10 dígitos, por ejemplo 300 412 88 05.");
+      setError(
+        "Escribe un celular colombiano de 10 dígitos, por ejemplo 300 412 88 05.",
+      );
       setBusy(false);
       return;
     }
@@ -63,16 +66,43 @@ export function RegisterForm() {
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
       {error && <ErrorNote>{error}</ErrorNote>}
 
-      <Field id="name" name="name" label="Nombre" autoComplete="name" required
-        placeholder="Catalina Ríos" />
-      <Field id="email" name="email" type="email" label="Correo"
-        autoComplete="email" required placeholder="catalina@correo.com" />
-      <Field id="phone" name="phone" type="tel" label="Celular"
-        autoComplete="tel" required placeholder="300 412 88 05"
-        hint="Te mandamos un código para confirmarlo. Sin celular confirmado no puedes comprar ni escribirle a nadie." />
-      <Field id="password" name="password" type="password" label="Contraseña"
-        autoComplete="new-password" required minLength={8}
-        hint="Mínimo ocho caracteres." />
+      <Field
+        id="name"
+        name="name"
+        label="Nombre"
+        autoComplete="name"
+        required
+        placeholder="Catalina Ríos"
+      />
+      <Field
+        id="email"
+        name="email"
+        type="email"
+        label="Correo"
+        autoComplete="email"
+        required
+        placeholder="catalina@correo.com"
+      />
+      <Field
+        id="phone"
+        name="phone"
+        type="tel"
+        label="Celular"
+        autoComplete="tel"
+        required
+        placeholder="300 412 88 05"
+        hint="Te mandamos un código para confirmarlo. Sin celular confirmado no puedes comprar ni escribirle a nadie."
+      />
+      <Field
+        id="password"
+        name="password"
+        type="password"
+        label="Contraseña"
+        autoComplete="new-password"
+        required
+        minLength={8}
+        hint="Mínimo ocho caracteres."
+      />
 
       <label className="flex items-start gap-2.5 text-sm text-ink2">
         <input type="checkbox" name="terms" required className="mt-0.5" />

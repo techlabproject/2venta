@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/session";
-import { listSellerMetrics, type ListingMetrics } from "@/features/metrics/queries";
+import {
+  listSellerMetrics,
+  type ListingMetrics,
+} from "@/features/metrics/queries";
 import { AppHeader } from "@/components/AppHeader";
 import { Price } from "@/components/Price";
 import { ButtonLink } from "@/components/ui";
@@ -35,7 +38,10 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 /** Qué puede hacer el vendedor desde aquí, según el estado (RF-17). */
-const ACCIONES: Record<string, ("reservada" | "activa" | "vendida" | "retirada")[]> = {
+const ACCIONES: Record<
+  string,
+  ("reservada" | "activa" | "vendida" | "retirada")[]
+> = {
   activa: ["reservada", "vendida", "retirada"],
   reservada: ["activa", "vendida", "retirada"],
   en_revision: ["retirada"],
@@ -61,7 +67,9 @@ export default async function Metricas() {
             <Link href="/vender" className="text-sm text-ink2 underline">
               Volver a tu espacio de vendedor
             </Link>
-            <h1 className="mt-2 font-title text-2xl font-semibold">Tus publicaciones</h1>
+            <h1 className="mt-2 font-title text-2xl font-semibold">
+              Tus publicaciones
+            </h1>
           </div>
           <ButtonLink href="/publicar" className="sm:w-auto">
             Publicar un artículo
@@ -69,11 +77,13 @@ export default async function Metricas() {
         </div>
 
         {metrics.length === 0 ? (
-          <div className="mt-8 rounded-2xl bg-white p-8 text-center ring-1 ring-line">
-            <p className="font-title text-lg font-semibold">Todavía no has publicado nada</p>
+          <div className="mt-8 rounded-2xl bg-white shadow-xs p-8 text-center ring-1 ring-line">
+            <p className="font-title text-lg font-semibold">
+              Todavía no has publicado nada
+            </p>
             <p className="mx-auto mt-2 max-w-md text-sm text-ink2">
-              Lo primero que vende es el video: treinta segundos mostrando el artículo
-              de verdad valen más que diez fotos perfectas.
+              Lo primero que vende es el video: treinta segundos mostrando el
+              artículo de verdad valen más que diez fotos perfectas.
             </p>
             <div className="mt-5 flex justify-center">
               <ButtonLink href="/publicar" className="sm:w-auto">
@@ -83,7 +93,11 @@ export default async function Metricas() {
           </div>
         ) : (
           <>
-            <dl className="mt-6 grid grid-cols-3 gap-3">
+            {/* Una sola tira y no tres tarjetas: en escritorio cada tarjeta medía
+                370 px de ancho para sostener una palabra y un número, y el hueco
+                vacío pesaba más que el dato. Tres cifras de resumen son una
+                línea, no tres objetos. */}
+            <dl className="mt-6 flex divide-x divide-line overflow-hidden rounded-2xl bg-white shadow-xs ring-1 ring-line">
               <Resumen label="Activas" value={activas} />
               <Resumen label="Visitas" value={vistas} />
               <Resumen label="Guardados" value={guardados} />
@@ -106,9 +120,11 @@ export default async function Metricas() {
 
 function Resumen({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl bg-white p-4 ring-1 ring-line">
+    <div className="flex-1 px-4 py-3">
       <dt className="text-xs text-muted">{label}</dt>
-      <dd className="font-title text-2xl font-semibold tabular-nums">{value}</dd>
+      <dd className="font-title text-2xl font-semibold tabular-nums">
+        {value}
+      </dd>
     </div>
   );
 }
@@ -117,7 +133,7 @@ function Tarjeta({ m }: { m: ListingMetrics }) {
   const acciones = ACCIONES[m.status] ?? [];
 
   return (
-    <li className="flex flex-col rounded-2xl bg-white p-4 ring-1 ring-line">
+    <li className="flex flex-col rounded-2xl bg-white shadow-xs p-4 ring-1 ring-line">
       <div className="flex gap-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -158,7 +174,9 @@ function Tarjeta({ m }: { m: ListingMetrics }) {
         </div>
         <div>
           <dt className="text-xs text-muted">Guardados</dt>
-          <dd className="font-title font-semibold tabular-nums">{m.favorites}</dd>
+          <dd className="font-title font-semibold tabular-nums">
+            {m.favorites}
+          </dd>
         </div>
         <div>
           <dt className="text-xs text-muted">Chats</dt>

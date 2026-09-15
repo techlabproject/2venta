@@ -42,7 +42,11 @@ const LABEL: Record<string, string> = {
   reembolsado: "Reembolsado",
 };
 
-export default async function Pedido({ params }: { params: Promise<{ id: string }> }) {
+export default async function Pedido({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const user = await currentUser();
   if (!user) redirect("/ingresar");
 
@@ -63,7 +67,8 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
   const claim = await getClaim(order.id);
   // D-17: se califica cuando el pedido terminó, no antes. Calificar durante la
   // transacción convertiría la reseña en una forma de presionar.
-  const completed = order.status === "liberado" || order.status === "reembolsado";
+  const completed =
+    order.status === "liberado" || order.status === "reembolsado";
   const alreadyRated = completed ? await hasRated(order.id, user.id) : true;
 
   // D-19: el código lo ve solo el comprador, y solo mientras haga falta. Se emite
@@ -76,10 +81,14 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
     presencial && isBuyer && order.status === "pagado" && !codeState?.used_at
       ? await issueCode(order.id)
       : null;
-  const events = await query<{ to_status: string; detail: string | null; created_at: Date }>(
+  const events = await query<{
+    to_status: string;
+    detail: string | null;
+    created_at: Date;
+  }>(
     `select to_status, detail, created_at from order_events
       where order_id = $1 order by created_at`,
-    [order.id]
+    [order.id],
   );
 
   return (
@@ -116,7 +125,10 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
 
         <ul className="mt-5 flex flex-col gap-2">
           {items.map((item) => (
-            <li key={item.listing_id} className="rounded-2xl bg-white p-4">
+            <li
+              key={item.listing_id}
+              className="rounded-2xl bg-white shadow-xs p-4 ring-1 ring-line"
+            >
               <p className="font-medium">{item.title_cop}</p>
               <p className="text-sm text-muted">{formatCop(item.price_cop)}</p>
             </li>
@@ -155,12 +167,14 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
             «alguien más se adelantó» cuando volvía a intentarlo— ni para el
             vendedor (ronda de usuario, 2026-09-14). */}
         {isBuyer && order.status === "pendiente_pago" && (
-          <section className="mt-6 rounded-2xl bg-white p-5 ring-1 ring-warn/40">
-            <h2 className="font-title font-semibold">Te falta terminar el pago</h2>
+          <section className="mt-6 rounded-2xl bg-white shadow-xs p-5 ring-1 ring-warn/40">
+            <h2 className="font-title font-semibold">
+              Te falta terminar el pago
+            </h2>
             <p className="mt-2 text-sm text-ink2">
-              Mientras tanto el artículo queda apartado para ti y nadie más puede
-              comprarlo. Si no terminas en {CHECKOUT_TTL_MINUTES} minutos, se suelta
-              solo y vuelve al catálogo.
+              Mientras tanto el artículo queda apartado para ti y nadie más
+              puede comprarlo. Si no terminas en {CHECKOUT_TTL_MINUTES} minutos,
+              se suelta solo y vuelve al catálogo.
             </p>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               {order.provider_ref && (
@@ -182,7 +196,7 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
         )}
 
         {presencial && (
-          <p className="mt-4 rounded-2xl bg-white p-4 text-sm">
+          <p className="mt-4 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line">
             Entrega en persona en {order.meeting_zone}. El punto y la hora los
             acuerdan por el chat.
           </p>
@@ -191,7 +205,10 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
         {code && (
           <div className="mt-5 rounded-2xl bg-brand p-5 text-cream">
             <p className="text-sm">Tu código de entrega</p>
-            <p data-testid="codigo" className="mt-1 font-title text-4xl tracking-[0.25em]">
+            <p
+              data-testid="codigo"
+              className="mt-1 font-title text-4xl tracking-[0.25em]"
+            >
               {code}
             </p>
             <p className="mt-3 text-sm text-cream/85">
@@ -207,15 +224,15 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
               Te pagaron. Cobra en el encuentro.
             </p>
             <p className="mt-1 text-sm text-ink2">
-              Cuando el comprador revise el producto te va a dictar un código de seis
-              dígitos. Escríbelo aquí y el dinero pasa a tu cuenta.
+              Cuando el comprador revise el producto te va a dictar un código de
+              seis dígitos. Escríbelo aquí y el dinero pasa a tu cuenta.
             </p>
             <RedeemForm orderId={order.id} />
           </div>
         )}
 
         {order.tracking_number && (
-          <div className="mt-5 rounded-2xl bg-white p-4 text-sm">
+          <div className="mt-5 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line">
             <p className="font-medium">Guía {order.tracking_number}</p>
             <p className="mt-1 text-muted">{order.carrier}</p>
           </div>
@@ -223,17 +240,19 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
 
         {!isBuyer && !presencial && order.status === "pagado" && (
           <div className="mt-6 rounded-2xl bg-brand/10 p-4">
-            <p className="text-sm font-medium text-brand">Te pagaron. Ya puedes despachar.</p>
+            <p className="text-sm font-medium text-brand">
+              Te pagaron. Ya puedes despachar.
+            </p>
             <p className="mt-1 text-sm text-ink2">
-              Generamos la guía y te decimos a dónde llevarlo. El dinero llega a tu
-              cuenta cuando el comprador confirme que recibió.
+              Generamos la guía y te decimos a dónde llevarlo. El dinero llega a
+              tu cuenta cuando el comprador confirme que recibió.
             </p>
             <ShipButton orderId={order.id} />
           </div>
         )}
 
         {address && (
-          <section className="mt-6 rounded-2xl bg-white p-4 text-sm">
+          <section className="mt-6 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line">
             <h2 className="font-medium">Entrega</h2>
             {/* El vendedor ve la dirección solo desde que el pedido está pagado, que
                 es cuando la necesita para despachar. Nunca antes. */}
@@ -245,22 +264,27 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
             <p className="text-muted">
               {address.zone} · {address.city}
             </p>
-            {address.notes && <p className="mt-1 text-muted">Nota: {address.notes}</p>}
+            {address.notes && (
+              <p className="mt-1 text-muted">Nota: {address.notes}</p>
+            )}
           </section>
         )}
 
-        {isBuyer && (order.status === "pagado" || order.status === "despachado" || order.status === "entregado") && (
-          <div className="mt-6 rounded-2xl bg-brand/10 p-4">
-            <p className="text-sm font-medium text-brand">
-              Tenemos guardados {formatCop(money.buyerTotalCop)}
-            </p>
-            <p className="mt-1 text-sm text-ink2">
-              El dinero llega al vendedor cuando confirmes que recibiste el producto,
-              o solo a los siete días de la entrega si no confirmas.
-            </p>
-            <ConfirmReceiptButton orderId={order.id} />
-          </div>
-        )}
+        {isBuyer &&
+          (order.status === "pagado" ||
+            order.status === "despachado" ||
+            order.status === "entregado") && (
+            <div className="mt-6 rounded-2xl bg-brand/10 p-4">
+              <p className="text-sm font-medium text-brand">
+                Tenemos guardados {formatCop(money.buyerTotalCop)}
+              </p>
+              <p className="mt-1 text-sm text-ink2">
+                El dinero llega al vendedor cuando confirmes que recibiste el
+                producto, o solo a los siete días de la entrega si no confirmas.
+              </p>
+              <ConfirmReceiptButton orderId={order.id} />
+            </div>
+          )}
 
         {/* Al vendedor se le decía a medias y solo antes de despachar: justo
             cuando el pedido lleva más tiempo en curso, la promesa desaparecía
@@ -286,21 +310,24 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
               {formatCop(order.seller_payout_cop)} ya son tuyos
             </p>
             <p className="mt-1 text-sm text-ink2">
-              Quedan a tu nombre en el proveedor de pagos. Retirarlos a tu cuenta
-              bancaria todavía no se puede desde la app; te avisamos apenas esté.
+              Quedan a tu nombre en el proveedor de pagos. Retirarlos a tu
+              cuenta bancaria todavía no se puede desde la app; te avisamos
+              apenas esté.
             </p>
           </div>
         )}
 
         {claim && (
           <section className="mt-6 rounded-2xl bg-warn/10 p-4 text-sm">
-            <h2 className="font-medium text-warn">Reclamo: {KIND_LABEL[claim.kind]}</h2>
+            <h2 className="font-medium text-warn">
+              Reclamo: {KIND_LABEL[claim.kind]}
+            </h2>
             {/* D-13: mientras se decide, el dinero no se mueve. Decirlo aquí es lo
                 que hace el reclamo creíble para los dos lados. */}
             {!claim.resolved_at && (
               <p className="mt-1 text-ink2">
-                Estamos revisando. Tu dinero no se mueve hasta que alguien compare
-                las dos versiones con el video de la publicación.
+                Estamos revisando. Tu dinero no se mueve hasta que alguien
+                compare las dos versiones con el video de la publicación.
               </p>
             )}
             <p className="mt-3 font-medium">Dice quien compró</p>
@@ -321,7 +348,10 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
 
             {claim.resolved_at && (
               <p data-testid="resolucion" className="mt-3 font-medium">
-                Resuelto a favor {claim.resolution === "comprador" ? "de quien compró" : "de quien vendió"}
+                Resuelto a favor{" "}
+                {claim.resolution === "comprador"
+                  ? "de quien compró"
+                  : "de quien vendió"}
                 {claim.resolution_note ? `: ${claim.resolution_note}` : "."}
               </p>
             )}
@@ -329,7 +359,8 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
         )}
 
         {/* La D-12 no cubre arrepentimiento: solo lo que no coincide o no llegó. */}
-        {isBuyer && !claim &&
+        {isBuyer &&
+          !claim &&
           ["pagado", "despachado", "entregado"].includes(order.status) && (
             <OpenClaimForm orderId={order.id} />
           )}
@@ -346,12 +377,14 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
           // pantalla se vuelve a dibujar y el formulario desaparece, así que un
           // mensaje que viviera dentro de él no se llegaría a ver. Además sirve
           // cuando la persona vuelve al pedido días después.
-          <p data-testid="ya-calificado" className="mt-6 rounded-2xl bg-brand/10 p-4 text-sm text-brand">
-            Ya calificaste este pedido. Gracias: es lo que le permite al siguiente
-            comprador saber con quién está tratando.
+          <p
+            data-testid="ya-calificado"
+            className="mt-6 rounded-2xl bg-brand/10 p-4 text-sm text-brand"
+          >
+            Ya calificaste este pedido. Gracias: es lo que le permite al
+            siguiente comprador saber con quién está tratando.
           </p>
         )}
-
       </main>
     </>
   );

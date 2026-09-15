@@ -50,17 +50,28 @@ export default async function Comprar({
   ]);
 
   const zoneNames = Array.from(
-    new Set([...zones.map((z) => z.zone), "Chapinero", "Usaquén", "Teusaquillo", "Suba"])
+    new Set([
+      ...zones.map((z) => z.zone),
+      "Chapinero",
+      "Usaquén",
+      "Teusaquillo",
+      "Suba",
+    ]),
   ).sort();
 
   return (
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Link href={`/producto/${listing.id}`} className="text-sm text-ink2 underline">
+        <Link
+          href={`/producto/${listing.id}`}
+          className="text-sm text-ink2 underline"
+        >
           Volver al artículo
         </Link>
-        <h1 className="mt-4 font-title text-xl font-semibold">¿A dónde lo llevamos?</h1>
+        <h1 className="mt-4 font-title text-xl font-semibold">
+          ¿A dónde lo llevamos?
+        </h1>
         <p className="mt-1 mb-6 text-sm text-muted">
           {id === "carrito"
             ? cart.length === 1

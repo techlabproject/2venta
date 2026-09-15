@@ -1,11 +1,44 @@
 # Estado
 
-**Última actualización:** 2026-09-13
+**Última actualización:** 2026-09-15
 
 ## En qué voy
 
-Las tres fases del plan más catorce rebanadas posteriores. 257 pruebas de navegador
-y 103 unitarias (seis de ellas contra MinIO), más 50 comparaciones visuales.
+Las tres fases del plan más diecisiete rebanadas posteriores. 277 pruebas de
+navegador y 119 unitarias (seis de ellas contra MinIO), más 50 comparaciones
+visuales sobre 70 referencias.
+
+**S-34 — petróleo y coral (2026-09-15):** cambio de paleta completo pedido por
+Nicolás (D-84), más los tres frentes que atacaban lo que él seguía llamando «plano»:
+profundidad (sombras teñidas y una superficie única para las 42 tarjetas blancas),
+movimiento con vocabulario propio (D-86) y personalidad (el arco del logo como
+gráfico, D-85; estados vacíos con salida, D-88). La investigación de referentes que
+lo acompaña está en `qa/investigacion-diseno/2026-09-15-referencias-y-oportunidades.md`.
+
+Lo que salió de construir esta rebanada, y conviene no redescubrir:
+
+- **`Suspense` con streaming rompe la D-25.** Los esqueletos de carga se
+  construyeron, se probaron y se retiraron: el streaming manda el hueco primero y el
+  contenido después, cosido con JavaScript, así que sin JavaScript el catálogo nunca
+  llega y deja de ser indexable. Lo cazaron dos pruebas que ya existían. Ver D-87.
+  **Siguiente paso concreto:** aplicarlos en actividad, guardados y panel del
+  vendedor, que son privadas y no tienen indexación que perder.
+- **El contraste de la paleta ahora es una prueba** (`src/app/paleta.test.ts`, 16
+  comprobaciones). Se comprobó que falla de verdad poniendo blanco sobre el coral:
+  sale con código 1. El fallo que destapó llevaba desde la primera paleta —la mostaza
+  daba 1,88:1 contra la crema, por debajo del 3:1 de WCAG 1.4.11— y nadie lo había
+  medido nunca. De paso el gris tenue pasó de 4,21:1 a 4,75:1 y dejó de incumplir AA.
+
+Abierto y sin explicar: en `/pedido/[id]` como vendedor, el navegador avisa de
+**dos hijos de React con la misma clave** (un UUID). No es mío —no toqué ninguna
+clave— y no hace fallar ninguna prueba. Se descartó la sospecha obvia: `order_items`
+no tiene restricción de unicidad sobre `(order_id, listing_id)`, pero en los datos de
+demostración no hay ninguna combinación repetida. Queda anotado sin arreglar, porque
+arreglar lo que no se entendió es peor que dejarlo escrito.
+
+Pendiente menor, no hecho: en `/vender/metricas` las tarjetas de una publicación
+vendida dejan un hueco donde irían sus acciones, porque la retícula iguala alturas y
+esa tarjeta no tiene ninguna.
 
 **S-31 — panel, navegación y foto de perfil (2026-09-13):** la cabecera pasa de
 seis enlaces subrayados a navegación con menú (D-72), `/vender/metricas` deja de ser
@@ -318,7 +351,7 @@ Lo que sigue abierto de ese repaso:
 
 ## Pendientes de diseño que dejó la ronda de QA
 
-- Chat con oferta activa: "Aceptar" y "Enviar" compiten por el acento mostaza.
+- Chat con oferta activa: "Aceptar" y "Enviar" compiten por el acento (hoy coral).
 - "Crear una cuenta" desde ingresar pasa por un paso extra; comprar sin cuenta no
   explica por qué pide iniciar sesión.
 - CSP: falta; requiere nonces para los scripts en línea de Next.

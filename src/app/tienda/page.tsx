@@ -35,15 +35,18 @@ export default async function Tienda() {
             <p className="mt-1 text-sm text-muted">NIT {store.nit}</p>
 
             <section className="mt-8">
-              <h2 className="font-title text-lg font-semibold">Cargar varios artículos</h2>
+              <h2 className="font-title text-lg font-semibold">
+                Cargar varios artículos
+              </h2>
               {/* La tensión con la D-14: el video no se puede subir desde un
                   archivo, así que el lote crea borradores y el video se graba
                   después, uno por uno. Se ahorra escribir, que es lo que cuesta
                   en volumen, sin tocar la garantía. */}
               <p className="mt-1 text-sm text-ink2">
-                Se crean como borradores. El video de cada artículo se graba desde el
-                celular: es lo que le permite al comprador ver que existe y en qué
-                estado está, y por eso no se puede subir de un archivo.
+                Se crean como borradores. El video de cada artículo se graba
+                desde el celular: es lo que le permite al comprador ver que
+                existe y en qué estado está, y por eso no se puede subir de un
+                archivo.
               </p>
               <BulkUploadForm />
             </section>
@@ -56,20 +59,31 @@ export default async function Tienda() {
               </h2>
               {drafts.length === 0 ? (
                 <p className="mt-2 text-sm text-muted">
-                  Nada pendiente. Los borradores que cargues aparecen aquí hasta que
-                  les grabes el video.
+                  Nada pendiente. Los borradores que cargues aparecen aquí hasta
+                  que les grabes el video.
                 </p>
               ) : (
-                <ul data-testid="borradores" className="mt-3 flex flex-col gap-2">
+                <ul
+                  data-testid="borradores"
+                  className="mt-3 flex flex-col gap-2"
+                >
                   {drafts.map((d) => (
-                    <li key={d.id} className="flex items-baseline justify-between gap-3 rounded-2xl bg-white p-4 text-sm">
+                    <li
+                      key={d.id}
+                      className="flex items-baseline justify-between gap-3 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
+                    >
                       <span>
                         <span className="font-medium">{d.title}</span>
-                        <span className="block text-muted">{d.category_label}</span>
+                        <span className="block text-muted">
+                          {d.category_label}
+                        </span>
                       </span>
                       <span className="flex shrink-0 flex-col items-end gap-1">
                         <span>{formatCop(d.price_cop)}</span>
-                        <Link href={`/publicar/${d.id}`} className="text-brand underline">
+                        <Link
+                          href={`/publicar/${d.id}`}
+                          className="text-brand underline"
+                        >
                           Grabar video
                         </Link>
                       </span>
@@ -82,8 +96,8 @@ export default async function Tienda() {
         ) : (
           <>
             <p className="mt-2 mb-6 text-sm text-ink2">
-              Con cuenta de tienda tus publicaciones llevan un distintivo distinto y
-              puedes cargar varios artículos de una vez.
+              Con cuenta de tienda tus publicaciones llevan un distintivo
+              distinto y puedes cargar varios artículos de una vez.
             </p>
             <RegisterStoreForm />
           </>

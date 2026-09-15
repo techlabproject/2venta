@@ -12,7 +12,8 @@ export function LoginForm() {
   // (hallazgo de la ronda de agentes, 2026-09-13). Solo se admiten rutas de
   // esta misma aplicación: una URL completa aquí sería un salto a otro sitio.
   const volverA = useSearchParams().get("volver");
-  const destino = volverA?.startsWith("/") && !volverA.startsWith("//") ? volverA : "/";
+  const destino =
+    volverA?.startsWith("/") && !volverA.startsWith("//") ? volverA : "/";
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -35,7 +36,7 @@ export function LoginForm() {
           ? "Esta cuenta está suspendida. Escríbenos si crees que es un error."
           : res.error.code === "TOO_MANY_REQUESTS"
             ? "Demasiados intentos. Espera un momento y vuelve a probar."
-            : "Correo o contraseña incorrectos."
+            : "Correo o contraseña incorrectos.",
       );
       setBusy(false);
       return;
@@ -48,9 +49,22 @@ export function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
       {error && <ErrorNote>{error}</ErrorNote>}
-      <Field id="email" name="email" type="email" label="Correo" autoComplete="email" required />
-      <Field id="password" name="password" type="password" label="Contraseña"
-        autoComplete="current-password" required />
+      <Field
+        id="email"
+        name="email"
+        type="email"
+        label="Correo"
+        autoComplete="email"
+        required
+      />
+      <Field
+        id="password"
+        name="password"
+        type="password"
+        label="Contraseña"
+        autoComplete="current-password"
+        required
+      />
       <Button type="submit" disabled={busy}>
         {busy ? "Entrando…" : "Iniciar sesión"}
       </Button>

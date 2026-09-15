@@ -39,7 +39,8 @@ const CON_ENVIO: Paso[] = [
   {
     estado: "liberado",
     titulo: "Le pagamos al vendedor",
-    detalle: "Cuando confirmas que recibiste, o a los siete días de la entrega.",
+    detalle:
+      "Cuando confirmas que recibiste, o a los siete días de la entrega.",
   },
 ];
 
@@ -52,7 +53,8 @@ const EN_PERSONA: Paso[] = [
   {
     estado: "liberado",
     titulo: "Le dictas el código y le pagamos al vendedor",
-    detalle: "Revisa el producto antes de dictarlo: el código libera el dinero.",
+    detalle:
+      "Revisa el producto antes de dictarlo: el código libera el dinero.",
   },
 ];
 
@@ -65,7 +67,9 @@ const hora = new Intl.DateTimeFormat("es-CO", {
 });
 
 /** Un pedido que se salió del camino no se dibuja como si siguiera en él. */
-const DESVIOS: Partial<Record<OrderStatus, { titulo: string; detalle: string }>> = {
+const DESVIOS: Partial<
+  Record<OrderStatus, { titulo: string; detalle: string }>
+> = {
   cancelado: {
     titulo: "Pedido cancelado",
     detalle: "No se cobró nada y el artículo volvió al catálogo.",
@@ -90,7 +94,7 @@ export function OrderTimeline({
     return (
       <div
         data-testid="seguimiento"
-        className="mt-5 rounded-2xl bg-white p-5 ring-1 ring-line"
+        className="mt-5 rounded-2xl bg-white shadow-xs p-5 ring-1 ring-line"
       >
         <p className="font-title font-semibold">{desvio.titulo}</p>
         <p className="mt-1 text-sm text-ink2">{desvio.detalle}</p>
@@ -133,7 +137,7 @@ export function OrderTimeline({
               {i < pasos.length - 1 && (
                 <span
                   aria-hidden
-                  className={`w-0.5 flex-1 ${cumplido ? "bg-brand" : "bg-line"}`}
+                  className={`w-0.5 flex-1 transition-colors duration-300 ease-salida ${cumplido ? "bg-brand" : "bg-line"}`}
                 />
               )}
             </div>
@@ -147,7 +151,9 @@ export function OrderTimeline({
                 {paso.titulo}
               </p>
               {fecha ? (
-                <time className="mt-0.5 block text-xs text-muted">{hora.format(fecha)}</time>
+                <time className="mt-0.5 block text-xs text-muted">
+                  {hora.format(fecha)}
+                </time>
               ) : (
                 <p className="mt-0.5 text-xs text-muted">{paso.detalle}</p>
               )}
@@ -165,7 +171,9 @@ export function OrderTimeline({
             />
           </div>
           <div>
-            <p className="text-sm font-medium text-warn">Con un reclamo abierto</p>
+            <p className="text-sm font-medium text-warn">
+              Con un reclamo abierto
+            </p>
             <p className="mt-0.5 text-xs text-muted">
               El dinero no se mueve mientras lo revisamos.
             </p>
@@ -179,16 +187,21 @@ export function OrderTimeline({
 function Punto({ cumplido, actual }: { cumplido: boolean; actual: boolean }) {
   if (cumplido) {
     return (
-      <span aria-hidden className="mt-1 h-3.5 w-3.5 shrink-0 rounded-full bg-brand" />
+      <span
+        aria-hidden
+        className="mt-1 h-3.5 w-3.5 shrink-0 rounded-full bg-brand"
+      />
     );
   }
   if (actual) {
-    // El mostaza marca dónde va el pedido ahora mismo. Es el único de la pantalla
-    // que no es un botón, y por eso el ojo lo encuentra.
+    // El coral marca dónde va el pedido ahora mismo. Es el único de la pantalla
+    // que no es un botón, y por eso el ojo lo encuentra. Late despacio (D-86)
+    // porque es el paso que todavía no ha ocurrido: el latido es lo que separa
+    // «esto está pasando» de «esto ya pasó», sin una palabra más.
     return (
       <span
         aria-hidden
-        className="mt-1 h-3.5 w-3.5 shrink-0 rounded-full bg-accent ring-4 ring-accent/25"
+        className="mt-1 h-3.5 w-3.5 shrink-0 animate-latir rounded-full bg-accent"
       />
     );
   }

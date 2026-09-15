@@ -155,9 +155,13 @@ export default async function ListingPage({
             </p>
 
             {/* D-04: alias y zona. Nunca nombre completo ni dirección exacta. */}
-            <div className="mt-5 flex items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-line">
+            <div className="mt-5 flex items-center gap-3 rounded-2xl bg-white shadow-xs p-4 ring-1 ring-line">
               <Avatar
-                src={listing.seller_avatar_path ? mediaUrl(listing.seller_avatar_path) : null}
+                src={
+                  listing.seller_avatar_path
+                    ? mediaUrl(listing.seller_avatar_path)
+                    : null
+                }
                 name={listing.seller_alias}
               />
               <div className="min-w-0 flex-1">
@@ -174,20 +178,27 @@ export default async function ListingPage({
                     0% disputas» se lee como mal desempeño cuando solo significa que
                     es nuevo, y al arrancar la plataforma lo son todos. */}
                 {reputation.sales > 0 ? (
-                  <p data-testid="reputacion-ficha" className="mt-0.5 text-sm text-muted">
+                  <p
+                    data-testid="reputacion-ficha"
+                    className="mt-0.5 text-sm text-muted"
+                  >
                     {reputation.average !== null && (
                       <span className="font-medium text-ink">
                         {reputation.average.toLocaleString("es-CO")} ★{" "}
                       </span>
                     )}
-                    {reputation.sales} {reputation.sales === 1 ? "venta" : "ventas"}
+                    {reputation.sales}{" "}
+                    {reputation.sales === 1 ? "venta" : "ventas"}
                     {reputation.disputeRate !== null &&
                       ` · ${reputation.disputeRate.toLocaleString("es-CO")}% disputas`}
                     {" · "}
                     {listing.seller_zone}
                   </p>
                 ) : (
-                  <p data-testid="vendedor-nuevo" className="mt-0.5 text-sm text-muted">
+                  <p
+                    data-testid="vendedor-nuevo"
+                    className="mt-0.5 text-sm text-muted"
+                  >
                     {listing.seller_verified
                       ? `Primera venta en 2venta · identidad verificada · ${listing.seller_zone}`
                       : `Primera venta en 2venta · ${listing.seller_zone}`}
@@ -258,11 +269,14 @@ export default async function ListingPage({
                       Lo tienes apartado con un pago sin terminar
                     </p>
                     <p className="mt-1 text-ink2">
-                      Nadie más puede comprarlo mientras tanto. Termina el pago o
-                      suéltalo desde tu pedido.
+                      Nadie más puede comprarlo mientras tanto. Termina el pago
+                      o suéltalo desde tu pedido.
                     </p>
                     <p className="mt-2">
-                      <Link href={`/pedido/${pedidoPropio}`} className="text-brand underline">
+                      <Link
+                        href={`/pedido/${pedidoPropio}`}
+                        className="text-brand underline"
+                      >
                         Ir a tu pedido
                       </Link>
                     </p>
@@ -306,7 +320,10 @@ export default async function ListingPage({
           )}
           <ul className="mt-3 flex flex-col gap-4">
             {questions.map((q) => (
-              <li key={q.id} className="rounded-2xl bg-white p-4 text-sm">
+              <li
+                key={q.id}
+                className="rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
+              >
                 <p className="font-medium">{q.body}</p>
                 <p className="mt-0.5 text-xs text-muted">{q.asker_alias}</p>
                 {q.answer ? (
@@ -332,7 +349,7 @@ export default async function ListingPage({
 
         {isSeller &&
           ["activa", "reservada", "en_revision"].includes(listing.status) && (
-            <section className="mt-8 rounded-2xl bg-white p-4 text-sm">
+            <section className="mt-8 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line">
               <h2 className="font-medium">Tu publicación</h2>
               {/* Lo que más le importa al vendedor y nadie le decía (hallazgo de
                 QA, 2026-09-13): cuánto le queda después de la comisión. */}
@@ -405,7 +422,9 @@ function Atributo({
   return (
     <li
       className={`rounded-full px-3 py-1 text-xs font-medium ${
-        destacado ? "bg-brand/10 text-brand ring-1 ring-brand/20" : "bg-ph text-ink2"
+        destacado
+          ? "bg-brand/10 text-brand ring-1 ring-brand/20"
+          : "bg-ph text-ink2"
       }`}
     >
       {children}

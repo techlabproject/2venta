@@ -19,7 +19,11 @@ export const metadata: Metadata = {
     "Compra y vende usado en Bogotá con el pago guardado hasta que el producto llegue.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="es-CO" className={`${poppins.variable} ${workSans.variable}`}>
       <body className="min-h-dvh">{children}</body>

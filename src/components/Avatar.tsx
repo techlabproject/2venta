@@ -37,7 +37,9 @@ export function Avatar({
     // El bucket sirve la imagen ya optimizada; el optimizador de Next exigiría
     // declarar cada host y no aporta nada a 40 px de lado.
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt="" aria-hidden className={`${base} object-cover`} />;
+    return (
+      <img src={src} alt="" aria-hidden className={`${base} object-cover`} />
+    );
   }
 
   return (

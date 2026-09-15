@@ -11,13 +11,13 @@ export function RateForm({
   orderId: string;
   counterpart: string;
 }) {
-  const [result, submit, pending] = useActionState<RatingResult | null, FormData>(
-    rateCounterpart,
-    null
-  );
+  const [result, submit, pending] = useActionState<
+    RatingResult | null,
+    FormData
+  >(rateCounterpart, null);
 
   return (
-    <section className="mt-6 rounded-2xl bg-white p-4">
+    <section className="mt-6 rounded-2xl bg-white shadow-xs p-4 ring-1 ring-line">
       <h2 className="font-medium">¿Cómo te fue con {counterpart}?</h2>
       <form action={submit} className="mt-3 flex flex-col gap-3">
         {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
@@ -28,15 +28,21 @@ export function RateForm({
           {[5, 4, 3, 2, 1].map((n) => (
             <label key={n} className="flex items-center gap-2 text-sm">
               <input type="radio" name="stars" value={n} required />
-              <span aria-hidden="true" className="text-accent-text">{"★".repeat(n)}</span>
+              <span aria-hidden="true" className="text-accent-text">
+                {"★".repeat(n)}
+              </span>
               <span className="sr-only">{n} de 5</span>
             </label>
           ))}
         </fieldset>
 
-        <textarea name="review" aria-label="Tu reseña" rows={3}
+        <textarea
+          name="review"
+          aria-label="Tu reseña"
+          rows={3}
           className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
-          placeholder="Cuenta cómo fue (opcional). Lo va a leer el siguiente comprador." />
+          placeholder="Cuenta cómo fue (opcional). Lo va a leer el siguiente comprador."
+        />
 
         <Button type="submit" disabled={pending}>
           {pending ? "Enviando…" : "Calificar"}

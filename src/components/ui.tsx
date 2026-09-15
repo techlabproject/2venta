@@ -5,8 +5,12 @@ import type { ComponentProps, ReactNode } from "react";
 // pantalla vuelva a escribir colores ni radios sueltos: si algo del manual cambia,
 // se cambia aquí.
 
+// El botón responde al dedo antes de que el servidor conteste: se hunde al
+// presionarlo (`active:scale`) y la sombra se acorta, que es lo que hace un objeto
+// real al que empujas. Es la micro-interacción más barata del producto y la que
+// más se nota, porque ocurre en cada toque.
 const BASE =
-  "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition duration-200 ease-salida active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100";
 
 // El tamaño es una propiedad del botón, no algo que cada pantalla parchee por
 // fuera. Pasar "w-auto text-xs" en className NO funciona: Tailwind resuelve el
@@ -23,10 +27,16 @@ const SIZE = {
 } as const;
 
 const VARIANT = {
-  // El acento mostaza se reserva para la acción principal de cada pantalla.
-  primary: "bg-accent text-on-accent hover:brightness-95",
-  brand: "bg-brand text-cream hover:bg-brand-d",
-  outline: "border border-brand/25 bg-white text-ink hover:bg-ph",
+  // El acento coral se reserva para la acción principal de cada pantalla.
+  // El borde no es decoración: el coral contra la crema da 2,57:1 y WCAG 1.4.11
+  // pide 3:1 para el contorno de un control, así que sin él un botón principal no
+  // tiene bordes visibles para quien ve poco contraste.
+  primary:
+    "border border-accent-edge/70 bg-accent text-on-accent shadow-sm hover:brightness-[0.97] hover:shadow-md active:shadow-xs",
+  brand:
+    "bg-brand text-cream shadow-sm hover:bg-brand-d hover:shadow-md active:shadow-xs",
+  outline:
+    "border border-line bg-white text-ink shadow-xs hover:border-brand/30 hover:bg-ph",
   ghost: "text-ink2 hover:bg-ph",
 } as const;
 
@@ -40,7 +50,10 @@ export function Button({
   ...props
 }: ComponentProps<"button"> & { variant?: Variant; size?: Size }) {
   return (
-    <button className={`${BASE} ${SIZE[size]} ${VARIANT[variant]} ${className}`} {...props} />
+    <button
+      className={`${BASE} ${SIZE[size]} ${VARIANT[variant]} ${className}`}
+      {...props}
+    />
   );
 }
 
@@ -51,7 +64,10 @@ export function ButtonLink({
   ...props
 }: ComponentProps<typeof Link> & { variant?: Variant; size?: Size }) {
   return (
-    <Link className={`${BASE} ${SIZE[size]} ${VARIANT[variant]} ${className}`} {...props} />
+    <Link
+      className={`${BASE} ${SIZE[size]} ${VARIANT[variant]} ${className}`}
+      {...props}
+    />
   );
 }
 
@@ -68,7 +84,9 @@ export function Field({
       </label>
       <input
         id={id}
-        className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm outline-none placeholder:text-muted focus:border-brand"
+        // El foco engorda el borde con una sombra en vez de con un ancho mayor:
+        // cambiar el ancho mueve el campo un pixel y salta toda la columna.
+        className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida placeholder:text-muted hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
         // Describir el campo por su pista es lo que hace que un lector de
         // pantalla la anuncie junto al campo, en vez de dejarla suelta.
         aria-describedby={hint ? `${id}-hint` : undefined}
@@ -87,7 +105,10 @@ export function Field({
 // tiene por qué volver a recorrer el formulario para enterarse de que algo falló.
 export function ErrorNote({ children }: { children: ReactNode }) {
   return (
-    <p role="alert" className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger">
+    <p
+      role="alert"
+      className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger"
+    >
       {children}
     </p>
   );

@@ -17,9 +17,13 @@ export default async function DevDestacar({
   if (isProduction()) notFound();
   const { id } = await params;
 
-  const rows = await query<{ price_cop: number; provider_ref: string; listing_id: string }>(
+  const rows = await query<{
+    price_cop: number;
+    provider_ref: string;
+    listing_id: string;
+  }>(
     `select price_cop, provider_ref, listing_id from promotions where id = $1`,
-    [id]
+    [id],
   );
   const promotion = rows[0];
   if (!promotion) notFound();
@@ -29,7 +33,9 @@ export default async function DevDestacar({
       <p className="rounded-xl bg-warn/10 px-4 py-3 text-sm text-warn">
         Proveedor de pagos de prueba. No existe en producción.
       </p>
-      <h1 className="mt-6 font-title text-2xl font-semibold">Destacar publicación</h1>
+      <h1 className="mt-6 font-title text-2xl font-semibold">
+        Destacar publicación
+      </h1>
       <p className="mt-2 text-sm text-ink2">
         {formatCop(promotion.price_cop)} por {PROMOTION_DAYS} días.
       </p>

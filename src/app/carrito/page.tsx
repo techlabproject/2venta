@@ -32,21 +32,30 @@ export default async function Carrito() {
         <h1 className="font-title text-2xl font-semibold">Tu carrito</h1>
 
         {items.length === 0 ? (
-          <p className="mt-4 rounded-2xl bg-white p-4 text-sm text-ink2">
-            Está vacío. Junta varias cosas del mismo vendedor y pagas un solo envío.{" "}
+          <p className="mt-4 rounded-2xl bg-white shadow-xs p-4 text-sm text-ink2 ring-1 ring-line">
+            Está vacío. Junta varias cosas del mismo vendedor y pagas un solo
+            envío.{" "}
             <Link href="/" className="text-brand underline">
               Ver el catálogo
             </Link>
           </p>
         ) : (
           <>
-            <p className="mt-1 text-sm text-muted">De {items[0].seller_alias}</p>
+            <p className="mt-1 text-sm text-muted">
+              De {items[0].seller_alias}
+            </p>
 
             <ul data-testid="carrito" className="mt-5 flex flex-col gap-2">
               {items.map((i) => (
-                <li key={i.listing_id} className="flex items-center justify-between gap-3 rounded-2xl bg-white p-4 text-sm">
+                <li
+                  key={i.listing_id}
+                  className="flex items-center justify-between gap-3 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
+                >
                   <span>
-                    <Link href={`/producto/${i.listing_id}`} className="font-medium underline">
+                    <Link
+                      href={`/producto/${i.listing_id}`}
+                      className="font-medium underline"
+                    >
                       {i.title}
                     </Link>
                     <span className="block text-muted">
@@ -60,9 +69,13 @@ export default async function Carrito() {
             </ul>
 
             {(ahorroEnvio > 0 || ahorroComision > 0) && (
-              <p data-testid="ahorro" className="mt-4 rounded-2xl bg-brand/10 p-4 text-sm text-brand">
-                Comprando junto te ahorras {formatCop(ahorroEnvio + ahorroComision)}:
-                un solo envío y una sola comisión en vez de {items.length}.
+              <p
+                data-testid="ahorro"
+                className="mt-4 rounded-2xl bg-brand/10 p-4 text-sm text-brand"
+              >
+                Comprando junto te ahorras{" "}
+                {formatCop(ahorroEnvio + ahorroComision)}: un solo envío y una
+                sola comisión en vez de {items.length}.
               </p>
             )}
 

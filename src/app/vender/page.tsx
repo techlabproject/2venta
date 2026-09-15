@@ -29,7 +29,9 @@ export default async function Vender() {
   return (
     <>
       <AppHeader />
-      <main className={`mx-auto px-5 py-8 ${aprobado ? "max-w-5xl" : "max-w-md"}`}>
+      <main
+        className={`mx-auto px-5 py-8 ${aprobado ? "max-w-5xl" : "max-w-md"}`}
+      >
         {aprobado ? (
           <>
             <div className="rounded-3xl bg-brand px-6 py-7 text-cream sm:px-8">
@@ -40,14 +42,17 @@ export default async function Vender() {
                 <VerifiedBadge label="Identidad verificada" />
               </p>
               <p className="mt-3 max-w-xl text-sm text-cream/85">
-                Tu perfil muestra el distintivo de identidad verificada, que es lo que
-                hace que un comprador se anime a pagarle a alguien que no conoce.
+                Tu perfil muestra el distintivo de identidad verificada, que es
+                lo que hace que un comprador se anime a pagarle a alguien que no
+                conoce.
               </p>
 
               {metrics.length > 0 && (
                 <dl className="mt-6 flex gap-8 border-t border-cream/20 pt-5">
                   <div>
-                    <dt className="text-xs text-cream/70">Publicaciones activas</dt>
+                    <dt className="text-xs text-cream/70">
+                      Publicaciones activas
+                    </dt>
                     <dd className="font-title text-2xl font-semibold tabular-nums">
                       {activas}
                     </dd>
@@ -78,7 +83,9 @@ export default async function Vender() {
                 href="/vender/metricas"
                 titulo="Tus publicaciones"
                 texto="Ver visitas, corregir el precio, reservar o retirar."
-                accion={metrics.length > 0 ? `Gestionar las ${metrics.length}` : "Ver"}
+                accion={
+                  metrics.length > 0 ? `Gestionar las ${metrics.length}` : "Ver"
+                }
               />
               <Atajo
                 href="/actividad"
@@ -98,12 +105,15 @@ export default async function Vender() {
           </>
         ) : v?.status === "pendiente" ? (
           <>
-            <h1 className="font-title text-2xl font-semibold">Estamos revisando</h1>
+            <h1 className="font-title text-2xl font-semibold">
+              Estamos revisando
+            </h1>
             {/* El estado intermedio tiene que ser visible: estos procesos tardan y
                 una pantalla muda se lee como una falla. */}
             <p className="mt-2 text-ink2">
-              Tu verificación está en curso. Suele tardar unos minutos y te avisamos
-              apenas haya respuesta. Puedes seguir explorando mientras tanto.
+              Tu verificación está en curso. Suele tardar unos minutos y te
+              avisamos apenas haya respuesta. Puedes seguir explorando mientras
+              tanto.
             </p>
             <p className="mt-4 text-sm text-muted">
               Referencia <code>{v.reference}</code>
@@ -127,19 +137,25 @@ export default async function Vender() {
                 <p className="font-medium">No pudimos verificarte</p>
                 {/* Un rechazo sin salida convierte a un usuario legítimo en un
                     ticket de soporte: siempre hay motivo y siempre hay reintento. */}
-                <p className="mt-1">{v.reason ?? "El proveedor no dio un motivo."}</p>
+                <p className="mt-1">
+                  {v.reason ?? "El proveedor no dio un motivo."}
+                </p>
               </div>
             )}
 
             <ol className="mt-6 flex flex-col gap-3 text-sm text-ink2">
               <li>1. Foto de tu cédula por ambos lados, sin reflejos.</li>
               <li>2. Una selfie para confirmar que eres tú.</li>
-              <li>3. Listo. Nosotros no guardamos ni la cédula ni la selfie.</li>
+              <li>
+                3. Listo. Nosotros no guardamos ni la cédula ni la selfie.
+              </li>
             </ol>
 
             <form action={beginVerification} className="mt-7">
               <Button type="submit">
-                {v?.status === "rechazado" ? "Volver a intentar" : "Empezar verificación"}
+                {v?.status === "rechazado"
+                  ? "Volver a intentar"
+                  : "Empezar verificación"}
               </Button>
             </form>
           </>
@@ -163,7 +179,7 @@ function Atajo({
   principal?: boolean;
 }) {
   return (
-    <div className="flex flex-col rounded-2xl bg-white p-5 ring-1 ring-line">
+    <div className="flex flex-col rounded-2xl bg-white shadow-xs p-5 ring-1 ring-line">
       <h2 className="font-title font-semibold">{titulo}</h2>
       <p className="mt-1 flex-1 text-sm text-ink2">{texto}</p>
       <div className="mt-4">

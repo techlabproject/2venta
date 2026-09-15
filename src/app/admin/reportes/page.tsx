@@ -38,22 +38,39 @@ export default async function Reportes({
         </Link>
         <h1 className="mt-4 font-title text-2xl font-semibold">Reportes</h1>
 
-        <form action="/admin/reportes" method="get" className="mt-5 flex flex-wrap items-end gap-3">
+        <form
+          action="/admin/reportes"
+          method="get"
+          className="mt-5 flex flex-wrap items-end gap-3"
+        >
           <label className="flex flex-col gap-1 text-sm">
             Desde
-            <input type="date" name="desde" defaultValue={dia(period.from)}
-              className="rounded-xl border border-brand/20 bg-white px-3 py-2" />
+            <input
+              type="date"
+              name="desde"
+              defaultValue={dia(period.from)}
+              className="rounded-xl border border-brand/20 bg-white px-3 py-2"
+            />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             Hasta
-            <input type="date" name="hasta" defaultValue={dia(period.to)}
-              className="rounded-xl border border-brand/20 bg-white px-3 py-2" />
+            <input
+              type="date"
+              name="hasta"
+              defaultValue={dia(period.to)}
+              className="rounded-xl border border-brand/20 bg-white px-3 py-2"
+            />
           </label>
-          <button type="submit" className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-cream">
+          <button
+            type="submit"
+            className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-cream"
+          >
             Ver
           </button>
-          <a href={`/api/admin/reportes.csv?${params.toString()}`}
-            className="rounded-xl border border-brand/25 bg-white px-4 py-2 text-sm font-medium">
+          <a
+            href={`/api/admin/reportes.csv?${params.toString()}`}
+            className="rounded-xl border border-brand/25 bg-white px-4 py-2 text-sm font-medium"
+          >
             Descargar
           </a>
         </form>
@@ -81,7 +98,10 @@ export default async function Reportes({
           </p>
         </section>
 
-        <dl data-testid="cifras" className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <dl
+          data-testid="cifras"
+          className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4"
+        >
           <Cifra label="Ventas" value={String(report.sales)} />
           <Cifra label="Volumen" value={formatCop(report.gmvCop)} />
           <Cifra
@@ -89,12 +109,17 @@ export default async function Reportes({
             value={formatCop(report.commissionCop)}
             testid="comisiones"
           />
-          <Cifra label="Ticket promedio" value={formatCop(report.averageTicketCop)} />
+          <Cifra
+            label="Ticket promedio"
+            value={formatCop(report.averageTicketCop)}
+          />
         </dl>
 
         <h2 className="mt-8 font-title text-lg font-semibold">Por categoría</h2>
         {report.byCategory.length === 0 ? (
-          <p className="mt-2 text-sm text-muted">Sin ventas completadas en este periodo.</p>
+          <p className="mt-2 text-sm text-muted">
+            Sin ventas completadas en este periodo.
+          </p>
         ) : (
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-sm">
@@ -112,7 +137,10 @@ export default async function Reportes({
                     <td className="py-2">{c.label}</td>
                     <td className="py-2 text-right">{c.sales}</td>
                     <td className="py-2 text-right">{formatCop(c.gmvCop)}</td>
-                    <td data-testid="comision-categoria" className="py-2 text-right">
+                    <td
+                      data-testid="comision-categoria"
+                      className="py-2 text-right"
+                    >
                       {formatCop(c.commissionCop)}
                     </td>
                   </tr>
@@ -136,9 +164,12 @@ function Cifra({
   testid?: string;
 }) {
   return (
-    <div className="rounded-2xl bg-white p-4">
+    <div className="rounded-2xl bg-white shadow-xs p-4 ring-1 ring-line">
       <dt className="text-xs text-muted">{label}</dt>
-      <dd data-testid={testid} className="mt-0.5 font-title text-xl font-semibold">
+      <dd
+        data-testid={testid}
+        className="mt-0.5 font-title text-xl font-semibold"
+      >
         {value}
       </dd>
     </div>

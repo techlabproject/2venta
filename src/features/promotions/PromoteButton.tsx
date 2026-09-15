@@ -12,10 +12,10 @@ export function PromoteButton({
   listingId: string;
   extending?: boolean;
 }) {
-  const [result, submit, pending] = useActionState<PromotionResult | null, FormData>(
-    promoteListing,
-    null
-  );
+  const [result, submit, pending] = useActionState<
+    PromotionResult | null,
+    FormData
+  >(promoteListing, null);
 
   return (
     <form action={submit} className="mt-4 flex flex-col gap-2">

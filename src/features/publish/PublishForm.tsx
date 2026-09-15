@@ -11,7 +11,12 @@ import type { Category } from "@/features/catalog/queries";
 import type { SuggestionMap } from "@/features/pricing/suggest";
 import { MAX_PHOTOS } from "./photos";
 import { formatCop } from "@/lib/money";
-import { commissionCop, MIN_PRICE_COP, parseCop, sellerPayoutCop } from "@/features/payments/money";
+import {
+  commissionCop,
+  MIN_PRICE_COP,
+  parseCop,
+  sellerPayoutCop,
+} from "@/features/payments/money";
 
 export function PublishForm({
   categories,
@@ -21,7 +26,9 @@ export function PublishForm({
   suggestions: SuggestionMap;
 }) {
   const router = useRouter();
-  const [media, setMedia] = useState<{ video: Blob; poster: Blob } | null>(null);
+  const [media, setMedia] = useState<{ video: Blob; poster: Blob } | null>(
+    null,
+  );
   // D-15: el IMEI solo se pide en electrónica.
   const [category, setCategory] = useState(categories[0]?.slug ?? "");
   // Lo que le queda al vendedor, calculado mientras escribe el precio. Es el
@@ -35,41 +42,41 @@ export function PublishForm({
 
   const [uploading, setUploading] = useState(false);
 
-  const [result, submit, pending] = useActionState<PublishResult | null, FormData>(
-    async (prev, form) => {
-      // D-50: los archivos van directo al bucket y a la acción solo llegan las
-      // claves. Los bytes nunca pasan por el servidor de la aplicación.
-      if (media) {
-        setUploading(true);
-        try {
-          const photos = form
-            .getAll("photos")
-            .filter((f): f is File => f instanceof File && f.size > 0);
-          const [videoKey, posterKey, photoKeys] = await Promise.all([
-            uploadBlob(media.video, "video"),
-            uploadBlob(media.poster, "image"),
-            uploadImages(photos),
-          ]);
-          form.set("video_key", videoKey);
-          form.set("poster_key", posterKey);
-          form.delete("photos");
-          for (const key of photoKeys) form.append("photo_keys", key);
-        } catch (err) {
-          if (err instanceof UploadError) return { error: err.message };
-          throw err;
-        } finally {
-          setUploading(false);
-        }
+  const [result, submit, pending] = useActionState<
+    PublishResult | null,
+    FormData
+  >(async (prev, form) => {
+    // D-50: los archivos van directo al bucket y a la acción solo llegan las
+    // claves. Los bytes nunca pasan por el servidor de la aplicación.
+    if (media) {
+      setUploading(true);
+      try {
+        const photos = form
+          .getAll("photos")
+          .filter((f): f is File => f instanceof File && f.size > 0);
+        const [videoKey, posterKey, photoKeys] = await Promise.all([
+          uploadBlob(media.video, "video"),
+          uploadBlob(media.poster, "image"),
+          uploadImages(photos),
+        ]);
+        form.set("video_key", videoKey);
+        form.set("poster_key", posterKey);
+        form.delete("photos");
+        for (const key of photoKeys) form.append("photo_keys", key);
+      } catch (err) {
+        if (err instanceof UploadError) return { error: err.message };
+        throw err;
+      } finally {
+        setUploading(false);
       }
-      const res = await publishListing(prev, form);
-      if ("id" in res) {
-        router.push(`/producto/${res.id}`);
-        router.refresh();
-      }
-      return res;
-    },
-    null
-  );
+    }
+    const res = await publishListing(prev, form);
+    if ("id" in res) {
+      router.push(`/producto/${res.id}`);
+      router.refresh();
+    }
+    return res;
+  }, null);
 
   return (
     <form action={submit} className="flex flex-col gap-5">
@@ -77,8 +84,12 @@ export function PublishForm({
 
       <div>
         <h2 className="text-sm font-medium">Video del artículo</h2>
-        <p className="mt-1 mb-3 text-xs text-muted">Obligatorio, máximo 30 segundos.</p>
-        <VideoCapture onCaptured={(video, poster) => setMedia({ video, poster })} />
+        <p className="mt-1 mb-3 text-xs text-muted">
+          Obligatorio, máximo 30 segundos.
+        </p>
+        <VideoCapture
+          onCaptured={(video, poster) => setMedia({ video, poster })}
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -105,38 +116,66 @@ export function PublishForm({
               : `${photoCount} fotos elegidas · cambiar`}
         </label>
         <p className="text-xs text-muted">
-          Hasta {MAX_PHOTOS}. Estas sí las puedes subir de la galería: el video ya
-          prueba que el artículo existe, las fotos son para que se vea bien.
+          Hasta {MAX_PHOTOS}. Estas sí las puedes subir de la galería: el video
+          ya prueba que el artículo existe, las fotos son para que se vea bien.
         </p>
       </div>
 
-      <Field id="title" name="title" label="Título" required
-        placeholder="Coche Chicco reclinable" />
+      <Field
+        id="title"
+        name="title"
+        label="Título"
+        required
+        placeholder="Coche Chicco reclinable"
+      />
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="category" className="text-sm font-medium">Categoría</label>
-        <select id="category" name="category" required value={category}
+        <label htmlFor="category" className="text-sm font-medium">
+          Categoría
+        </label>
+        <select
+          id="category"
+          name="category"
+          required
+          value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm">
+          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm"
+        >
           {categories.map((c) => (
-            <option key={c.slug} value={c.slug}>{c.label}</option>
+            <option key={c.slug} value={c.slug}>
+              {c.label}
+            </option>
           ))}
         </select>
       </div>
 
       {category === "tecnologia" && (
-        <Field id="imei" name="imei" label="IMEI del equipo" inputMode="numeric" required
+        <Field
+          id="imei"
+          name="imei"
+          label="IMEI del equipo"
+          inputMode="numeric"
+          required
           placeholder="490154203237518"
-          hint="Márcalo en el teclado con *#06# y cópialo tal cual. Son 15 dígitos. Lo pedimos para que nadie venda equipos robados." />
+          hint="Márcalo en el teclado con *#06# y cópialo tal cual. Son 15 dígitos. Lo pedimos para que nadie venda equipos robados."
+        />
       )}
 
-      <Field id="price" name="price" label="Precio" inputMode="numeric" required
-        placeholder="260000" hint="En pesos, sin puntos ni comas. Mínimo $10.000."
-        onChange={(e) => setPrice(parseCop(e.target.value))} />
+      <Field
+        id="price"
+        name="price"
+        label="Precio"
+        inputMode="numeric"
+        required
+        placeholder="260000"
+        hint="En pesos, sin puntos ni comas. Mínimo $10.000."
+        onChange={(e) => setPrice(parseCop(e.target.value))}
+      />
       {price !== null && price >= MIN_PRICE_COP && (
         <p data-testid="te-llegan" className="-mt-2 text-xs text-ink2">
-          Te llegan <b>{formatCop(sellerPayoutCop(price))}</b> después de la comisión de 2venta
-          ({formatCop(commissionCop(price))}). El comprador paga {formatCop(price)} más el envío.
+          Te llegan <b>{formatCop(sellerPayoutCop(price))}</b> después de la
+          comisión de 2venta ({formatCop(commissionCop(price))}). El comprador
+          paga {formatCop(price)} más el envío.
         </p>
       )}
 
@@ -145,29 +184,47 @@ export function PublishForm({
           es ruido presentado como consejo, y quien fija su precio por un dato
           inventado se lleva la peor parte. */}
       {suggestions[category] && (
-        <p data-testid="precio-sugerido" className="-mt-2 rounded-xl bg-brand/10 px-4 py-3 text-xs text-brand">
+        <p
+          data-testid="precio-sugerido"
+          className="-mt-2 rounded-xl bg-brand/10 px-4 py-3 text-xs text-brand"
+        >
           En esta categoría, lo usado en buen estado se ha vendido entre{" "}
-          {formatCop(suggestions[category]!.low)} y {formatCop(suggestions[category]!.high)}.
-          Es lo que dicen {suggestions[category]!.sales} ventas de 2venta, no una
-          estimación.
+          {formatCop(suggestions[category]!.low)} y{" "}
+          {formatCop(suggestions[category]!.high)}. Es lo que dicen{" "}
+          {suggestions[category]!.sales} ventas de 2venta, no una estimación.
         </p>
       )}
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-medium">Estado del artículo</legend>
+        <legend className="mb-1 text-sm font-medium">
+          Estado del artículo
+        </legend>
         {Object.entries(CONDITION_LABEL).map(([value, label], i) => (
           <label key={value} className="flex items-center gap-2 text-sm">
-            <input type="radio" name="condition" value={value} defaultChecked={i === 1} required />
+            <input
+              type="radio"
+              name="condition"
+              value={value}
+              defaultChecked={i === 1}
+              required
+            />
             {label}
           </label>
         ))}
       </fieldset>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="description" className="text-sm font-medium">Descripción</label>
-        <textarea id="description" name="description" required rows={4}
+        <label htmlFor="description" className="text-sm font-medium">
+          Descripción
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          required
+          rows={4}
           className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
-          placeholder="Cuenta el uso que tuvo y cualquier detalle que se note." />
+          placeholder="Cuenta el uso que tuvo y cualquier detalle que se note."
+        />
       </div>
 
       <Button type="submit" disabled={pending || !media}>
@@ -182,8 +239,8 @@ export function PublishForm({
 
       {category === "tecnologia" && (
         <p className="text-xs text-muted">
-          La electrónica la revisa una persona antes de quedar visible. Suele tardar
-          pocas horas y te avisamos.
+          La electrónica la revisa una persona antes de quedar visible. Suele
+          tardar pocas horas y te avisamos.
         </p>
       )}
     </form>

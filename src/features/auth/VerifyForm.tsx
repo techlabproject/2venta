@@ -19,7 +19,7 @@ export function VerifyForm({ phone }: { phone: string }) {
       }
       return res;
     },
-    null
+    null,
   );
 
   async function resend() {
@@ -32,9 +32,14 @@ export function VerifyForm({ phone }: { phone: string }) {
 
   return (
     <form action={submit} className="flex flex-col gap-4">
-      {(result?.error || resendError) && <ErrorNote>{result?.error || resendError}</ErrorNote>}
+      {(result?.error || resendError) && (
+        <ErrorNote>{result?.error || resendError}</ErrorNote>
+      )}
       {note && (
-        <p role="status" className="rounded-xl bg-brand/10 px-4 py-3 text-sm text-brand">
+        <p
+          role="status"
+          className="rounded-xl bg-brand/10 px-4 py-3 text-sm text-brand"
+        >
           {note}
         </p>
       )}

@@ -8,12 +8,17 @@ import { AppHeader } from "@/components/AppHeader";
 // RF-16. Editar una publicación propia.
 export const dynamic = "force-dynamic";
 
-export default async function Editar({ params }: { params: Promise<{ id: string }> }) {
+export default async function Editar({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   // Una cuenta suspendida no llega a las pantallas que escriben.
   const user = await activeUser();
 
   const { id } = await params;
-  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const UUID =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!UUID.test(id)) notFound();
 
   const rows = await query<{
@@ -26,7 +31,7 @@ export default async function Editar({ params }: { params: Promise<{ id: string 
   }>(
     `select id, title, description, price_cop, condition, status
        from listings where id = $1 and seller_id = $2`,
-    [id, user.id]
+    [id, user.id],
   );
   const listing = rows[0];
 
@@ -39,7 +44,7 @@ export default async function Editar({ params }: { params: Promise<{ id: string 
     const ajena = await query<{ status: string }>(
       `select status from listings
         where id = $1 and status in ('activa','reservada','vendida')`,
-      [id]
+      [id],
     );
     if (!ajena[0]) notFound();
 
@@ -47,9 +52,12 @@ export default async function Editar({ params }: { params: Promise<{ id: string 
       <>
         <AppHeader />
         <main className="mx-auto max-w-md px-5 py-16">
-          <h1 className="font-title text-2xl font-semibold">Esta publicación no es tuya</h1>
+          <h1 className="font-title text-2xl font-semibold">
+            Esta publicación no es tuya
+          </h1>
           <p className="mt-2 text-ink2">
-            Solo quien publicó un artículo puede cambiarle el precio o el estado.
+            Solo quien publicó un artículo puede cambiarle el precio o el
+            estado.
           </p>
           <p className="mt-6">
             <Link href={`/producto/${id}`} className="text-brand underline">
@@ -68,13 +76,18 @@ export default async function Editar({ params }: { params: Promise<{ id: string 
         <Link href={`/producto/${id}`} className="text-sm text-ink2 underline">
           Volver al artículo
         </Link>
-        <h1 className="mt-4 font-title text-xl font-semibold">Editar publicación</h1>
+        <h1 className="mt-4 font-title text-xl font-semibold">
+          Editar publicación
+        </h1>
         {["vendida", "retirada", "rechazada"].includes(listing.status) ? (
           // El servidor ya lo rechazaba; mostrar el formulario entero era
           // invitar a llenarlo para nada (hallazgo de QA, 2026-09-13).
-          <p role="status" className="mt-4 rounded-xl bg-ph px-4 py-3 text-sm text-ink2">
-            Una publicación {listing.status} ya no se puede editar. Si quieres volver a
-            ofrecerla, publícala de nuevo con un video actual.
+          <p
+            role="status"
+            className="mt-4 rounded-xl bg-ph px-4 py-3 text-sm text-ink2"
+          >
+            Una publicación {listing.status} ya no se puede editar. Si quieres
+            volver a ofrecerla, publícala de nuevo con un video actual.
           </p>
         ) : (
           <EditForm listing={listing} />

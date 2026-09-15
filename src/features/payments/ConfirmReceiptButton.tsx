@@ -7,7 +7,7 @@ import { Button, ErrorNote } from "@/components/ui";
 export function ConfirmReceiptButton({ orderId }: { orderId: string }) {
   const [result, submit, pending] = useActionState<BuyResult | null, FormData>(
     confirmReceipt,
-    null
+    null,
   );
 
   return (
@@ -18,8 +18,8 @@ export function ConfirmReceiptButton({ orderId }: { orderId: string }) {
         {pending ? "Liberando…" : "Ya lo recibí, liberar pago"}
       </Button>
       <p className="text-xs text-muted">
-        Revisa el producto antes de confirmar. Una vez liberado, el dinero es del
-        vendedor.
+        Revisa el producto antes de confirmar. Una vez liberado, el dinero es
+        del vendedor.
       </p>
     </form>
   );

@@ -28,7 +28,7 @@ export function AvatarForm({ tieneFoto }: { tieneFoto: boolean }) {
       setError(
         e instanceof UploadError
           ? e.message
-          : "No pudimos subir la foto. Revisa la conexión e intenta otra vez."
+          : "No pudimos subir la foto. Revisa la conexión e intenta otra vez.",
       );
     } finally {
       setSubiendo(false);
@@ -57,7 +57,11 @@ export function AvatarForm({ tieneFoto }: { tieneFoto: boolean }) {
           disabled={subiendo}
           onClick={() => input.current?.click()}
         >
-          {subiendo ? "Subiendo…" : tieneFoto ? "Cambiar la foto" : "Subir una foto"}
+          {subiendo
+            ? "Subiendo…"
+            : tieneFoto
+              ? "Cambiar la foto"
+              : "Subir una foto"}
         </Button>
 
         {tieneFoto && (

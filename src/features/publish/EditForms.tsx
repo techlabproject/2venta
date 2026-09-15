@@ -8,11 +8,17 @@ import { CONDITION_LABEL } from "@/features/catalog/labels";
 export function EditForm({
   listing,
 }: {
-  listing: { id: string; title: string; description: string; price_cop: number; condition: string };
+  listing: {
+    id: string;
+    title: string;
+    description: string;
+    price_cop: number;
+    condition: string;
+  };
 }) {
   const [result, submit, pending] = useActionState<EditResult | null, FormData>(
     editListing,
-    null
+    null,
   );
 
   return (
@@ -20,26 +26,53 @@ export function EditForm({
       {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
       <input type="hidden" name="listingId" value={listing.id} />
 
-      <Field id="title" name="title" label="Título" required defaultValue={listing.title} />
-      <Field id="price" name="price" label="Precio" inputMode="numeric" required
-        defaultValue={String(listing.price_cop)} hint="En pesos, sin puntos ni comas." />
+      <Field
+        id="title"
+        name="title"
+        label="Título"
+        required
+        defaultValue={listing.title}
+      />
+      <Field
+        id="price"
+        name="price"
+        label="Precio"
+        inputMode="numeric"
+        required
+        defaultValue={String(listing.price_cop)}
+        hint="En pesos, sin puntos ni comas."
+      />
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-medium">Estado del artículo</legend>
+        <legend className="mb-1 text-sm font-medium">
+          Estado del artículo
+        </legend>
         {Object.entries(CONDITION_LABEL).map(([value, label]) => (
           <label key={value} className="flex items-center gap-2 text-sm">
-            <input type="radio" name="condition" value={value} required
-              defaultChecked={listing.condition === value} />
+            <input
+              type="radio"
+              name="condition"
+              value={value}
+              required
+              defaultChecked={listing.condition === value}
+            />
             {label}
           </label>
         ))}
       </fieldset>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="description" className="text-sm font-medium">Descripción</label>
-        <textarea id="description" name="description" required rows={4}
+        <label htmlFor="description" className="text-sm font-medium">
+          Descripción
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          required
+          rows={4}
           defaultValue={listing.description}
-          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm outline-none focus:border-brand" />
+          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+        />
       </div>
 
       <p className="text-xs text-muted">
@@ -84,11 +117,14 @@ export function StatusButton({
 }) {
   const [result, submit, pending] = useActionState<EditResult | null, FormData>(
     setListingStatus,
-    null
+    null,
   );
 
   return (
-    <form action={submit} className={compact ? "contents" : "flex flex-col gap-2"}>
+    <form
+      action={submit}
+      className={compact ? "contents" : "flex flex-col gap-2"}
+    >
       {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
       <input type="hidden" name="listingId" value={listingId} />
       <input type="hidden" name="status" value={status} />

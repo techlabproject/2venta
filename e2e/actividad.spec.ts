@@ -47,7 +47,7 @@ test("el vendedor encuentra su venta", async ({ browser }) => {
   await seller.page.goto("/actividad");
   await expect(seller.page.getByTestId("ventas")).toContainText(titulo);
   // Y no aparece como compra suya.
-  await expect(seller.page.getByRole("main")).toContainText("Todavía no has comprado nada");
+  await expect(seller.page.getByRole("main")).toContainText("Aquí van tus compras");
 
   await seller.context.close();
   await ctx.close();
@@ -115,7 +115,7 @@ test("no se ven pedidos ni conversaciones de otras personas", async ({ browser }
   await signUpVerified(otro, "ajeno", "Persona Ajena");
   await otro.goto("/actividad");
   await expect(otro.getByRole("main")).not.toContainText(titulo);
-  await expect(otro.getByRole("main")).toContainText("Todavía no has comprado nada");
+  await expect(otro.getByRole("main")).toContainText("Aquí van tus compras");
 
   await seller.context.close();
   await ctx.close();

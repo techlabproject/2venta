@@ -26,7 +26,9 @@ export function PhoneForm() {
     const raw = String(new FormData(e.currentTarget).get("phone"));
     const digits = raw.replace(/\D/g, "").replace(/^57/, "");
     if (!/^3\d{9}$/.test(digits)) {
-      setError("Escribe un celular colombiano de 10 dígitos, por ejemplo 300 412 88 05.");
+      setError(
+        "Escribe un celular colombiano de 10 dígitos, por ejemplo 300 412 88 05.",
+      );
       setBusy(false);
       return;
     }
@@ -37,7 +39,7 @@ export function PhoneForm() {
       setError(
         /exist/i.test(updated.error.message ?? "")
           ? "Ese celular ya está en otra cuenta."
-          : "No pudimos guardar tu celular. Intenta de nuevo."
+          : "No pudimos guardar tu celular. Intenta de nuevo.",
       );
       setBusy(false);
       return;

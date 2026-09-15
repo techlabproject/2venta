@@ -1,39 +1,127 @@
 @import "tailwindcss";
 
-/* Sistema de diseño 2venta.
-   Los valores salen del manual de marca, opción 1 (ciclo de reuso):
-   verde bosque y mostaza, Poppins para títulos y Work Sans para cuerpo.
-   Cualquier color nuevo se agrega aquí, nunca suelto en un componente. */
+/* Sistema de diseño 2venta — «petróleo y coral» (D-84).
+   Antes era verde bosque y mostaza. El petróleo es más profundo y más frío, y
+   deja que el coral —que es cálido y saturado— sea lo único que grita en la
+   pantalla. Cualquier color nuevo se agrega aquí, nunca suelto en un componente. */
 @theme {
-  --color-brand: #2d5940;
-  --color-brand-d: #244a35;
-  --color-accent: #e8a94c;
-  --color-on-accent: #17251f;
-  --color-accent-on-brand: #edba70;
-  --color-accent-text: #946c31;
-  --color-ink: #17251f;
-  --color-ink2: #3a4a42;
-  --color-muted: #717672;
-  --color-cream: #f4f5f1;
-  --color-ph: #e9ebe5;
-  --color-warn: #b26b2e;
-  --color-danger: #a33b2b;
-  --color-line: #dbe1d7;
+  /* La marca. El petróleo sostiene cabecera, precios y superficies serias. */
+  --color-brand: #0f4c4a;
+  --color-brand-d: #0a3a38;
+  --color-brand-l: #1c6a66;
+
+  /* El acento. Coral: dinero y acción principal, en ese orden y en ningún otro
+     sitio. `accent-edge` le da el borde de definición que el coral no tiene por
+     sí solo contra la crema (2,57:1, por debajo del 3:1 que pide WCAG 1.4.11
+     para el contorno de un control). */
+  --color-accent: #ff6b4a;
+  --color-accent-edge: #d8431f;
+  --color-on-accent: #0b2422;
+  --color-accent-on-brand: #ff9478;
+  --color-accent-text: #bf4326;
+
+  /* Tinta y superficies. Todos los grises llevan una gota de petróleo: un gris
+     neutro sobre una crema fría se ve sucio. */
+  --color-ink: #0b2422;
+  --color-ink2: #2f4b48;
+  --color-muted: #5f706d;
+  --color-cream: #f2f5f3;
+  --color-ph: #e3eae7;
+  --color-line: #d6e0dd;
+
+  /* Semánticos. Separados del coral a propósito: el aviso se va al ámbar y el
+     peligro al carmesí, porque tres naranjas seguidos no significan nada. */
+  --color-warn: #8a6410;
+  --color-danger: #a61b2b;
 
   --font-title: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-work-sans), ui-sans-serif, system-ui, sans-serif;
+
+  /* Elevación. Las sombras van teñidas de petróleo, no de negro: una sombra gris
+     neutra sobre superficies frías se lee como suciedad, y era buena parte de lo
+     que hacía que todo se viera plano. Dos capas por sombra —una de contacto,
+     corta y densa, y una de difusión, larga y suave— que es como cae la luz. */
+  --shadow-xs: 0 1px 2px -1px oklch(0.32 0.04 192 / 0.12);
+  --shadow-sm:
+    0 1px 2px -1px oklch(0.32 0.04 192 / 0.14),
+    0 2px 6px -2px oklch(0.32 0.04 192 / 0.1);
+  --shadow-md:
+    0 2px 4px -2px oklch(0.32 0.04 192 / 0.16),
+    0 6px 14px -4px oklch(0.32 0.04 192 / 0.12);
+  --shadow-lg:
+    0 4px 8px -4px oklch(0.32 0.04 192 / 0.18),
+    0 14px 28px -8px oklch(0.32 0.04 192 / 0.16);
+  --shadow-xl:
+    0 8px 16px -8px oklch(0.32 0.04 192 / 0.2),
+    0 28px 48px -12px oklch(0.32 0.04 192 / 0.2);
+
+  /* Movimiento. Un solo vocabulario para toda la app: si cada pantalla inventa su
+     curva, el producto se siente hecho por cinco personas distintas. */
+  --ease-salida: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-entrada: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-resorte: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --animate-aparecer: aparecer 0.34s var(--ease-salida) both;
+  --animate-subir: subir 0.42s var(--ease-salida) both;
+  --animate-latir: latir 2.4s var(--ease-entrada) infinite;
+  --animate-pop: pop 0.32s var(--ease-resorte);
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+/* El punto del paso en curso del seguimiento. Late despacio y poco: es un signo
+   de vida, no una alarma. */
+@keyframes latir {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--color-accent);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 0.35rem transparent;
+    opacity: 0.85;
+  }
+}
+
+
+/* El corazón de guardados, al marcarlo. */
+@keyframes pop {
+  40% {
+    transform: scale(1.32);
+  }
 }
 
 body {
   background: var(--color-cream);
   color: var(--color-ink);
   font-family: var(--font-body);
+  /* Las cifras de dinero se alinean entre tarjetas sin pedirlo pantalla por
+     pantalla, y los textos largos no quedan con ríos de espacio. */
+  font-variant-numeric: tabular-nums;
+  text-rendering: optimizeLegibility;
 }
 
 h1,
 h2,
 h3 {
   font-family: var(--font-title);
+  text-wrap: balance;
+  letter-spacing: -0.015em;
+}
+
+p {
+  text-wrap: pretty;
 }
 
 /* El foco visible no se quita nunca: es el único camino de navegación para
@@ -41,6 +129,27 @@ h3 {
 :focus-visible {
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;
+}
+
+/* Sobre el petróleo de la cabecera, un contorno petróleo no se ve. */
+.bg-brand :focus-visible,
+.bg-brand-d :focus-visible {
+  outline-color: var(--color-accent-on-brand);
+}
+
+
+/* IMPORTANT: quien pidió menos movimiento en su sistema operativo lo pidió en
+   serio. Nada se mueve, y todo queda en su estado final —no en el inicial— para
+   que ninguna animación de entrada deje contenido invisible. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* La barra de navegación inferior (D-77) es fija, así que sin este hueco el final

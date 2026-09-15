@@ -10,7 +10,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
     <li>
       <Link
         href={`/producto/${listing.id}`}
-        className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-line transition hover:-translate-y-0.5 hover:shadow-lg hover:ring-brand/30"
+        className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-xs ring-1 ring-line transition duration-200 ease-salida hover:-translate-y-1 hover:shadow-lg hover:ring-brand/30 active:translate-y-0 active:shadow-sm active:duration-75"
       >
         <div className="relative">
           {/* La portada sale del primer cuadro del video, así que siempre
@@ -18,7 +18,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
           <img
             src={mediaUrl(listing.poster_path)}
             alt=""
-            className="aspect-[4/3] w-full bg-ph object-cover"
+            className="aspect-[4/3] w-full bg-ph object-cover transition-transform duration-500 ease-salida group-hover:scale-[1.04]"
           />
 
           {/* D-14: todo artículo lleva un video grabado dentro de la app, y es la
@@ -26,7 +26,11 @@ export function ListingCard({ listing }: { listing: Listing }) {
               no se veía en el feed: la tarjeta parecía la de cualquier
               clasificado. Ahora el video se anuncia donde más se mira. */}
           <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-ink/70 py-1 pr-2.5 pl-2 text-[11px] font-medium text-cream backdrop-blur-sm">
-            <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3 w-3 fill-current">
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              className="h-3 w-3 fill-current"
+            >
               <path d="M8 5.14v13.72a1 1 0 0 0 1.54.84l10.3-6.86a1 1 0 0 0 0-1.68L9.54 4.3A1 1 0 0 0 8 5.14Z" />
             </svg>
             Con video

@@ -14,10 +14,11 @@ export default async function EditarPerfil() {
   // Una cuenta suspendida no llega a las pantallas que escriben.
   const user = await activeUser();
 
-  const rows = await query<{ zone: string | null; bio: string | null; avatar_path: string | null }>(
-    `select zone, bio, avatar_path from "user" where id = $1`,
-    [user.id]
-  );
+  const rows = await query<{
+    zone: string | null;
+    bio: string | null;
+    avatar_path: string | null;
+  }>(`select zone, bio, avatar_path from "user" where id = $1`, [user.id]);
   const alias = user.alias ?? user.name;
   const foto = rows[0]?.avatar_path ? mediaUrl(rows[0].avatar_path) : null;
 
@@ -28,11 +29,13 @@ export default async function EditarPerfil() {
         <Link href="/cuenta" className="text-sm text-ink2 underline">
           Volver a tu cuenta
         </Link>
-        <h1 className="mt-4 font-title text-xl font-semibold">Editar tu perfil</h1>
+        <h1 className="mt-4 font-title text-xl font-semibold">
+          Editar tu perfil
+        </h1>
 
         {/* La foto es lo primero: en un mercado de desconocidos, una cara cambia
             más que cualquier texto de la descripción. */}
-        <section className="mt-5 rounded-2xl bg-white p-5 ring-1 ring-line">
+        <section className="mt-5 rounded-2xl bg-white shadow-xs p-5 ring-1 ring-line">
           <div className="flex items-center gap-4">
             <Avatar src={foto} name={alias} size="lg" />
             <div className="min-w-0 flex-1">

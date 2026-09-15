@@ -1,7 +1,12 @@
 "use client";
 
 import { useActionState, useRef } from "react";
-import { makeOffer, respondToOffer, sendMessage, type ChatResult } from "./actions";
+import {
+  makeOffer,
+  respondToOffer,
+  sendMessage,
+  type ChatResult,
+} from "./actions";
 import { Button, ErrorNote } from "@/components/ui";
 
 const inputClass =
@@ -15,7 +20,7 @@ export function MessageForm({ conversationId }: { conversationId: string }) {
       if (!res.error) ref.current?.reset();
       return res;
     },
-    null
+    null,
   );
 
   return (
@@ -46,7 +51,7 @@ export function OfferForm({ conversationId }: { conversationId: string }) {
       if (!res.error) ref.current?.reset();
       return res;
     },
-    null
+    null,
   );
 
   return (
@@ -62,7 +67,12 @@ export function OfferForm({ conversationId }: { conversationId: string }) {
           className={inputClass}
           required
         />
-        <Button type="submit" variant="outline" disabled={pending} size="inline">
+        <Button
+          type="submit"
+          variant="outline"
+          disabled={pending}
+          size="inline"
+        >
           Ofertar
         </Button>
       </div>
@@ -74,7 +84,7 @@ export function OfferForm({ conversationId }: { conversationId: string }) {
 export function OfferDecision({ offerId }: { offerId: string }) {
   const [result, submit, pending] = useActionState<ChatResult | null, FormData>(
     respondToOffer,
-    null
+    null,
   );
 
   return (
@@ -82,10 +92,21 @@ export function OfferDecision({ offerId }: { offerId: string }) {
       {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
       <input type="hidden" name="offerId" value={offerId} />
       <div className="flex gap-2">
-        <Button type="submit" name="decision" value="aceptar" disabled={pending}>
+        <Button
+          type="submit"
+          name="decision"
+          value="aceptar"
+          disabled={pending}
+        >
           Aceptar
         </Button>
-        <Button type="submit" name="decision" value="rechazar" variant="outline" disabled={pending}>
+        <Button
+          type="submit"
+          name="decision"
+          value="rechazar"
+          variant="outline"
+          disabled={pending}
+        >
           Rechazar
         </Button>
       </div>

@@ -16,14 +16,16 @@ export default async function Suspendida() {
 
   const rows = await query<{ suspended_reason: string | null }>(
     `select suspended_reason from "user" where id = $1`,
-    [user.id]
+    [user.id],
   );
 
   return (
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-10">
-        <h1 className="font-title text-2xl font-semibold">Tu cuenta está suspendida</h1>
+        <h1 className="font-title text-2xl font-semibold">
+          Tu cuenta está suspendida
+        </h1>
         <p className="mt-3 text-ink2">
           No puedes publicar, comprar ni escribirle a nadie. Sí puedes ver tus
           pedidos y seguir cualquier reclamo abierto, porque si tienes dinero
@@ -41,12 +43,16 @@ export default async function Suspendida() {
         </p>
 
         <div className="mt-7 flex flex-col gap-3">
-          <Link href="/actividad"
-            className="inline-flex w-full items-center justify-center rounded-xl border border-brand/25 bg-white px-4 py-3 text-sm font-medium">
+          <Link
+            href="/actividad"
+            className="inline-flex w-full items-center justify-center rounded-xl border border-brand/25 bg-white px-4 py-3 text-sm font-medium"
+          >
             Ver mis pedidos
           </Link>
-          <Link href="/cuenta"
-            className="inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm text-ink2">
+          <Link
+            href="/cuenta"
+            className="inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm text-ink2"
+          >
             Mi cuenta
           </Link>
         </div>

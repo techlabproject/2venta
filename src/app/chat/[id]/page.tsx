@@ -8,7 +8,11 @@ import {
   listOffers,
 } from "@/features/chat/queries";
 import { REDACTION_NOTICE } from "@/features/chat/redact";
-import { MessageForm, OfferDecision, OfferForm } from "@/features/chat/ChatForms";
+import {
+  MessageForm,
+  OfferDecision,
+  OfferForm,
+} from "@/features/chat/ChatForms";
 import { AppHeader } from "@/components/AppHeader";
 import { formatCop } from "@/lib/money";
 import { mediaUrl } from "@/lib/media";
@@ -16,7 +20,11 @@ import { mediaUrl } from "@/lib/media";
 // Pantalla 1h del mockup: chat interno con los pagos fuera de la app bloqueados.
 export const dynamic = "force-dynamic";
 
-export default async function Chat({ params }: { params: Promise<{ id: string }> }) {
+export default async function Chat({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const user = await currentUser();
   if (!user) redirect("/ingresar");
 
@@ -48,7 +56,7 @@ export default async function Chat({ params }: { params: Promise<{ id: string }>
             con quién. */}
         <Link
           href={`/producto/${conversation.listing_id}`}
-          className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-line transition hover:ring-brand/30"
+          className="flex items-center gap-3 rounded-2xl bg-white shadow-xs p-3 ring-1 ring-line transition hover:ring-brand/30"
         >
           <img
             src={mediaUrl(conversation.listing_poster_path)}
@@ -73,9 +81,9 @@ export default async function Chat({ params }: { params: Promise<{ id: string }>
         </p>
 
         {messages.length === 0 && (
-          <p className="mt-6 rounded-2xl bg-white p-4 text-sm text-ink2">
-            Todavía no se han escrito. Pregúntale lo que necesites saber antes de
-            comprar: en qué estado está, por qué lo vende, si tiene la caja.
+          <p className="mt-6 rounded-2xl bg-white shadow-xs p-4 text-sm text-ink2 ring-1 ring-line">
+            Todavía no se han escrito. Pregúntale lo que necesites saber antes
+            de comprar: en qué estado está, por qué lo vende, si tiene la caja.
           </p>
         )}
 
@@ -122,12 +130,14 @@ export default async function Chat({ params }: { params: Promise<{ id: string }>
         )}
 
         {pending && (
-          <div className="mt-6 rounded-2xl bg-white p-4">
+          <div className="mt-6 rounded-2xl bg-white shadow-xs p-4 ring-1 ring-line">
             <p data-testid="oferta" className="text-sm">
               Oferta de {formatCop(pending.price_cop)}
               {pending.offered_by === user.id ? " (tuya)" : ""}
             </p>
-            {pending.offered_by !== user.id && <OfferDecision offerId={pending.id} />}
+            {pending.offered_by !== user.id && (
+              <OfferDecision offerId={pending.id} />
+            )}
           </div>
         )}
 
@@ -136,12 +146,14 @@ export default async function Chat({ params }: { params: Promise<{ id: string }>
             precio antes que el de escribir. */}
         <div className="mt-6 flex flex-col gap-4">
           <MessageForm conversationId={conversation.id} />
-          {!pending && !accepted && <OfferForm conversationId={conversation.id} />}
+          {!pending && !accepted && (
+            <OfferForm conversationId={conversation.id} />
+          )}
         </div>
 
         <p className="mt-6 text-xs text-muted">
-          Cierra el trato aquí. Si pagas por fuera pierdes el pago protegido, y es
-          justo lo que usan los estafadores.
+          Cierra el trato aquí. Si pagas por fuera pierdes el pago protegido, y
+          es justo lo que usan los estafadores.
         </p>
       </main>
     </>

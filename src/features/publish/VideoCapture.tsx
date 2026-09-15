@@ -25,9 +25,9 @@ export function VideoCapture({ onCaptured }: Props) {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
 
-  const [state, setState] = useState<"inicial" | "listo" | "grabando" | "grabado">(
-    "inicial"
-  );
+  const [state, setState] = useState<
+    "inicial" | "listo" | "grabando" | "grabado"
+  >("inicial");
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -54,7 +54,7 @@ export function VideoCapture({ onCaptured }: Props) {
       setState("listo");
     } catch {
       setError(
-        "No pudimos abrir la cámara. Revisa el permiso en tu navegador e intenta otra vez."
+        "No pudimos abrir la cámara. Revisa el permiso en tu navegador e intenta otra vez.",
       );
     }
   }
@@ -66,13 +66,19 @@ export function VideoCapture({ onCaptured }: Props) {
     // Los códecs varían entre navegadores: iOS grababa en contenedor mp4 hasta la
     // 18.3 y Android entrega WebM. Se toma el primero que el navegador acepte, y
     // el servidor guarda lo que llegue.
-    const mimeType = ["video/webm;codecs=vp8,opus", "video/webm", "video/mp4"].find(
-      (t) => MediaRecorder.isTypeSupported(t)
-    );
+    const mimeType = [
+      "video/webm;codecs=vp8,opus",
+      "video/webm",
+      "video/mp4",
+    ].find((t) => MediaRecorder.isTypeSupported(t));
 
     chunksRef.current = [];
-    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-    recorder.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
+    const recorder = new MediaRecorder(
+      stream,
+      mimeType ? { mimeType } : undefined,
+    );
+    recorder.ondataavailable = (e) =>
+      e.data.size && chunksRef.current.push(e.data);
     recorder.onstop = finish;
     recorder.start();
     recorderRef.current = recorder;
@@ -129,7 +135,10 @@ export function VideoCapture({ onCaptured }: Props) {
       </div>
 
       {error && (
-        <p role="alert" className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger">
+        <p
+          role="alert"
+          className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger"
+        >
           {error}
         </p>
       )}
@@ -140,8 +149,8 @@ export function VideoCapture({ onCaptured }: Props) {
             Abrir cámara
           </Button>
           <p className="text-xs text-muted">
-            El video se graba aquí, no se sube desde la galería. Es lo que le permite
-            al comprador ver que el artículo existe y está como dice.
+            El video se graba aquí, no se sube desde la galería. Es lo que le
+            permite al comprador ver que el artículo existe y está como dice.
           </p>
         </>
       )}
@@ -151,12 +160,19 @@ export function VideoCapture({ onCaptured }: Props) {
         </Button>
       )}
       {state === "grabando" && (
-        <Button type="button" variant="outline" onClick={() => recorderRef.current?.stop()}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => recorderRef.current?.stop()}
+        >
           Terminar
         </Button>
       )}
       {state === "grabado" && (
-        <p role="status" className="rounded-xl bg-brand/10 px-4 py-3 text-sm text-brand">
+        <p
+          role="status"
+          className="rounded-xl bg-brand/10 px-4 py-3 text-sm text-brand"
+        >
           Video listo. Si no te gustó, recarga la página y graba otro.
         </p>
       )}
@@ -172,11 +188,16 @@ function posterFromLive(video: HTMLVideoElement | null): Promise<Blob> {
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;
-    canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas
+      .getContext("2d")
+      ?.drawImage(video, 0, 0, canvas.width, canvas.height);
     canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("no se pudo generar la portada"))),
+      (blob) =>
+        blob
+          ? resolve(blob)
+          : reject(new Error("no se pudo generar la portada")),
       "image/jpeg",
-      0.8
+      0.8,
     );
   });
 }

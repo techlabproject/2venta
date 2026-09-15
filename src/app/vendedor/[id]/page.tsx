@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getPublicSeller, listSellerListings } from "@/features/catalog/queries";
+import {
+  getPublicSeller,
+  listSellerListings,
+} from "@/features/catalog/queries";
 import { ListingCard } from "@/features/catalog/ListingCard";
 import { AppHeader } from "@/components/AppHeader";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -25,7 +28,10 @@ export default async function PerfilVendedor({
   if (!seller) notFound();
 
   const viewer = await currentUser();
-  const bios = await query<{ bio: string | null }>(`select bio from "user" where id = $1`, [id]);
+  const bios = await query<{ bio: string | null }>(
+    `select bio from "user" where id = $1`,
+    [id],
+  );
   const [listings, reputation, reviews] = await Promise.all([
     listSellerListings(id),
     getReputation(id),
@@ -56,33 +62,47 @@ export default async function PerfilVendedor({
           )}
           <span>· {seller.zone}</span>
         </p>
-        <p className="mt-1 text-sm text-muted">Miembro desde {formatMonthYear(seller.member_since)}</p>
-        {bios[0]?.bio && <p className="mt-3 text-sm text-ink2">{bios[0].bio}</p>}
+        <p className="mt-1 text-sm text-muted">
+          Miembro desde {formatMonthYear(seller.member_since)}
+        </p>
+        {bios[0]?.bio && (
+          <p className="mt-3 text-sm text-ink2">{bios[0].bio}</p>
+        )}
 
         {/* D-17: un vendedor sin ventas no muestra cifras en cero. "0 ventas, 0
             estrellas" parece mal desempeño cuando en realidad es ausencia de
             datos, y en una plataforma que arranca eso son todos. Lo único cierto
             que se puede decir de él es desde cuándo está y que se verificó. */}
         {reputation.sales > 0 ? (
-          <dl data-testid="reputacion" className="mt-5 grid grid-cols-3 gap-3 text-center">
-            <div className="rounded-2xl bg-white p-3">
+          <dl
+            data-testid="reputacion"
+            className="mt-5 grid grid-cols-3 gap-3 text-center"
+          >
+            <div className="rounded-2xl bg-white shadow-xs p-3 ring-1 ring-line">
               <dt className="text-xs text-muted">Calificación</dt>
               <dd className="font-title text-xl font-semibold">
                 {reputation.average !== null ? (
                   <>
                     {reputation.average.toFixed(1).replace(".", ",")}
-                    <span aria-hidden="true" className="text-accent-text"> ★</span>
+                    <span aria-hidden="true" className="text-accent-text">
+                      {" "}
+                      ★
+                    </span>
                   </>
                 ) : (
-                  <span className="text-base font-normal text-muted">Sin reseñas</span>
+                  <span className="text-base font-normal text-muted">
+                    Sin reseñas
+                  </span>
                 )}
               </dd>
             </div>
-            <div className="rounded-2xl bg-white p-3">
+            <div className="rounded-2xl bg-white shadow-xs p-3 ring-1 ring-line">
               <dt className="text-xs text-muted">Ventas</dt>
-              <dd className="font-title text-xl font-semibold">{reputation.sales}</dd>
+              <dd className="font-title text-xl font-semibold">
+                {reputation.sales}
+              </dd>
             </div>
-            <div className="rounded-2xl bg-white p-3">
+            <div className="rounded-2xl bg-white shadow-xs p-3 ring-1 ring-line">
               <dt className="text-xs text-muted">Disputas</dt>
               <dd className="font-title text-xl font-semibold">
                 {reputation.disputeRate?.toString().replace(".", ",")}%
@@ -90,18 +110,27 @@ export default async function PerfilVendedor({
             </div>
           </dl>
         ) : (
-          <p data-testid="sin-ventas" className="mt-4 rounded-2xl bg-white p-4 text-sm text-ink2">
-            Todavía no ha completado ninguna venta en 2venta. Su identidad sí está
-            verificada, que es lo que garantiza que responde con su nombre real.
+          <p
+            data-testid="sin-ventas"
+            className="mt-4 rounded-2xl bg-white shadow-xs p-4 text-sm text-ink2 ring-1 ring-line"
+          >
+            Todavía no ha completado ninguna venta en 2venta. Su identidad sí
+            está verificada, que es lo que garantiza que responde con su nombre
+            real.
           </p>
         )}
 
         {reviews.length > 0 && (
           <section className="mt-8">
-            <h2 className="font-title text-lg font-semibold">Lo que dicen los compradores</h2>
+            <h2 className="font-title text-lg font-semibold">
+              Lo que dicen los compradores
+            </h2>
             <ul className="mt-3 flex flex-col gap-3">
               {reviews.map((r, i) => (
-                <li key={i} className="rounded-2xl bg-white p-4 text-sm">
+                <li
+                  key={i}
+                  className="rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
+                >
                   <p className="flex items-center gap-2">
                     <span className="font-medium">{r.rater_alias}</span>
                     <span aria-hidden="true" className="text-accent-text">
@@ -126,11 +155,12 @@ export default async function PerfilVendedor({
             saber dónde hacerlo; esta línea lo dice. */}
         {listings.length > 0 ? (
           <p className="mt-1 text-sm text-muted">
-            ¿Quieres escribirle? Abre el artículo que te interesa: la conversación
-            va por artículo, para que los dos sepan de qué están hablando.
+            ¿Quieres escribirle? Abre el artículo que te interesa: la
+            conversación va por artículo, para que los dos sepan de qué están
+            hablando.
           </p>
         ) : (
-          <p className="mt-3 rounded-2xl bg-white p-4 text-sm text-ink2">
+          <p className="mt-3 rounded-2xl bg-white shadow-xs p-4 text-sm text-ink2 ring-1 ring-line">
             No tiene nada publicado en este momento.
           </p>
         )}

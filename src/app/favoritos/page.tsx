@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/session";
 import { listFavorites } from "@/features/favorites/queries";
 import { ListingCard } from "@/features/catalog/ListingCard";
 import { AppHeader } from "@/components/AppHeader";
+import { Vacio } from "@/components/Vacio";
 
 export const dynamic = "force-dynamic";
 
@@ -25,13 +25,15 @@ export default async function Favoritos() {
         <h1 className="font-title text-2xl font-semibold">Guardados</h1>
 
         {favorites.length === 0 ? (
-          <p className="mt-4 rounded-2xl bg-white p-4 text-sm text-ink2">
-            Todavía no has guardado nada. El corazón de cada artículo lo guarda aquí
-            para verlo después.{" "}
-            <Link href="/" className="text-brand underline">
-              Ver el catálogo
-            </Link>
-          </p>
+          <div className="mt-4">
+            <Vacio
+              titulo="Todavía no has guardado nada"
+              accion={{ href: "/", label: "Ver el catálogo" }}
+            >
+              El corazón de cada artículo lo guarda aquí. Sirve: en segunda mano
+              cada cosa es única, y lo que hoy está mañana puede no estar.
+            </Vacio>
+          </div>
         ) : (
           <ul data-testid="favoritos" className="mt-5 grid grid-cols-2 gap-3">
             {available.map((l) => (
@@ -46,7 +48,10 @@ export default async function Favoritos() {
             <p className="mt-1 text-sm text-muted">
               En segunda mano cada cosa es única y dura poco.
             </p>
-            <ul data-testid="favoritos-vendidos" className="mt-3 grid grid-cols-2 gap-3 opacity-60">
+            <ul
+              data-testid="favoritos-vendidos"
+              className="mt-3 grid grid-cols-2 gap-3 opacity-60"
+            >
               {gone.map((l) => (
                 <ListingCard key={l.id} listing={l} />
               ))}

@@ -96,8 +96,20 @@ Los colores y las dos tipografías viven en `@theme` dentro de `src/app/globals.
 las primitivas con la marca ya aplicada, en `src/components/ui.tsx`. Un color suelto
 en una pantalla es un error de revisión, no una opción.
 
-- El mostaza (`accent`) es para el dinero y para la acción principal de la pantalla.
-  Si aparece en un tercer sitio, deja de significar algo.
+- El coral (`accent`) es para el dinero y para la acción principal de la pantalla.
+  Si aparece en un tercer sitio, deja de significar algo. Lleva **texto oscuro**
+  (`on-accent`) y **borde** (`accent-edge`): blanco encima no se lee y sin borde no
+  tiene contorno visible. Ver D-84; `src/app/paleta.test.ts` lo comprueba en cada
+  corrida, así que no hay que creerlo, hay que correrlo.
+- Toda tarjeta blanca es `rounded-2xl bg-white shadow-xs ring-1 ring-line`. La misma
+  superficie siempre: cuando cada una tiene la suya, el ojo no las agrupa y la
+  pantalla se ve plana aunque cada pieza esté bien.
+- Las sombras van teñidas de petróleo y salen de `@theme`. Una sombra de negro
+  neutro sobre superficies frías se lee como suciedad.
+- El movimiento tiene vocabulario propio (`ease-salida`, `ease-entrada`,
+  `ease-resorte`) y cada animación tiene un trabajo: confirmar un toque, marcar un
+  estado o explicar de dónde sale algo. Si no hace ninguna de las tres, no entra
+  (D-86).
 - El precio se pinta con `<Price>`, nunca con `formatCop` a mano.
 - El escritorio no es el móvil estirado (D-70): catálogo, gestión y paneles usan
   `max-w-6xl` y varias columnas. Solo lo que se lee y los formularios siguen
@@ -161,6 +173,12 @@ el número y se le manda el código antes de dejarlo comprar o escribir.
   captura muestra un diseño que ya no existe. Cuando cambies una pantalla, **borra su
   `.png` antes de regenerar**; `rm e2e/visual/pantallas.spec.ts-snapshots/*.png` y
   volver a generar es lo único que garantiza que las 50 referencias son de verdad.
+- IMPORTANT: `Suspense` con streaming **rompe la garantía de la D-25**. El streaming
+  manda el hueco primero y el contenido después, cosido con JavaScript; sin
+  JavaScript el contenido nunca llega, y el catálogo y la ficha tienen que existir
+  como HTML del servidor para que un buscador los indexe. Lo cazan dos pruebas
+  («la búsqueda funciona sin JavaScript del cliente», «la ficha se sirve como
+  HTML»). En pantallas privadas no hay conflicto. Ver D-87.
 - Las imágenes de MinIO viven en `quay.io/minio/*`; las de Docker Hub ya no existen.
 - En S3 de verdad, `HeadObject` sobre una clave inexistente devuelve **403, no 404**,
   si el rol no tiene `s3:ListBucket` sobre el bucket. MinIO no lo hace. Los roles

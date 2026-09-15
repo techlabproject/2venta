@@ -1,9 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/session";
-import { listPurchases, listSales, type OrderSummary } from "@/features/orders/queries";
+import {
+  listPurchases,
+  listSales,
+  type OrderSummary,
+} from "@/features/orders/queries";
 import { listConversations } from "@/features/chat/queries";
 import { AppHeader } from "@/components/AppHeader";
+import { Vacio } from "@/components/Vacio";
 import { formatCop } from "@/lib/money";
 import { breakdown } from "@/features/payments/money";
 
@@ -44,13 +49,37 @@ export default async function Actividad() {
       <main className="mx-auto max-w-3xl px-5 py-6">
         <h1 className="font-title text-2xl font-semibold">Tu actividad</h1>
 
-        <Section title="Compras" testId="compras" empty="Todavía no has comprado nada.">
+        <Section
+          title="Compras"
+          testId="compras"
+          vacio={
+            <Vacio
+              titulo="Aquí van tus compras"
+              accion={{ href: "/", label: "Ver qué hay" }}
+            >
+              Cuando le compres a alguien, el pedido queda aquí con su
+              seguimiento, hasta que confirmes que recibiste.
+            </Vacio>
+          }
+        >
           {purchases.map((o) => (
             <OrderRow key={o.id} order={o} role="compraste a" />
           ))}
         </Section>
 
-        <Section title="Ventas" testId="ventas" empty="Todavía no has vendido nada.">
+        <Section
+          title="Ventas"
+          testId="ventas"
+          vacio={
+            <Vacio
+              titulo="Aquí van tus ventas"
+              accion={{ href: "/publicar", label: "Publicar un artículo" }}
+            >
+              Lo primero que vende es el video: treinta segundos mostrando el
+              artículo de verdad valen más que diez fotos perfectas.
+            </Vacio>
+          }
+        >
           {sales.map((o) => (
             <OrderRow key={o.id} order={o} role="vendiste a" />
           ))}
@@ -59,25 +88,34 @@ export default async function Actividad() {
         <Section
           title="Conversaciones"
           testId="chats"
-          empty="Ninguna todavía. Se abren desde el artículo, escribiéndole al vendedor."
+          vacio={
+            <Vacio titulo="Ninguna conversación todavía">
+              Se abren desde el artículo, escribiéndole al vendedor. Preguntar
+              antes de comprar es gratis y evita casi todos los reclamos.
+            </Vacio>
+          }
         >
           {conversations.map((c) => (
             <li key={c.id}>
               <Link
                 href={`/chat/${c.id}`}
                 aria-label={`Abrir conversación sobre ${c.listing_title}`}
-                className="block rounded-2xl bg-white p-4 text-sm"
+                className="block rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
               >
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="font-medium">{c.listing_title}</span>
-                  <span className="shrink-0 text-xs text-muted">{fecha.format(c.last_at)}</span>
+                  <span className="shrink-0 text-xs text-muted">
+                    {fecha.format(c.last_at)}
+                  </span>
                 </div>
                 <p className="mt-0.5 text-muted">
                   Con {c.counterpart_alias}
                   {c.listing_status === "vendida" && " · ya se vendió"}
                 </p>
                 {c.last_message && (
-                  <p className="mt-1 line-clamp-1 text-ink2">{c.last_message}</p>
+                  <p className="mt-1 line-clamp-1 text-ink2">
+                    {c.last_message}
+                  </p>
                 )}
               </Link>
             </li>
@@ -91,19 +129,19 @@ export default async function Actividad() {
 function Section({
   title,
   testId,
-  empty,
+  vacio,
   children,
 }: {
   title: string;
   testId: string;
-  empty: string;
+  vacio: React.ReactNode;
   children: React.ReactNode[];
 }) {
   return (
     <section className="mt-8">
       <h2 className="font-title text-lg font-semibold">{title}</h2>
       {children.length === 0 ? (
-        <p className="mt-2 text-sm text-muted">{empty}</p>
+        <div className="mt-3">{vacio}</div>
       ) : (
         <ul data-testid={testId} className="mt-3 flex flex-col gap-2">
           {children}
@@ -117,14 +155,17 @@ function OrderRow({ order, role }: { order: OrderSummary; role: string }) {
   const money = breakdown(order.subtotal_cop, order.shipping_cop);
   return (
     <li>
-      <Link href={`/pedido/${order.id}`} className="block rounded-2xl bg-white p-4 text-sm">
+      <Link
+        href={`/pedido/${order.id}`}
+        className="block rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
+      >
         <div className="flex items-baseline justify-between gap-3">
           <span className="font-medium">{order.title}</span>
           <span className="shrink-0">{formatCop(money.buyerTotalCop)}</span>
         </div>
         <p className="mt-0.5 text-muted">
-          {STATUS_LABEL[order.status] ?? order.status} · {role} {order.counterpart_alias} ·{" "}
-          {fecha.format(order.created_at)}
+          {STATUS_LABEL[order.status] ?? order.status} · {role}{" "}
+          {order.counterpart_alias} · {fecha.format(order.created_at)}
         </p>
       </Link>
     </li>

@@ -33,7 +33,9 @@ export default async function Publicar() {
         <Link href="/" className="text-sm text-ink2 underline">
           Cancelar
         </Link>
-        <h1 className="mt-4 mb-6 font-title text-2xl font-semibold">Publicar artículo</h1>
+        <h1 className="mt-4 mb-6 font-title text-2xl font-semibold">
+          Publicar artículo
+        </h1>
         <PublishForm categories={categories} suggestions={suggestions} />
       </main>
     </>

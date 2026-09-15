@@ -16,8 +16,8 @@ export default function Bienvenida() {
         primera confianza
       </h1>
       <p className="mt-3 text-ink2">
-        Compra y vende usado en Bogotá con el pago guardado hasta que el producto
-        llegue.
+        Compra y vende usado en Bogotá con el pago guardado hasta que el
+        producto llegue.
       </p>
 
       <div className="mt-9 flex flex-col gap-3">

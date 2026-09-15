@@ -9,7 +9,11 @@ import { breakdown } from "@/features/payments/money";
 // real mostraría su propio formulario de tarjeta o PSE. No existe en producción.
 export const dynamic = "force-dynamic";
 
-export default async function DevPago({ params }: { params: Promise<{ id: string }> }) {
+export default async function DevPago({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   if (isProduction()) notFound();
   const { id } = await params;
   const order = await getOrder(id);
@@ -25,8 +29,8 @@ export default async function DevPago({ params }: { params: Promise<{ id: string
   return (
     <main className="mx-auto max-w-md px-5 py-10">
       <p className="rounded-xl bg-warn/10 px-4 py-3 text-sm text-warn">
-        Proveedor de pagos de prueba. Ocupa el lugar del real mientras R-02 no tenga
-        respuesta. No existe en producción.
+        Proveedor de pagos de prueba. Ocupa el lugar del real mientras R-02 no
+        tenga respuesta. No existe en producción.
       </p>
 
       <h1 className="mt-6 font-title text-2xl font-semibold">Confirmar pago</h1>
@@ -53,7 +57,10 @@ export default async function DevPago({ params }: { params: Promise<{ id: string
         <dd>{formatCop(order.shipping_cop)}</dd>
       </dl>
 
-      <DevPagoControls reference={order.provider_ref ?? ""} orderId={order.id} />
+      <DevPagoControls
+        reference={order.provider_ref ?? ""}
+        orderId={order.id}
+      />
     </main>
   );
 }

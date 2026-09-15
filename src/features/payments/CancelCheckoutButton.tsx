@@ -8,7 +8,7 @@ import { Button, ErrorNote } from "@/components/ui";
 export function CancelCheckoutButton({ orderId }: { orderId: string }) {
   const [result, submit, pending] = useActionState<BuyResult | null, FormData>(
     cancelCheckout,
-    null
+    null,
   );
 
   return (

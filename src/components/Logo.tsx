@@ -2,7 +2,12 @@
 export function Logo({ className }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 ${className ?? ""}`}>
-      <svg viewBox="0 0 100 100" className="h-full w-auto" role="img" aria-label="2venta">
+      <svg
+        viewBox="0 0 100 100"
+        className="h-full w-auto"
+        role="img"
+        aria-label="2venta"
+      >
         <circle
           cx="50"
           cy="50"
@@ -17,7 +22,7 @@ export function Logo({ className }: { className?: string }) {
           cy="50"
           r="42"
           fill="none"
-          stroke="#E8A94C"
+          stroke="var(--color-accent)"
           strokeWidth="8"
           strokeDasharray="198 266"
           strokeLinecap="round"
@@ -35,7 +40,9 @@ export function Logo({ className }: { className?: string }) {
           2
         </text>
       </svg>
-      <span className="font-title text-lg font-semibold tracking-tight">2venta</span>
+      <span className="font-title text-lg font-semibold tracking-tight">
+        2venta
+      </span>
     </span>
   );
 }

@@ -57,13 +57,14 @@ export default async function Cuenta() {
   }>(
     `select id, "userAgent", "createdAt", "expiresAt" from session
       where "userId" = $1 and "expiresAt" > now() order by "createdAt" desc`,
-    [user.id]
+    [user.id],
   );
 
-  const perfil = await query<{ avatar_path: string | null; zone: string | null; bio: string | null }>(
-    `select avatar_path, zone, bio from "user" where id = $1`,
-    [user.id]
-  );
+  const perfil = await query<{
+    avatar_path: string | null;
+    zone: string | null;
+    bio: string | null;
+  }>(`select avatar_path, zone, bio from "user" where id = $1`, [user.id]);
   const verificacion = await getVerification(user.id);
   const alias = user.alias ?? user.name;
   const foto = perfil[0]?.avatar_path ? mediaUrl(perfil[0].avatar_path) : null;
@@ -78,12 +79,16 @@ export default async function Cuenta() {
         <h1 className="font-title text-2xl font-semibold">Tu cuenta</h1>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-          <section className="rounded-2xl bg-white p-6 ring-1 ring-line">
+          <section className="rounded-2xl bg-white shadow-xs p-6 ring-1 ring-line">
             <div className="flex items-center gap-4">
               <Avatar src={foto} name={alias} size="lg" />
               <div className="min-w-0">
-                <p className="truncate font-title text-lg font-semibold">{alias}</p>
-                <p className="text-sm text-muted">{perfil[0]?.zone ?? "Bogotá"}</p>
+                <p className="truncate font-title text-lg font-semibold">
+                  {alias}
+                </p>
+                <p className="text-sm text-muted">
+                  {perfil[0]?.zone ?? "Bogotá"}
+                </p>
                 {verificacion?.status === "aprobado" && (
                   <p className="mt-2">
                     <VerifiedBadge label="Identidad verificada" />
@@ -92,7 +97,9 @@ export default async function Cuenta() {
               </div>
             </div>
 
-            {perfil[0]?.bio && <p className="mt-5 text-sm text-ink2">{perfil[0].bio}</p>}
+            {perfil[0]?.bio && (
+              <p className="mt-5 text-sm text-ink2">{perfil[0].bio}</p>
+            )}
 
             <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 border-t border-line pt-5 text-sm">
               <dt className="text-muted">Nombre</dt>
@@ -104,17 +111,27 @@ export default async function Cuenta() {
             </dl>
 
             <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-              <ButtonLink href="/cuenta/editar" variant="outline" className="sm:w-auto">
+              <ButtonLink
+                href="/cuenta/editar"
+                variant="outline"
+                className="sm:w-auto"
+              >
                 Editar tu perfil
               </ButtonLink>
-              <ButtonLink href="/recuperar" variant="ghost" className="sm:w-auto">
+              <ButtonLink
+                href="/recuperar"
+                variant="ghost"
+                className="sm:w-auto"
+              >
                 Cambiar tu contraseña
               </ButtonLink>
             </div>
           </section>
 
           <section>
-            <h2 className="font-title text-lg font-semibold">Sesiones abiertas</h2>
+            <h2 className="font-title text-lg font-semibold">
+              Sesiones abiertas
+            </h2>
             <p className="mt-1 text-sm text-muted">
               Si ves una que no reconoces, ciérrala y cambia tu contraseña.
             </p>
@@ -124,10 +141,12 @@ export default async function Cuenta() {
                 return (
                   <li
                     key={s.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl bg-white p-4 text-sm ring-1 ring-line"
+                    className="flex items-center justify-between gap-3 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
                   >
                     <span>
-                      <span className="font-medium">{describeDevice(s.userAgent)}</span>
+                      <span className="font-medium">
+                        {describeDevice(s.userAgent)}
+                      </span>
                       <span className="block text-muted">
                         Desde el {fecha.format(s.createdAt)}
                         {actual && " · esta"}

@@ -77,9 +77,12 @@ test("un identificador con formato inválido devuelve 404, no un error de servid
 
 test("la marca aplica la tipografía y el color del manual", async ({ page }) => {
   await page.goto("/");
-  // Opción 1 del manual: verde bosque de marca en la cabecera, Poppins en títulos.
+  // «Petróleo y coral» (D-84): petróleo de marca en la cabecera, Poppins en
+  // títulos. La prueba clava el color a propósito: es la única forma de que un
+  // cambio de paleta a medias —la mitad de la app en un color y la otra mitad en
+  // otro— falle en vez de llegar a producción.
   const header = page.getByRole("banner");
-  await expect(header).toHaveCSS("background-color", "rgb(45, 89, 64)"); // #2D5940
+  await expect(header).toHaveCSS("background-color", "rgb(15, 76, 74)"); // #0F4C4A
   const heading = page.getByRole("heading", { name: "Cerca de ti" });
   await expect(heading).toHaveCSS("font-family", /Poppins/);
 });

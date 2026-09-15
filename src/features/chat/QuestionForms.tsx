@@ -1,7 +1,12 @@
 "use client";
 
 import { useActionState, useRef } from "react";
-import { answerQuestion, askQuestion, startConversation, type ChatResult } from "./actions";
+import {
+  answerQuestion,
+  askQuestion,
+  startConversation,
+  type ChatResult,
+} from "./actions";
 import { Button, ErrorNote } from "@/components/ui";
 
 const inputClass =
@@ -15,7 +20,7 @@ export function AskForm({ listingId }: { listingId: string }) {
       if (!res.error) ref.current?.reset();
       return res;
     },
-    null
+    null,
   );
 
   return (
@@ -23,9 +28,19 @@ export function AskForm({ listingId }: { listingId: string }) {
       {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
       <input type="hidden" name="listingId" value={listingId} />
       <div className="flex gap-2">
-        <input name="body" aria-label="Tu pregunta" placeholder="Pregunta algo del producto"
-          className={inputClass} required />
-        <Button type="submit" variant="outline" disabled={pending} size="inline">
+        <input
+          name="body"
+          aria-label="Tu pregunta"
+          placeholder="Pregunta algo del producto"
+          className={inputClass}
+          required
+        />
+        <Button
+          type="submit"
+          variant="outline"
+          disabled={pending}
+          size="inline"
+        >
           Preguntar
         </Button>
       </div>
@@ -44,7 +59,7 @@ export function AnswerForm({ questionId }: { questionId: string }) {
       if (!res.error) ref.current?.reset();
       return res;
     },
-    null
+    null,
   );
 
   return (
@@ -52,9 +67,19 @@ export function AnswerForm({ questionId }: { questionId: string }) {
       {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
       <input type="hidden" name="questionId" value={questionId} />
       <div className="flex gap-2">
-        <input name="answer" aria-label="Tu respuesta" placeholder="Responder"
-          className={inputClass} required />
-        <Button type="submit" variant="outline" disabled={pending} size="inline">
+        <input
+          name="answer"
+          aria-label="Tu respuesta"
+          placeholder="Responder"
+          className={inputClass}
+          required
+        />
+        <Button
+          type="submit"
+          variant="outline"
+          disabled={pending}
+          size="inline"
+        >
           Responder
         </Button>
       </div>
@@ -65,7 +90,7 @@ export function AnswerForm({ questionId }: { questionId: string }) {
 export function ChatButton({ listingId }: { listingId: string }) {
   const [result, submit, pending] = useActionState<ChatResult | null, FormData>(
     startConversation,
-    null
+    null,
   );
 
   return (

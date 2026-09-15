@@ -40,7 +40,7 @@ export default async function Usuarios() {
       where r.resolved_at is null
          or u.suspended_at > now() - interval '7 days'
       group by u.id, u.alias, u.name, u.suspended_at
-      order by u.suspended_at nulls first, count(r.id) desc`
+      order by u.suspended_at nulls first, count(r.id) desc`,
   );
 
   return (
@@ -50,7 +50,9 @@ export default async function Usuarios() {
         <Link href="/admin" className="text-sm text-ink2 underline">
           Moderación
         </Link>
-        <h1 className="mt-4 font-title text-2xl font-semibold">Cuentas reportadas</h1>
+        <h1 className="mt-4 font-title text-2xl font-semibold">
+          Cuentas reportadas
+        </h1>
         <p data-testid="cola-usuarios" className="mt-1 text-sm text-muted">
           {reported.length === 1
             ? "1 cuenta por revisar"
@@ -58,18 +60,24 @@ export default async function Usuarios() {
         </p>
 
         {reported.length === 0 && (
-          <p className="mt-6 rounded-2xl bg-white p-6 text-sm">
+          <p className="mt-6 rounded-2xl bg-white shadow-xs p-6 text-sm ring-1 ring-line">
             Nada pendiente. Suspender una cuenta no borra sus pedidos ni sus
-            conversaciones: al otro lado de cada pedido hay alguien que no hizo nada
-            malo.
+            conversaciones: al otro lado de cada pedido hay alguien que no hizo
+            nada malo.
           </p>
         )}
 
         <ul className="mt-5 flex flex-col gap-3">
           {reported.map((u) => (
-            <li key={u.id} className="rounded-2xl bg-white p-4 text-sm">
+            <li
+              key={u.id}
+              className="rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
+            >
               <div className="flex items-baseline justify-between gap-3">
-                <Link href={`/vendedor/${u.id}`} className="font-medium underline">
+                <Link
+                  href={`/vendedor/${u.id}`}
+                  className="font-medium underline"
+                >
                   {u.alias}
                 </Link>
                 {u.reports > 0 && (
@@ -87,7 +95,9 @@ export default async function Usuarios() {
                 </p>
               )}
               {u.suspended_at ? (
-                <p className="mt-3 font-medium text-danger">Cuenta suspendida</p>
+                <p className="mt-3 font-medium text-danger">
+                  Cuenta suspendida
+                </p>
               ) : (
                 <SuspendForm userId={u.id} />
               )}

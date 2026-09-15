@@ -18,7 +18,8 @@ export function DevKycControls({ reference }: { reference: string }) {
       body: JSON.stringify({
         reference,
         status,
-        reason: status === "rechazado" ? "La foto de la cédula salió borrosa." : null,
+        reason:
+          status === "rechazado" ? "La foto de la cédula salió borrosa." : null,
       }),
     });
     setBusy(false);

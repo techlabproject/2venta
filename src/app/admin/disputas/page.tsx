@@ -26,22 +26,30 @@ export default async function Disputas() {
         </Link>
         <h1 className="mt-4 font-title text-2xl font-semibold">Disputas</h1>
         <p data-testid="cola-disputas" className="mt-1 text-sm text-muted">
-          {claims.length === 1 ? "1 reclamo abierto" : `${claims.length} reclamos abiertos`}
+          {claims.length === 1
+            ? "1 reclamo abierto"
+            : `${claims.length} reclamos abiertos`}
         </p>
 
         {claims.length === 0 && (
-          <p className="mt-6 rounded-2xl bg-white p-6 text-sm">
-            Nada pendiente. Aquí llegan los reclamos con el dinero congelado, hasta
-            que alguien compare las dos versiones contra el video de la publicación.
+          <p className="mt-6 rounded-2xl bg-white shadow-xs p-6 text-sm ring-1 ring-line">
+            Nada pendiente. Aquí llegan los reclamos con el dinero congelado,
+            hasta que alguien compare las dos versiones contra el video de la
+            publicación.
           </p>
         )}
 
         <ul className="mt-5 flex flex-col gap-4">
           {claims.map((c) => (
-            <li key={c.id} className="rounded-2xl bg-white p-4">
+            <li
+              key={c.id}
+              className="rounded-2xl bg-white shadow-xs p-4 ring-1 ring-line"
+            >
               <div className="flex items-baseline justify-between gap-4">
                 <h2 className="font-medium">{c.listing_title}</h2>
-                <span className="shrink-0 text-sm">{formatCop(c.subtotal_cop)}</span>
+                <span className="shrink-0 text-sm">
+                  {formatCop(c.subtotal_cop)}
+                </span>
               </div>
               <p className="mt-0.5 text-sm text-warn">{KIND_LABEL[c.kind]}</p>
 
@@ -63,7 +71,9 @@ export default async function Disputas() {
                   <p className="font-medium">Dice {c.seller_alias} (vendió)</p>
                   <p className="mt-1 text-ink2">
                     {c.seller_reply ?? (
-                      <span className="text-muted">Todavía no ha respondido.</span>
+                      <span className="text-muted">
+                        Todavía no ha respondido.
+                      </span>
                     )}
                   </p>
                 </div>

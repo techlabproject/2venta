@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/session";
-import { listNotifications, listSavedSearches } from "@/features/alerts/queries";
+import {
+  listNotifications,
+  listSavedSearches,
+} from "@/features/alerts/queries";
 import { markAllRead } from "@/features/alerts/actions";
 import { DeleteSearchButton } from "@/features/alerts/Forms";
 import { AppHeader } from "@/components/AppHeader";
@@ -29,9 +32,9 @@ export default async function Avisos() {
         <h1 className="font-title text-2xl font-semibold">Avisos</h1>
 
         {notifications.length === 0 ? (
-          <p className="mt-4 rounded-2xl bg-white p-4 text-sm text-ink2">
-            Nada nuevo. Guarda una búsqueda y te avisamos cuando aparezca algo que
-            coincida.
+          <p className="mt-4 rounded-2xl bg-white shadow-xs p-4 text-sm text-ink2 ring-1 ring-line">
+            Nada nuevo. Guarda una búsqueda y te avisamos cuando aparezca algo
+            que coincida.
           </p>
         ) : (
           <>
@@ -41,7 +44,9 @@ export default async function Avisos() {
                   <Link
                     href={n.href}
                     className={`block rounded-2xl p-4 text-sm ${
-                      n.read_at ? "bg-white text-ink2" : "bg-brand/10 font-medium text-brand"
+                      n.read_at
+                        ? "bg-white text-ink2"
+                        : "bg-brand/10 font-medium text-brand"
                     }`}
                   >
                     {n.title}
@@ -57,7 +62,9 @@ export default async function Avisos() {
           </>
         )}
 
-        <h2 className="mt-8 font-title text-lg font-semibold">Búsquedas guardadas</h2>
+        <h2 className="mt-8 font-title text-lg font-semibold">
+          Búsquedas guardadas
+        </h2>
         {searches.length === 0 ? (
           <p className="mt-2 text-sm text-muted">
             Ninguna todavía. Se guardan desde la pantalla de búsqueda.
@@ -65,8 +72,14 @@ export default async function Avisos() {
         ) : (
           <ul data-testid="busquedas" className="mt-3 flex flex-col gap-2">
             {searches.map((s) => (
-              <li key={s.id} className="flex items-center justify-between gap-3 rounded-2xl bg-white p-4 text-sm">
-                <Link href={`/buscar?${s.params}`} className="font-medium underline">
+              <li
+                key={s.id}
+                className="flex items-center justify-between gap-3 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
+              >
+                <Link
+                  href={`/buscar?${s.params}`}
+                  className="font-medium underline"
+                >
                   {s.label}
                 </Link>
                 <DeleteSearchButton id={s.id} />

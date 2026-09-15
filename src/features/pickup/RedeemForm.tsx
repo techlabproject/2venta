@@ -5,10 +5,10 @@ import { redeemCode, type PickupResult } from "./actions";
 import { Button, ErrorNote } from "@/components/ui";
 
 export function RedeemForm({ orderId }: { orderId: string }) {
-  const [result, submit, pending] = useActionState<PickupResult | null, FormData>(
-    redeemCode,
-    null
-  );
+  const [result, submit, pending] = useActionState<
+    PickupResult | null,
+    FormData
+  >(redeemCode, null);
 
   return (
     <form action={submit} className="mt-4 flex flex-col gap-3">

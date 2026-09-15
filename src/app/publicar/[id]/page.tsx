@@ -19,14 +19,15 @@ export default async function PublicarBorrador({
   const user = await activeUser();
 
   const { id } = await params;
-  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const UUID =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!UUID.test(id)) notFound();
 
   const rows = await query<{ title: string; price_cop: number; label: string }>(
     `select l.title, l.price_cop, c.label
        from listings l join categories c on c.slug = l.category
       where l.id = $1 and l.seller_id = $2 and l.status = 'borrador'`,
-    [id, user.id]
+    [id, user.id],
   );
   const draft = rows[0];
   if (!draft) notFound();
@@ -43,8 +44,9 @@ export default async function PublicarBorrador({
           {formatCop(draft.price_cop)} · {draft.label}
         </p>
         <p className="mt-4 text-sm text-ink2">
-          Solo falta el video. Es lo que le permite al comprador ver que el artículo
-          existe y en qué estado está, y por eso se graba aquí y no se sube.
+          Solo falta el video. Es lo que le permite al comprador ver que el
+          artículo existe y en qué estado está, y por eso se graba aquí y no se
+          sube.
         </p>
         <DraftVideoForm draftId={id} />
       </main>

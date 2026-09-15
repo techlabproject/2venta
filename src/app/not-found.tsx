@@ -15,11 +15,13 @@ export default function NotFound() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-16">
-        <h1 className="font-title text-2xl font-semibold">No pudimos abrir esto</h1>
+        <h1 className="font-title text-2xl font-semibold">
+          No pudimos abrir esto
+        </h1>
         <p className="mt-2 text-ink2">
-          Si era un artículo, pudo venderse o el vendedor lo quitó: pasa seguido en
-          segunda mano, cada cosa es única y dura poco. Si era otra pantalla, puede
-          que no exista o que no sea tuya.
+          Si era un artículo, pudo venderse o el vendedor lo quitó: pasa seguido
+          en segunda mano, cada cosa es única y dura poco. Si era otra pantalla,
+          puede que no exista o que no sea tuya.
         </p>
         <div className="mt-7 flex flex-col gap-3">
           <Link

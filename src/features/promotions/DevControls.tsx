@@ -28,11 +28,19 @@ export function DevDestacarControls({
 
   return (
     <div className="mt-7 flex flex-col gap-3">
-      <Button type="button" disabled={busy} onClick={() => send("pago.aprobado")}>
+      <Button
+        type="button"
+        disabled={busy}
+        onClick={() => send("pago.aprobado")}
+      >
         Simular pago aprobado
       </Button>
-      <Button type="button" variant="outline" disabled={busy}
-        onClick={() => send("pago.rechazado")}>
+      <Button
+        type="button"
+        variant="outline"
+        disabled={busy}
+        onClick={() => send("pago.rechazado")}
+      >
         Simular pago rechazado
       </Button>
     </div>

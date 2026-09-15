@@ -2,7 +2,12 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { addToCart, clearCart, removeFromCart, type CartResult } from "./actions";
+import {
+  addToCart,
+  clearCart,
+  removeFromCart,
+  type CartResult,
+} from "./actions";
 import { Button, ErrorNote } from "@/components/ui";
 
 export function AddToCartButton({
@@ -14,7 +19,7 @@ export function AddToCartButton({
 }) {
   const [result, submit, pending] = useActionState<CartResult | null, FormData>(
     addToCart,
-    null
+    null,
   );
 
   if (inCart || (result && !result.error)) {
@@ -54,12 +59,16 @@ export function AddToCartButton({
 export function RemoveFromCartButton({ listingId }: { listingId: string }) {
   const [, submit, pending] = useActionState<CartResult | null, FormData>(
     removeFromCart,
-    null
+    null,
   );
   return (
     <form action={submit}>
       <input type="hidden" name="listingId" value={listingId} />
-      <button type="submit" disabled={pending} className="text-sm text-muted underline">
+      <button
+        type="submit"
+        disabled={pending}
+        className="text-sm text-muted underline"
+      >
         Quitar
       </button>
     </form>

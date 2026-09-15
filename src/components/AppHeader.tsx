@@ -50,7 +50,7 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
 
   return (
     <>
-      <header className="bg-brand text-cream shadow-[0_1px_0_rgba(0,0,0,0.18)]">
+      <header className="bg-brand text-cream">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-5">
           <Link
             href="/"
@@ -75,10 +75,10 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
               </nav>
 
               <div className="ml-auto flex items-center gap-2">
-                {/* «Vender» hace crecer el catálogo y es lo único en mostaza aquí. */}
+                {/* «Vender» hace crecer el catálogo y es lo único en coral aquí. */}
                 <Link
                   href="/vender"
-                  className="hidden rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-on-accent transition hover:brightness-95 md:inline-flex"
+                  className="hidden rounded-full border border-accent-edge/50 bg-accent px-4 py-1.5 text-sm font-semibold text-on-accent shadow-sm transition duration-200 ease-salida hover:brightness-[0.97] active:scale-[0.97] md:inline-flex"
                 >
                   Vender
                 </Link>
@@ -132,7 +132,7 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
               </span>
               <Link
                 href="/bienvenida"
-                className="rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-on-accent transition hover:brightness-95"
+                className="rounded-full border border-accent-edge/50 bg-accent px-4 py-1.5 text-sm font-semibold text-on-accent shadow-sm transition duration-200 ease-salida hover:brightness-[0.97] active:scale-[0.97]"
               >
                 Entrar
               </Link>
