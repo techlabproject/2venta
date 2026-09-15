@@ -18,10 +18,18 @@ import { formatCop } from "@/lib/money";
 import { paymentProvider } from "@/features/payments/provider";
 import { CancelCheckoutButton } from "@/features/payments/CancelCheckoutButton";
 import { CHECKOUT_TTL_MINUTES } from "@/features/payments/abandon";
+import { OrderTimeline } from "@/features/payments/OrderTimeline";
 import { ButtonLink } from "@/components/ui";
 
 // Pantalla 1j del mockup: seguimiento y liberación del pago.
 export const dynamic = "force-dynamic";
+
+// Las fechas se guardan en UTC y se formatean en Bogotá solo al mostrarlas.
+const fecha = new Intl.DateTimeFormat("es-CO", {
+  day: "numeric",
+  month: "long",
+  timeZone: "America/Bogota",
+});
 
 const LABEL: Record<string, string> = {
   pendiente_pago: "Esperando el pago",
@@ -85,9 +93,26 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
         <h1 className="mt-4 font-title text-xl font-semibold">
           Pedido {order.id.slice(0, 8)}
         </h1>
-        <p data-testid="estado" className="mt-1 text-sm text-muted">
+        {/* La fecha de compra, como en el mockup. El estado dejó de escribirse aquí
+            porque la línea de tiempo de abajo ya lo dice, y repetirlo dos veces era
+            exactamente el defecto que esta rebanada vino a quitar. Sigue existiendo
+            para quien usa lector de pantalla: un resumen que se anuncia de una vez
+            vale más que recorrer cuatro pasos para deducir dónde va el pedido. */}
+        <p className="mt-1 text-sm text-muted">
+          Comprado el {fecha.format(order.created_at)}
+        </p>
+        <p data-testid="estado" role="status" className="sr-only">
           {LABEL[order.status]}
         </p>
+
+        {/* D-83: el estado era un rótulo arriba y una lista de movimientos abajo.
+            La misma información, repartida en dos sitios y sin decir nunca qué
+            falta. */}
+        <OrderTimeline
+          status={order.status}
+          presencial={presencial}
+          events={events}
+        />
 
         <ul className="mt-5 flex flex-col gap-2">
           {items.map((item) => (
@@ -327,23 +352,6 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
           </p>
         )}
 
-        <h2 className="mt-8 font-title text-sm font-semibold">Movimientos</h2>
-        <ol className="mt-3 flex flex-col gap-2 text-sm">
-          {events.map((e, i) => (
-            <li key={i} className="flex justify-between gap-4 border-b border-line pb-2">
-              <span>{e.detail ?? LABEL[e.to_status]}</span>
-              <time className="shrink-0 text-muted">
-                {new Intl.DateTimeFormat("es-CO", {
-                  day: "numeric",
-                  month: "short",
-                  hour: "numeric",
-                  minute: "2-digit",
-                  timeZone: "America/Bogota",
-                }).format(e.created_at)}
-              </time>
-            </li>
-          ))}
-        </ol>
       </main>
     </>
   );

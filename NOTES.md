@@ -103,10 +103,13 @@ Lo que sigue abierto de ese repaso:
 - (RESUELTO en S-32) El IMEI validado, la reputación del vendedor y los atributos
   como distintivos ya están en la ficha (D-81), y un vendedor sin ventas dice que es
   nuevo en vez de mostrar ceros (D-82), que era lo que la D-17 dejó pendiente.
+- (RESUELTO en S-33) El seguimiento del pedido ya es la línea de tiempo del mockup
+  (D-83). Sigue fuera el paso «En reparto», que necesita que la transportadora lo
+  reporte (R-04).
 - Menores, del mockup y sin construir: filtro por distancia en kilómetros (no hay
-  coordenadas), atributo «Batería 89%», tiempo de respuesta en el perfil, estado
-  «En reparto» en el seguimiento, y las secciones «Resumen» y «Verificaciones KYC»
-  del panel de administración.
+  coordenadas), atributo «Batería 89%» (no existe el dato), tiempo de respuesta en el
+  perfil, y las secciones «Resumen» y «Verificaciones KYC» del panel de
+  administración.
 
 ## Por confirmar
 
@@ -237,6 +240,10 @@ Lo que sigue abierto de ese repaso:
 - `chat.spec.ts:19` falló una vez contra la imagen bajo carga (la respuesta del
   vendedor no apareció a tiempo) y pasó 28/28 al repetirla. Intermitente a vigilar;
   para Luna.
+- `store.spec.ts:142` («grabado el video, el borrador se publica») falló una vez el
+  2026-09-14 al hacer clic en «Grabar», y pasó 14/14 al repetir la suite. Es el otro
+  punto donde la cámara falsa se cae bajo carga. **No se arregló**: no se pudo
+  reproducir, y darlo por cerrado sin entenderlo sería peor que dejarlo anotado.
 
 - `instrumentation.ts` en la raíz no corre cuando el proyecto usa `src/`. Next solo
   lo busca en `src/`. Estuvo así desde S-25 y nadie lo notó porque la validación se

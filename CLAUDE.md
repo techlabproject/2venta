@@ -154,6 +154,13 @@ el número y se le manda el código antes de dejarlo comprar o escribir.
   se come el mensaje y lo descarta con «mensaje sin forma conocida», la prueba falla
   sin decir por qué, y el error no aparece en la salida de Playwright sino en
   `docker compose logs worker`.
+- `npm run test:visual -- --update-snapshots` **puede dejar una referencia vieja sin
+  reescribir**: solo escribe cuando la comparación falla, y si el servidor de
+  desarrollo todavía servía la versión anterior de la pantalla, la comparación pasa y
+  la foto desactualizada se queda. Síntoma: la suite visual en verde mientras la
+  captura muestra un diseño que ya no existe. Cuando cambies una pantalla, **borra su
+  `.png` antes de regenerar**; `rm e2e/visual/pantallas.spec.ts-snapshots/*.png` y
+  volver a generar es lo único que garantiza que las 50 referencias son de verdad.
 - Las imágenes de MinIO viven en `quay.io/minio/*`; las de Docker Hub ya no existen.
 - En S3 de verdad, `HeadObject` sobre una clave inexistente devuelve **403, no 404**,
   si el rol no tiene `s3:ListBucket` sobre el bucket. MinIO no lo hace. Los roles

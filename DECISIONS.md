@@ -751,3 +751,21 @@ verificada.
 **Por qué.** Un cero se lee como mal desempeño cuando solo significa que es nuevo, y
 al arrancar la plataforma lo son todos. La identidad verificada es la única señal
 real que un vendedor nuevo sí tiene, así que es la que se muestra en su lugar.
+
+### D-83 — El seguimiento del pedido es una línea de tiempo, no un rótulo
+La pantalla del pedido muestra los pasos por los que pasa, cuáles se cumplieron y
+con qué hora, y cuál va ahora. Sustituye al rótulo de estado suelto y a la lista de
+«Movimientos» del final, que decían lo mismo repartido en dos sitios.
+**Por qué.** Ninguno de los dos decía nunca **qué falta**, que es justo lo que va a
+buscar alguien que acaba de pagarle a un desconocido y tiene su plata retenida.
+**Cómo se calcula.** Los pasos cumplidos salen de `order_events`, no del estado
+actual: un pedido puede saltarse pasos —la entrega en persona va de `pagado` a
+`liberado` sin pasar por `despachado`— y así cada paso muestra su hora de verdad.
+**Dos caminos.** Con envío son cuatro pasos; en persona, dos. Inventarle a una
+entrega en mano un paso de transportadora sería describir algo que no ocurre.
+**Los desvíos no se disfrazan de camino feliz.** Cancelado y reembolsado tienen su
+propio bloque, y un reclamo abierto dice que el dinero no se mueve mientras se
+decide.
+**Lo que no se construyó.** El paso «En reparto en Bogotá» del mockup necesita que
+la transportadora lo reporte, y la nuestra es de prueba con dos estados. Va con R-04:
+decirle a alguien que su paquete se está moviendo sin saberlo es peor que no decirlo.
