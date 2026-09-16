@@ -6,6 +6,7 @@ import {
   getConversation,
   listMessages,
   listOffers,
+  markConversationRead,
 } from "@/features/chat/queries";
 import { REDACTION_NOTICE } from "@/features/chat/redact";
 import {
@@ -41,6 +42,10 @@ export default async function Chat({
   const [messages, offers] = await Promise.all([
     listMessages(conversation.id),
     listOffers(conversation.id),
+    // Abrir la conversación es leerla (S-35). Va después de la comprobación de
+    // acceso de arriba, pero la propia consulta vuelve a filtrar por participación:
+    // el control de acceso no se delega a quien llama.
+    markConversationRead(conversation.id, user.id),
   ]);
 
   const isBuyer = conversation.buyer_id === user.id;

@@ -6,7 +6,6 @@ import {
   listSales,
   type OrderSummary,
 } from "@/features/orders/queries";
-import { listConversations } from "@/features/chat/queries";
 import { AppHeader } from "@/components/AppHeader";
 import { Vacio } from "@/components/Vacio";
 import { formatCop } from "@/lib/money";
@@ -37,10 +36,9 @@ export default async function Actividad() {
   const user = await currentUser();
   if (!user) redirect("/ingresar");
 
-  const [purchases, sales, conversations] = await Promise.all([
+  const [purchases, sales] = await Promise.all([
     listPurchases(user.id),
     listSales(user.id),
-    listConversations(user.id),
   ]);
 
   return (
@@ -85,42 +83,18 @@ export default async function Actividad() {
           ))}
         </Section>
 
-        <Section
-          title="Conversaciones"
-          testId="chats"
-          vacio={
-            <Vacio titulo="Ninguna conversación todavía">
-              Se abren desde el artículo, escribiéndole al vendedor. Preguntar
-              antes de comprar es gratis y evita casi todos los reclamos.
-            </Vacio>
-          }
-        >
-          {conversations.map((c) => (
-            <li key={c.id}>
-              <Link
-                href={`/chat/${c.id}`}
-                aria-label={`Abrir conversación sobre ${c.listing_title}`}
-                className="block rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
-              >
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-medium">{c.listing_title}</span>
-                  <span className="shrink-0 text-xs text-muted">
-                    {fecha.format(c.last_at)}
-                  </span>
-                </div>
-                <p className="mt-0.5 text-muted">
-                  Con {c.counterpart_alias}
-                  {c.listing_status === "vendida" && " · ya se vendió"}
-                </p>
-                {c.last_message && (
-                  <p className="mt-1 line-clamp-1 text-ink2">
-                    {c.last_message}
-                  </p>
-                )}
-              </Link>
-            </li>
-          ))}
-        </Section>
+        {/* Las conversaciones se fueron a `/chats` (D-90). Esta pantalla es la de
+            pedidos; tener la misma lista en dos sitios es lo que hacía que ninguno
+            de los dos se sintiera el sitio. Queda el camino, no la copia. */}
+        <section className="mt-8">
+          <h2 className="font-title text-lg font-semibold">Conversaciones</h2>
+          <p className="mt-2 text-sm text-ink2">
+            Tus chats con compradores y vendedores tienen pantalla propia.{" "}
+            <Link href="/chats" className="text-brand underline">
+              Ver conversaciones
+            </Link>
+          </p>
+        </section>
       </main>
     </>
   );

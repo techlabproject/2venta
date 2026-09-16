@@ -6,6 +6,7 @@ import { currentUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { mediaUrl } from "@/lib/media";
 import { SignOutButton } from "@/features/auth/SignOutButton";
+import { countUnreadConversations } from "@/features/chat/queries";
 
 // Cabecera de la app. La ubicación es fija por ahora: la versión 1 es solo
 // Bogotá (D-06) y la zona real del usuario llega cuando haya perfil editable.
@@ -26,7 +27,8 @@ const ENLACES = [
 const DEL_MENU = [
   { href: "/cuenta", label: "Tu cuenta" },
   { href: "/vender/metricas", label: "Tus publicaciones" },
-  { href: "/actividad", label: "Ventas y conversaciones" },
+  { href: "/chats", label: "Conversaciones" },
+  { href: "/actividad", label: "Compras y ventas" },
   { href: "/cuenta/editar", label: "Editar tu perfil" },
 ];
 
@@ -39,12 +41,15 @@ const ITEM =
 export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
   const user = await currentUser();
 
-  const rows = user
-    ? await query<{ avatar_path: string | null }>(
-        `select avatar_path from "user" where id = $1`,
-        [user.id],
-      )
-    : [];
+  const [rows, sinLeer] = user
+    ? await Promise.all([
+        query<{ avatar_path: string | null }>(
+          `select avatar_path from "user" where id = $1`,
+          [user.id],
+        ),
+        countUnreadConversations(user.id),
+      ])
+    : [[], 0];
   const avatar = rows[0]?.avatar_path ? mediaUrl(rows[0].avatar_path) : null;
   const alias = user?.alias ?? user?.name ?? "";
 
@@ -140,7 +145,7 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
           )}
         </div>
       </header>
-      {user && <BottomNav />}
+      {user && <BottomNav sinLeer={sinLeer} />}
     </>
   );
 }

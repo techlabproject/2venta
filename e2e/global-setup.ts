@@ -26,6 +26,7 @@ const ROUTES = [
   "/carrito",
   "/comprar/carrito",
   "/actividad",
+  "/chats",
   "/cuenta",
   "/suspendida",
   "/cuenta/editar",

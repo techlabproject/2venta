@@ -4,9 +4,24 @@
 
 ## En qué voy
 
-Las tres fases del plan más diecisiete rebanadas posteriores. 277 pruebas de
-navegador y 119 unitarias (seis de ellas contra MinIO), más 50 comparaciones
-visuales sobre 70 referencias.
+Las tres fases del plan más dieciocho rebanadas posteriores. 283 pruebas de
+navegador y 125 unitarias (seis de ellas contra MinIO), más 52 comparaciones
+visuales sobre 72 referencias.
+
+**S-35 — la bandeja de conversaciones (2026-09-15):** las conversaciones salen de
+`/actividad` y tienen pantalla propia en `/chats` (D-90), con no leídos por
+participante (migración `0012`), contador en la barra inferior y hora relativa. Lo
+pidió Nicolás comparándolo con Facebook Marketplace; detrás había un desajuste real,
+que la barra decía «Chats» y llevaba a la pantalla de pedidos.
+
+Dos cosas que salieron de construirla:
+
+- **La hora relativa comparaba 24 horas en vez de días de calendario.** A las 9 de la
+  mañana, algo de anoche a las 11 salía como «11:00 p. m.», sin decir de qué día. Lo
+  cazó la prueba unitaria que se escribió para ese caso antes de mirar el código.
+- **El filtro de redacción convierte «dos» en «2».** Es el anti-teléfonos-con-letras
+  funcionando, pero conviene saberlo al escribir mensajes de prueba: una aserción
+  sobre el texto que enviaste puede fallar por eso y no por lo que se está probando.
 
 **S-34 — petróleo y coral (2026-09-15):** cambio de paleta completo pedido por
 Nicolás (D-84), más los tres frentes que atacaban lo que él seguía llamando «plano»:

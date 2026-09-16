@@ -16,11 +16,11 @@ const DESTINOS = [
   { href: "/", label: "Inicio", icono: Casa },
   { href: "/buscar", label: "Buscar", icono: Lupa },
   { href: "/publicar", label: "Publicar", icono: Mas, centro: true },
-  { href: "/actividad", label: "Chats", icono: Globo },
+  { href: "/chats", label: "Chats", icono: Globo },
   { href: "/cuenta", label: "Perfil", icono: Persona },
 ] as const;
 
-export function BottomNav() {
+export function BottomNav({ sinLeer = 0 }: { sinLeer?: number }) {
   const ruta = usePathname();
 
   const activo = (href: string) =>
@@ -73,8 +73,29 @@ export function BottomNav() {
                     className="absolute inset-x-3 top-0 h-0.5 rounded-full bg-accent"
                   />
                 )}
-                <Icono />
+                <span className="relative">
+                  <Icono />
+                  {/* El contador solo sobre «Chats», y solo si hay algo. Un cero
+                      dibujado es ruido con forma de alerta. */}
+                  {href === "/chats" && sinLeer > 0 && (
+                    <span
+                      aria-hidden
+                      className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-on-accent ring-2 ring-white"
+                    >
+                      {sinLeer > 9 ? "9+" : sinLeer}
+                    </span>
+                  )}
+                </span>
                 {label}
+                {href === "/chats" && sinLeer > 0 && (
+                  // El número de arriba es un dibujo; esto es lo que oye un lector
+                  // de pantalla, y por eso dice de qué es la cifra.
+                  <span className="sr-only">
+                    {sinLeer === 1
+                      ? "1 conversación sin leer"
+                      : `${sinLeer} conversaciones sin leer`}
+                  </span>
+                )}
               </Link>
             </li>
           );

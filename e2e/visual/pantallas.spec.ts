@@ -223,6 +223,11 @@ test.describe("compradora (Laura)", () => {
     await page.goto("/actividad");
     await foto(page, "actividad");
   });
+  test("bandeja de conversaciones", async () => {
+    // Va después de "chat filtrado", que es quien deja una conversación abierta.
+    await page.goto("/chats");
+    await foto(page, "chats");
+  });
   test("avisos", async () => {
     await page.goto("/avisos");
     await foto(page, "avisos");

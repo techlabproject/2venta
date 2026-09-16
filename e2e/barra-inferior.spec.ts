@@ -32,8 +32,14 @@ test("en un teléfono la barra lleva a los cinco destinos y marca dónde estás"
     "page"
   );
 
+  // «Chats» lleva a la bandeja de conversaciones, no a la pantalla de pedidos
+  // (S-35). Antes el rótulo decía una cosa y el destino era otra.
   await barra(page).getByRole("link", { name: "Chats" }).click();
-  await expect(page).toHaveURL(/\/actividad/);
+  await expect(page).toHaveURL(/\/chats/);
+  await expect(barra(page).getByRole("link", { name: "Chats" })).toHaveAttribute(
+    "aria-current",
+    "page"
+  );
 
   await barra(page).getByRole("link", { name: "Perfil" }).click();
   await expect(page).toHaveURL(/\/cuenta/);

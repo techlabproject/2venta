@@ -67,11 +67,15 @@ test("las dos partes encuentran la conversación", async ({ browser }) => {
   await buyer.getByRole("button", { name: "Enviar" }).click();
   await expect(buyer.getByRole("main")).toContainText("¿Sigue disponible?");
 
+  // La bandeja vive en /chats desde la S-35; aquí solo queda el camino hacia ella.
   await buyer.goto("/actividad");
+  await expect(buyer.getByRole("link", { name: "Ver conversaciones" })).toBeVisible();
+
+  await buyer.goto("/chats");
   await expect(buyer.getByTestId("chats")).toContainText(titulo);
   await expect(buyer.getByTestId("chats")).toContainText("¿Sigue disponible?");
 
-  await seller.page.goto("/actividad");
+  await seller.page.goto("/chats");
   await expect(seller.page.getByTestId("chats")).toContainText(titulo);
 
   await seller.context.close();
@@ -98,7 +102,7 @@ test("la conversación sigue estando cuando el artículo se vende", async ({
     c.query(`update listings set status = 'vendida' where id = $1`, [seller.listingId])
   );
 
-  await buyer.goto("/actividad");
+  await buyer.goto("/chats");
   await expect(buyer.getByTestId("chats")).toContainText(titulo);
   await expect(buyer.getByTestId("chats")).toContainText("ya se vendió");
 

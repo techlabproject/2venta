@@ -850,3 +850,27 @@ la suite visual, con dos renglones distintos mostrando el mismo importe al lado.
 siempre el mismo y la lista no baile entre recargas. El importe es el del pedido
 entero, así que el renglón tiene que decir que hay más de una cosa: si no, la cifra
 parece el precio de lo único que se nombra.
+
+### D-90 — Las conversaciones tienen pantalla propia, en `/chats`
+La bandeja se saca de `/actividad` y vive en `/chats`, con la forma de bandeja de
+cualquier marketplace: cara de la contraparte, artículo, último mensaje, hora
+relativa y punto de no leído. `/actividad` se queda con compras y ventas, y enlaza.
+**Por qué.** Lo pidió Nicolás (2026-09-15) comparándolo con Facebook Marketplace, y
+detrás había un desajuste concreto: la barra inferior decía «Chats» y llevaba a
+`/actividad`, donde las conversaciones eran la **tercera** sección, debajo de compras
+y ventas. El rótulo decía una cosa y el destino era otra.
+**Por qué no se deja también en `/actividad`.** Tener la misma lista en dos sitios es
+lo que hacía que ninguno de los dos se sintiera el sitio. Queda el camino, no la copia.
+**El no leído es por participante** (tabla `conversation_reads`), no por conversación:
+que el comprador abra el hilo no puede marcar como leído lo del vendedor. No existir
+fila significa «no ha leído nada», que es el estado correcto de una conversación
+recién abierta, así que no se siembra nada al crearla.
+**El contador cuenta conversaciones, no mensajes.** Lo que le sirve a alguien es «con
+cuánta gente tengo algo pendiente», no cuántas frases hay sin abrir.
+**Control de acceso.** Son datos personales de dos personas: `markConversationRead`
+vuelve a filtrar por participación dentro de la propia consulta en vez de confiar en
+que la pantalla ya lo comprobó, y el punto de no leído sale de la misma consulta ya
+filtrada que la lista.
+**Lo que no lleva.** Tiempo real, buscar dentro de las conversaciones, archivar,
+silenciar ni marcar como no leído a mano. Nada de eso se pidió y ninguno tiene
+volumen que lo justifique todavía.
