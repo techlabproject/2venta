@@ -5,7 +5,11 @@ import { currentUser } from "@/lib/session";
 import { ListingCard } from "@/features/catalog/ListingCard";
 import { SearchFilters } from "@/features/catalog/SearchFilters";
 import { listCategories } from "@/features/catalog/queries";
-import { listZones, parseFilters, searchListings } from "@/features/catalog/search";
+import {
+  listZones,
+  parseFilters,
+  searchListings,
+} from "@/features/catalog/search";
 
 // Pantalla 1e del mockup. Renderizada en servidor: los filtros viven en la
 // dirección, así que un resultado se puede compartir por chat y el buscador la
@@ -45,12 +49,18 @@ export default async function Buscar({
           {filters.q ? `Resultados para “${filters.q}”` : "Buscar"}
         </h1>
 
-        <SearchFilters filters={filters} categories={categories} zones={zones.map((z) => z.zone)} />
+        <SearchFilters
+          filters={filters}
+          categories={categories}
+          zones={zones.map((z) => z.zone)}
+        />
 
         {user && <SaveSearchForm params={params.toString()} />}
 
         <p data-testid="conteo" className="mt-6 text-sm text-muted">
-          {listings.length === 1 ? "1 resultado" : `${listings.length} resultados`}
+          {listings.length === 1
+            ? "1 resultado"
+            : `${listings.length} resultados`}
         </p>
 
         {listings.length === 0 ? (

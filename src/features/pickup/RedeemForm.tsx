@@ -21,7 +21,7 @@ export function RedeemForm({ orderId }: { orderId: string }) {
         maxLength={9}
         placeholder="000000"
         required
-        className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-center font-title text-2xl tracking-[0.3em] outline-none focus:border-brand"
+        className="rounded-xl border border-line bg-white px-4 py-3 text-center font-title text-2xl tracking-[0.3em] outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
       />
       <Button type="submit" disabled={pending}>
         {pending ? "Comprobando…" : "Cobrar la venta"}

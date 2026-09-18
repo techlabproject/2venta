@@ -64,7 +64,7 @@ export function ProfileForm({
           name="bio"
           rows={3}
           defaultValue={bio ?? ""}
-          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+          className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
           placeholder="Vendo cosas que ya no uso, respondo rápido."
         />
       </div>
@@ -106,7 +106,7 @@ export function ReportUserForm({ userId }: { userId: string }) {
           aria-label="Motivo del reporte"
           required
           defaultValue=""
-          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm"
+          className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
         >
           <option value="" disabled>
             ¿Qué pasó?
@@ -121,7 +121,7 @@ export function ReportUserForm({ userId }: { userId: string }) {
           name="detail"
           aria-label="Detalle del reporte"
           placeholder="Cuéntanos más (opcional)"
-          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm"
+          className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
         />
         <Button type="submit" variant="outline" disabled={pending}>
           {pending ? "Enviando…" : "Reportar"}

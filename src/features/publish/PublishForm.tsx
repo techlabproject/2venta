@@ -139,7 +139,7 @@ export function PublishForm({
           required
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm"
+          className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
         >
           {categories.map((c) => (
             <option key={c.slug} value={c.slug}>
@@ -222,7 +222,7 @@ export function PublishForm({
           name="description"
           required
           rows={4}
-          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+          className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
           placeholder="Cuenta el uso que tuvo y cualquier detalle que se note."
         />
       </div>

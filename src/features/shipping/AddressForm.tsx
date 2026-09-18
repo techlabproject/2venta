@@ -152,7 +152,7 @@ export function AddressForm({
             name="meetingZone"
             required
             defaultValue=""
-            className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm"
+            className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
           >
             <option value="" disabled>
               Elige una zona
@@ -211,7 +211,7 @@ export function AddressForm({
               name="zone"
               required
               defaultValue=""
-              className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm"
+              className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
             >
               <option value="" disabled>
                 Elige tu zona

@@ -10,7 +10,7 @@ import {
 import { Button, ErrorNote } from "@/components/ui";
 
 const inputClass =
-  "flex-1 rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm outline-none focus:border-brand";
+  "flex-1 rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15";
 
 export function MessageForm({ conversationId }: { conversationId: string }) {
   const ref = useRef<HTMLFormElement>(null);

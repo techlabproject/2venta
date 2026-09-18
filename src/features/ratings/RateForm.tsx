@@ -40,7 +40,7 @@ export function RateForm({
           name="review"
           aria-label="Tu reseña"
           rows={3}
-          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+          className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
           placeholder="Cuenta cómo fue (opcional). Lo va a leer el siguiente comprador."
         />
 

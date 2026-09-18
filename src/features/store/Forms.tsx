@@ -78,7 +78,7 @@ export function BulkUploadForm() {
         accept=".csv,text/csv"
         aria-label="Archivo de artículos"
         required
-        className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm"
+        className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
       />
 
       <Button type="submit" variant="outline" disabled={pending}>

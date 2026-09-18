@@ -8,6 +8,20 @@ Las tres fases del plan más dieciocho rebanadas posteriores. 283 pruebas de
 navegador y 125 unitarias (seis de ellas contra MinIO), más 52 comparaciones
 visuales sobre 72 referencias.
 
+**Campos de formulario, al sistema de diseño (2026-09-18):** la pasada de la S-34
+normalizó las 42 tarjetas pero **se saltó los formularios**: quedaron 22 campos
+sueltos en 15 archivos con el borde viejo (`border-brand/20`), sin transición, sin
+hover y sin anillo de foco. Lo destapó Nicolás mandando una captura del campo de
+«Avísame cuando aparezca algo así», que era la peor variante. Ya usan todos el mismo
+tratamiento que `Field` de `ui.tsx`.
+
+**Intermitente nueva, sin arreglar:** `seguimiento.spec.ts:31` falló una vez
+esperando `data-testid="usuario"` tras confirmar el celular en el registro
+(`helpers.ts:71`), y pasó 12/12 al repetir. No se pudo reproducir. Va junto a las
+otras dos ya anotadas (`chat.spec.ts:19` y `store.spec.ts:142`); las tres están en el
+mismo sitio del circuito —justo después de una acción que redirige— y puede que sean
+la misma.
+
 **S-35 — la bandeja de conversaciones (2026-09-15):** las conversaciones salen de
 `/actividad` y tienen pantalla propia en `/chats` (D-90), con no leídos por
 participante (migración `0012`), contador en la barra inferior y hora relativa. Lo

@@ -16,7 +16,7 @@ export function SearchFilters({
   zones: string[];
 }) {
   const input =
-    "rounded-xl border border-brand/20 bg-white px-3 py-2 text-sm outline-none focus:border-brand";
+    "rounded-xl border border-line bg-white px-3 py-2 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15";
 
   return (
     <form action="/buscar" method="get" className="flex flex-col gap-4">

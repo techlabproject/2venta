@@ -49,7 +49,7 @@ export default async function Reportes({
               type="date"
               name="desde"
               defaultValue={dia(period.from)}
-              className="rounded-xl border border-brand/20 bg-white px-3 py-2"
+              className="rounded-xl border border-line bg-white px-3 py-2 outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -58,7 +58,7 @@ export default async function Reportes({
               type="date"
               name="hasta"
               defaultValue={dia(period.to)}
-              className="rounded-xl border border-brand/20 bg-white px-3 py-2"
+              className="rounded-xl border border-line bg-white px-3 py-2 outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
             />
           </label>
           <button

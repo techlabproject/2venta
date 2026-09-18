@@ -42,7 +42,7 @@ export function ReportForm({ listingId }: { listingId: string }) {
           aria-label="Motivo"
           required
           defaultValue=""
-          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm"
+          className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
         >
           <option value="" disabled>
             ¿Qué pasa con esta publicación?
@@ -57,7 +57,7 @@ export function ReportForm({ listingId }: { listingId: string }) {
           name="detail"
           aria-label="Detalle"
           placeholder="Cuéntanos más (opcional)"
-          className="rounded-xl border border-brand/20 bg-white px-4 py-3 text-sm"
+          className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
         />
         <Button type="submit" variant="outline" disabled={pending}>
           {pending ? "Enviando…" : "Reportar"}
@@ -81,7 +81,7 @@ export function ReviewForm({ listingId }: { listingId: string }) {
         name="note"
         aria-label="Nota de revisión"
         placeholder="Nota (opcional)"
-        className="rounded-xl border border-brand/20 bg-white px-3 py-2 text-sm"
+        className="rounded-xl border border-line bg-white px-3 py-2 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
       />
       <div className="flex gap-2">
         <Button

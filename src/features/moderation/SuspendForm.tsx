@@ -19,7 +19,7 @@ export function SuspendForm({ userId }: { userId: string }) {
         aria-label="Motivo de la suspensión"
         required
         placeholder="Motivo (queda en el registro)"
-        className="rounded-xl border border-brand/20 bg-white px-3 py-2 text-sm"
+        className="rounded-xl border border-line bg-white px-3 py-2 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
       />
       <Button type="submit" variant="outline" disabled={pending}>
         {pending ? "Suspendiendo…" : "Suspender la cuenta"}
