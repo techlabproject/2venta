@@ -285,3 +285,163 @@ test("resolver dos veces no mueve el dinero dos veces", async ({ browser }) => {
   await ctx.close();
   await admin.ctx.close();
 });
+
+/*
+ * S-39 — fotos como prueba en un reclamo.
+ * Ver slices/39-fotos-en-los-reclamos.md
+ *
+ * Lo encontró Luna el 2026-09-20: el chat deja adjuntar fotos y el reclamo no,
+ * cuando el reclamo es justo donde una foto decide. Una de las dos partes llegaba
+ * con prueba —el video de la publicación— y la otra solo con un párrafo.
+ */
+
+/** Un PNG de 1×1 real, para que el bucket reciba bytes de imagen de verdad. */
+const PNG_1X1 = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "base64",
+);
+
+/** Adjunta `cuantas` fotos al formulario visible. */
+async function adjuntarPruebas(page: Page, cuantas: number) {
+  await page.setInputFiles(
+    'input[type="file"]',
+    Array.from({ length: cuantas }, (_, i) => ({
+      name: `prueba-${i}.png`,
+      mimeType: "image/png",
+      buffer: PNG_1X1,
+    })),
+  );
+}
+
+test("las dos partes aportan fotos y quien modera las ve junto al video", async ({
+  browser,
+}) => {
+  const { seller, ctx, buyer, orderId } = await deliveredOrder(
+    browser,
+    `Chaqueta con prueba ${Date.now()}`,
+  );
+  // El detalle lleva marca de tiempo porque la cola de disputas acumula los
+  // reclamos abiertos de toda la corrida y hay que poder señalar ESTA tarjeta.
+  const detalle = `Llegó con un roto en la manga ${Date.now()}.`;
+
+  // El comprador abre el reclamo con dos fotos.
+  await buyer.goto(`/pedido/${orderId}`);
+  await buyer.getByText("Tengo un problema con el pedido").click();
+  await buyer.getByRole("radio", { name: /no es lo que decía/ }).check();
+  await buyer.getByLabel("Qué pasó").fill(detalle);
+  await adjuntarPruebas(buyer, 2);
+  await buyer.getByRole("button", { name: "Abrir reclamo" }).click();
+
+  const delComprador = buyer.getByRole("img", {
+    name: "Prueba que aportó quien compró",
+  });
+  await expect(delComprador).toHaveCount(2);
+
+  // El vendedor las ve y responde con la suya.
+  await seller.page.goto(`/pedido/${orderId}`);
+  await expect(
+    seller.page.getByRole("img", { name: "Prueba que aportó quien compró" }),
+  ).toHaveCount(2);
+
+  await seller.page
+    .getByLabel("Tu versión")
+    .fill("Salió sin roto, lo tengo grabado.");
+  await adjuntarPruebas(seller.page, 1);
+  await seller.page.getByRole("button", { name: "Responder" }).click();
+  // Esperar a que la respuesta esté pintada del lado del vendedor antes de
+  // recargar al comprador: si no, se recarga contra una acción todavía en vuelo.
+  await expect(
+    seller.page.getByRole("img", { name: "Prueba que aportó quien vendió" }),
+  ).toHaveCount(1);
+
+  await buyer.reload();
+  await expect(
+    buyer.getByRole("img", { name: "Prueba que aportó quien vendió" }),
+  ).toHaveCount(1);
+
+  // Quien modera ve las tres, cada una del lado de quien la aportó. La cola lleva
+  // los reclamos abiertos de toda la corrida, así que se mira solo esta tarjeta.
+  const admin = await adminPage(browser);
+  await admin.page.goto("/admin/disputas");
+  const tarjeta = admin.page
+    .getByRole("listitem")
+    .filter({ hasText: detalle });
+  await expect(
+    tarjeta.getByRole("img", { name: "Prueba que aportó quien compró" }),
+  ).toHaveCount(2);
+  await expect(
+    tarjeta.getByRole("img", { name: "Prueba que aportó quien vendió" }),
+  ).toHaveCount(1);
+
+  await seller.context.close();
+  await ctx.close();
+  await admin.ctx.close();
+});
+
+test("una persona ajena al pedido no llega a las pruebas", async ({
+  browser,
+}) => {
+  const { seller, ctx, buyer, orderId } = await deliveredOrder(
+    browser,
+    `Reclamo privado ${Date.now()}`,
+  );
+
+  await buyer.goto(`/pedido/${orderId}`);
+  await buyer.getByText("Tengo un problema con el pedido").click();
+  await buyer.getByRole("radio", { name: /no es lo que decía/ }).check();
+  await buyer.getByLabel("Qué pasó").fill("Llegó una caja vacía, sin nada.");
+  await adjuntarPruebas(buyer, 1);
+  await buyer.getByRole("button", { name: "Abrir reclamo" }).click();
+  await expect(
+    buyer.getByRole("img", { name: "Prueba que aportó quien compró" }),
+  ).toHaveCount(1);
+
+  const otroCtx = await browser.newContext();
+  const otro = await otroCtx.newPage();
+  await signUpVerified(otro, "colado", "Otro Usuario");
+
+  await otro.goto(`/pedido/${orderId}`);
+  await expect(otro.getByRole("img", { name: /Prueba que aportó/ })).toHaveCount(
+    0,
+  );
+
+  await seller.context.close();
+  await ctx.close();
+  await otroCtx.close();
+});
+
+test("la cuarta foto de un mismo lado no entra", async ({ browser }) => {
+  const { seller, ctx, buyer, orderId } = await deliveredOrder(
+    browser,
+    `Tope de pruebas ${Date.now()}`,
+  );
+
+  await buyer.goto(`/pedido/${orderId}`);
+  await buyer.getByText("Tengo un problema con el pedido").click();
+  await buyer.getByRole("radio", { name: /Nunca me llegó/ }).check();
+  await buyer.getByLabel("Qué pasó").fill("Nunca llegó nada a mi dirección.");
+
+  // La interfaz se queda con las tres primeras y lo dice.
+  await adjuntarPruebas(buyer, 4);
+  await expect(alertIn(buyer)).toContainText("Solo caben 3 fotos");
+  await buyer.getByRole("button", { name: "Abrir reclamo" }).click();
+  await expect(
+    buyer.getByRole("img", { name: "Prueba que aportó quien compró" }),
+  ).toHaveCount(3);
+
+  // Y el tope también está en el servidor: aunque llegaran cuatro claves, la
+  // cuarta no se guarda.
+  const guardadas = await withDb(async (c) => {
+    const { rows } = await c.query<{ n: string }>(
+      `select count(*)::text as n from claim_photos p
+         join claims cl on cl.id = p.claim_id
+        where cl.order_id = $1`,
+      [orderId],
+    );
+    return Number(rows[0].n);
+  });
+  expect(guardadas).toBe(3);
+
+  await seller.context.close();
+  await ctx.close();
+});

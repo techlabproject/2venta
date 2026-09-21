@@ -9,7 +9,11 @@ import { getAddress } from "@/features/shipping/queries";
 import { breakdown } from "@/features/payments/money";
 import { issueCode, getCodeState } from "@/features/pickup/queries";
 import { RedeemForm } from "@/features/pickup/RedeemForm";
-import { getClaim, KIND_LABEL } from "@/features/claims/queries";
+import {
+  getClaim,
+  listClaimPhotos,
+  KIND_LABEL,
+} from "@/features/claims/queries";
 import { OpenClaimForm, ReplyClaimForm } from "@/features/claims/Forms";
 import { hasRated } from "@/features/ratings/queries";
 import { RateForm } from "@/features/ratings/RateForm";
@@ -20,6 +24,7 @@ import { CHECKOUT_TTL_MINUTES } from "@/features/payments/abandon";
 import { OrderTimeline } from "@/features/payments/OrderTimeline";
 import { ButtonLink } from "@/components/ui";
 import { Volver } from "@/components/Volver";
+import { Pruebas } from "@/components/Pruebas";
 
 // Pantalla 1j del mockup: seguimiento y liberación del pago.
 export const dynamic = "force-dynamic";
@@ -80,6 +85,11 @@ export default async function Pedido({
   const address = await getAddress(order.id);
   const money = breakdown(order.subtotal_cop, order.shipping_cop);
   const claim = await getClaim(order.id);
+  // Las pruebas del reclamo, separadas por quién las aportó. La consulta no lleva
+  // permiso dentro: arriba ya se comprobó que quien mira es una de las dos partes.
+  const pruebas = claim ? await listClaimPhotos(claim.id) : [];
+  const pruebasComprador = pruebas.filter((f) => f.uploaded_by === order.buyer_id);
+  const pruebasVendedor = pruebas.filter((f) => f.uploaded_by === order.seller_id);
   // D-17: se califica cuando el pedido terminó, no antes. Calificar durante la
   // transacción convertiría la reseña en una forma de presionar.
   const completed =
@@ -351,11 +361,16 @@ export default async function Pedido({
             )}
             <p className="mt-3 font-medium">Dice quien compró</p>
             <p className="mt-0.5 text-ink2">{claim.detail}</p>
+            {/* Las pruebas de cada lado van pegadas a su versión, no todas juntas
+                al final: lo que se compara es «esto dice y esto enseña» contra
+                «esto dice y esto enseña» (S-39). */}
+            <Pruebas fotos={pruebasComprador} de="quien compró" />
 
             {claim.seller_reply ? (
               <>
                 <p className="mt-3 font-medium">Dice quien vendió</p>
                 <p className="mt-0.5 text-ink2">{claim.seller_reply}</p>
+                <Pruebas fotos={pruebasVendedor} de="quien vendió" />
               </>
             ) : !isBuyer && !claim.resolved_at ? (
               <ReplyClaimForm orderId={order.id} />

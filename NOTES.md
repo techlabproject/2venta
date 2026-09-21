@@ -1,10 +1,10 @@
 # Estado
 
-**Última actualización:** 2026-09-20
+**Última actualización:** 2026-09-21
 
 ## En qué voy
 
-Las tres fases del plan más veinte rebanadas posteriores. 297 pruebas de navegador
+Las tres fases del plan más veintiuna rebanadas posteriores. 300 pruebas de navegador
 y 125 unitarias (seis de ellas contra MinIO), más 52 comparaciones visuales sobre
 72 referencias.
 
@@ -14,7 +14,17 @@ independientes: Codex leyendo el código elemento por elemento, Sol mirando las 
 capturas como usuaria, y Luna usando la aplicación en el navegador. Salieron nueve
 defectos reales, todos arreglados con su prueba (D-93 a D-96).
 
-El más grave: **pagar una oferta aceptada era imposible**. La acción de pago
+**S-39 — fotos en los reclamos (2026-09-21).** Cierra el H-4 de Luna, el único
+hallazgo de su ronda que había quedado sin hacer. Las dos partes pueden aportar hasta
+tres fotos; quien modera las ve junto al video (D-97, D-98, migración `0014`).
+
+Al construirlo salió algo que no estaba a la vista: la firma de subida exigía
+identidad verificada para cualquier imagen, y por la D-02 un comprador nunca pasa por
+KYC. Es decir que en una disputa **solo el vendedor podía probar algo**. Y la cola de
+disputas hacía `join order_items` directo, así que un pedido de dos artículos mostraba
+el mismo reclamo dos veces.
+
+El más grave de la ronda anterior: **pagar una oferta aceptada era imposible**. La acción de pago
 comparaba el total contra el precio publicado antes de aplicar el de la oferta, así
 que toda negociación moría en «el precio cambió mientras comprabas». La prueba que
 decía cubrirlo llegaba a la pantalla de pago, comprobaba el total en pantalla y se

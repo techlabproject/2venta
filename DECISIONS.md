@@ -993,3 +993,33 @@ encima un comentario que afirmaba justo la comprobación que faltaba, y uno ten�
 prueba llamada «no puede publicar ni reportar» que solo probaba publicar. Un
 comentario que explica por qué algo es seguro no es prueba de que lo sea, y el nombre
 de una prueba no prueba nada: hay que leer el cuerpo.
+
+### D-97 — Las pruebas de un reclamo no piden verificación de identidad
+Adjuntar fotos a un reclamo usa un tipo de subida propio (`prueba`) que, como la foto
+de perfil, se salta la comprobación de KYC.
+**Por qué hay que decirlo.** La firma de subida exigía identidad verificada para
+cualquier imagen, y quien reclama es casi siempre el comprador, que por la D-02 nunca
+pasa por KYC. Con la regla anterior, en una disputa **solo el vendedor podía probar
+algo**: él llega con el video de la publicación y con fotos, y el comprador solo con
+un párrafo. Es exactamente al revés de lo que hace falta.
+**Lo que no se relajó.** Sigue haciendo falta sesión, cuenta activa y celular
+confirmado, y el servidor sigue yendo a S3 a comprobar que el archivo exista, sea de
+quien dice y sea una imagen: nunca se cree el tipo ni el tamaño que declara el
+cliente.
+
+### D-98 — Tres fotos por parte, y en tabla
+Cada parte puede aportar hasta tres fotos a un reclamo, guardadas en `claim_photos`.
+**Tres y no una.** Un daño casi nunca se demuestra con una sola foto: la rotura, el
+empaque y la etiqueta son tres cosas distintas.
+**Tabla y no columnas, al revés que en el chat.** La D-92 eligió columna porque un
+mensaje tiene como mucho una foto. Un reclamo no es un mensaje: es un expediente al
+que aportan los dos lados y con un número variable. Seis columnas `foto_1..3` por
+lado para representar dos listas sería modelar al revés.
+**El tope vive dentro de la sentencia**, contando lo que ya hay más la posición de
+cada foto del lote. Comprobarlo antes en JavaScript dejaría una ventana entre contar
+e insertar.
+**Validar antes de congelar el dinero.** Las fotos se comprueban ANTES de mover el
+pedido a disputa. Al revés, quien se equivoca de archivo se queda con un reclamo
+abierto que no pidió.
+**No se pueden borrar.** Una prueba que se retira después de que la otra parte la vio
+no es una prueba.

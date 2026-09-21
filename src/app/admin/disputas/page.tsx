@@ -6,6 +6,7 @@ import { ResolveClaimForm } from "@/features/claims/Forms";
 import { AppHeader } from "@/components/AppHeader";
 import { formatCop } from "@/lib/money";
 import { Volver } from "@/components/Volver";
+import { Pruebas } from "@/components/Pruebas";
 
 // El panel de arbitraje de la D-13. Sin esto, "2venta arbitra con la evidencia de
 // ambas partes" es una promesa que nadie puede cumplir.
@@ -64,6 +65,13 @@ export default async function Disputas() {
                 <div>
                   <p className="font-medium">Dice {c.buyer_alias} (compró)</p>
                   <p className="mt-1 text-ink2">{c.detail}</p>
+                  {/* `opened_by` es siempre quien compró: solo el comprador abre
+                      un reclamo. Lo demás que haya en las pruebas es del vendedor,
+                      que solo puede aportarlas al responder (S-39). */}
+                  <Pruebas
+                    fotos={c.photos.filter((f) => f.uploaded_by === c.opened_by)}
+                    de="quien compró"
+                  />
                 </div>
                 <div>
                   <p className="font-medium">Dice {c.seller_alias} (vendió)</p>
@@ -74,6 +82,10 @@ export default async function Disputas() {
                       </span>
                     )}
                   </p>
+                  <Pruebas
+                    fotos={c.photos.filter((f) => f.uploaded_by !== c.opened_by)}
+                    de="quien vendió"
+                  />
                 </div>
               </div>
 

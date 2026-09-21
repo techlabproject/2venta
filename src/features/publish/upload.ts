@@ -22,16 +22,21 @@ export type UploadResult = { error: string } | SignedUpload;
 export async function requestUpload(input: {
   contentType: string;
   size: number;
-  kind: "video" | "image" | "avatar";
+  kind: "video" | "image" | "avatar" | "prueba";
 }): Promise<UploadResult> {
   const user = await activeUser();
   if (!user.phoneNumberVerified) {
     return { error: "Confirma tu celular antes de subir archivos." };
   }
-  // La foto de perfil es la excepción a la verificación de identidad: quien compra
-  // también tiene cara, y exigirle la cédula para ponerla sería pedirle a un
-  // comprador lo que solo se le pide a un vendedor (D-02).
-  if (input.kind !== "avatar") {
+  // Dos excepciones a la verificación de identidad, por la misma razón: la D-02
+  // solo le pide la cédula a quien vende.
+  //
+  // La foto de perfil, porque quien compra también tiene cara. Y la prueba de un
+  // reclamo, porque quien reclama es casi siempre el comprador: exigirle KYC para
+  // enseñar una foto del producto roto significaría que solo el vendedor puede
+  // probar algo en una disputa, que es exactamente al revés de lo que hace falta
+  // (S-39).
+  if (input.kind !== "avatar" && input.kind !== "prueba") {
     const verification = await getVerification(user.id);
     if (verification?.status !== "aprobado") {
       return { error: "Necesitas verificar tu identidad antes de publicar." };

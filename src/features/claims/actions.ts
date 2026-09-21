@@ -5,11 +5,75 @@ import { activeUser, currentAdmin } from "@/lib/session";
 import { query } from "@/lib/db";
 import { getOrder, transition } from "@/features/payments/orders";
 import { paymentProvider } from "@/features/payments/provider";
-import { getClaim, KIND_LABEL, WINDOW_HOURS, type ClaimKind } from "./queries";
+import { claim } from "@/features/publish/claim";
+import {
+  getClaim,
+  KIND_LABEL,
+  MAX_PRUEBAS,
+  WINDOW_HOURS,
+  type ClaimKind,
+} from "./queries";
 
 export type ClaimResult = { error: string };
 
 const KINDS: ClaimKind[] = ["no_coincide", "no_llego"];
+
+/**
+ * Comprueba las fotos que manda el navegador, antes de tocar nada.
+ *
+ * Los archivos suben directo al bucket con URL prefirmada (D-50) y al servidor solo
+ * le llegan las claves. `claim()` va a S3 y comprueba que el objeto exista, que sea
+ * de quien dice y que sea una imagen: nunca se cree el tipo ni el tamaño que declara
+ * el cliente.
+ *
+ * Va separado de guardarlas, y primero, porque abrir un reclamo mueve el pedido a
+ * disputa y congela el dinero. Si una foto no sirve, tiene que fallar ANTES de eso;
+ * al revés, quien se equivoca de archivo se queda con un reclamo abierto que no
+ * pidió.
+ */
+async function validarPruebas(
+  userId: string,
+  form: FormData,
+): Promise<{ error: string } | { claves: string[] }> {
+  const crudas = form
+    .getAll("photoKeys")
+    .map((k) => String(k))
+    .filter(Boolean)
+    .slice(0, MAX_PRUEBAS);
+
+  const claves: string[] = [];
+  for (const cruda of crudas) {
+    const comprobada = await claim(cruda, userId, "image");
+    if ("error" in comprobada) return { error: comprobada.error };
+    claves.push(comprobada.key);
+  }
+  return { claves };
+}
+
+/**
+ * Guarda las pruebas ya comprobadas.
+ *
+ * El tope por persona vive DENTRO de la sentencia, contando lo que ya hay más la
+ * posición de cada foto del lote. Comprobarlo antes en JavaScript dejaría una
+ * ventana entre contar e insertar; así, quien ya tenía dos y manda tres mete una y
+ * las otras dos no entran, en vez de pasarse del tope o perder el lote entero.
+ */
+async function guardarPruebas(
+  claimId: string,
+  userId: string,
+  claves: string[],
+): Promise<void> {
+  if (claves.length === 0) return;
+  await query(
+    `insert into claim_photos (claim_id, uploaded_by, path)
+     select $1, $2, nueva.path
+       from (select unnest($3::text[]) as path,
+                    generate_subscripts($3::text[], 1) as pos) nueva
+      where (select count(*) from claim_photos
+              where claim_id = $1 and uploaded_by = $2) + nueva.pos <= $4`,
+    [claimId, userId, claves, MAX_PRUEBAS],
+  );
+}
 
 /** El comprador abre un reclamo. Los fondos quedan congelados (D-13). */
 export async function openClaim(
@@ -54,6 +118,10 @@ export async function openClaim(
     }
   }
 
+  // Antes de congelar el dinero: si una foto no sirve, no se abre nada.
+  const pruebas = await validarPruebas(user.id, form);
+  if ("error" in pruebas) return { error: pruebas.error };
+
   const moved = await transition({
     orderId: order.id,
     to: "en_disputa",
@@ -62,11 +130,13 @@ export async function openClaim(
   });
   if (!moved) return { error: "Este pedido no admite un reclamo en su estado actual." };
 
-  await query(
+  const creado = await query<{ id: string }>(
     `insert into claims (order_id, opened_by, kind, detail) values ($1, $2, $3, $4)
-     on conflict (order_id) do nothing`,
+     on conflict (order_id) do nothing
+     returning id`,
     [order.id, user.id, kind, detail]
   );
+  if (creado[0]) await guardarPruebas(creado[0].id, user.id, pruebas.claves);
 
   revalidatePath(`/pedido/${order.id}`);
   return { error: "" };
@@ -86,6 +156,9 @@ export async function replyToClaim(
   const reply = String(form.get("reply") ?? "").trim().slice(0, 1000);
   if (reply.length < 10) return { error: "Cuenta tu versión con algo de detalle." };
 
+  const pruebas = await validarPruebas(user.id, form);
+  if ("error" in pruebas) return { error: pruebas.error };
+
   const rows = await query<{ id: string }>(
     `update claims set seller_reply = $2, replied_at = now()
       where order_id = $1 and resolved_at is null
@@ -93,6 +166,8 @@ export async function replyToClaim(
     [order.id, reply]
   );
   if (rows.length === 0) return { error: "Ese reclamo ya se resolvió." };
+
+  await guardarPruebas(rows[0].id, user.id, pruebas.claves);
 
   revalidatePath(`/pedido/${order.id}`);
   return { error: "" };
