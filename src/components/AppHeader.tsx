@@ -80,10 +80,15 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
               </nav>
 
               <div className="ml-auto flex items-center gap-2">
-                {/* «Vender» hace crecer el catálogo y es lo único en coral aquí. */}
+                {/* «Vender» es coral, pero perfilado y no relleno.
+                    Relleno competía con la acción principal de cada pantalla: en
+                    una ficha se veían dos botones naranjas del mismo peso y el ojo
+                    no sabía cuál era el importante. El coral sigue estando —es la
+                    invitación a publicar— y el relleno sólido queda reservado para
+                    la única acción de la pantalla (D-84). */}
                 <Link
                   href="/vender"
-                  className="hidden rounded-full border border-accent-edge/50 bg-accent px-4 py-1.5 text-sm font-semibold text-on-accent shadow-sm transition duration-200 ease-salida hover:brightness-[0.97] active:scale-[0.97] md:inline-flex"
+                  className="hidden rounded-full border border-accent-on-brand/60 px-4 py-1.5 text-sm font-semibold text-accent-on-brand transition duration-200 ease-salida hover:border-accent-on-brand hover:bg-accent-on-brand/10 active:scale-[0.97] md:inline-flex"
                 >
                   Vender
                 </Link>
@@ -137,7 +142,7 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
               </span>
               <Link
                 href="/bienvenida"
-                className="rounded-full border border-accent-edge/50 bg-accent px-4 py-1.5 text-sm font-semibold text-on-accent shadow-sm transition duration-200 ease-salida hover:brightness-[0.97] active:scale-[0.97]"
+                className="rounded-full border border-accent-on-brand/60 px-4 py-1.5 text-sm font-semibold text-accent-on-brand transition duration-200 ease-salida hover:border-accent-on-brand hover:bg-accent-on-brand/10 active:scale-[0.97]"
               >
                 Entrar
               </Link>

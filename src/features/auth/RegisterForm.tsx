@@ -33,14 +33,24 @@ export function RegisterForm() {
       return;
     }
 
-    const signUp = await authClient.signUp.email({
-      email: String(form.get("email")).trim().toLowerCase(),
-      password: String(form.get("password")),
-      name,
-      phoneNumber: phone,
-      // D-04: el alias es lo público. Por defecto, el nombre de pila y la inicial.
-      alias: toAlias(name),
-    });
+    // Si el SDK rechaza —red caída, servidor sin responder— antes no se pintaba
+    // nada: el formulario se quedaba pensando para siempre con el botón apagado
+    // y sin decir por qué (ronda de verificación, 2026-09-20).
+    let signUp;
+    try {
+      signUp = await authClient.signUp.email({
+        email: String(form.get("email")).trim().toLowerCase(),
+        password: String(form.get("password")),
+        name,
+        phoneNumber: phone,
+        // D-04: el alias es lo público. Por defecto, el nombre y la inicial.
+        alias: toAlias(name),
+      });
+    } catch {
+      setError("No pudimos conectarnos. Revisa tu conexión e intenta otra vez.");
+      setBusy(false);
+      return;
+    }
 
     if (signUp.error) {
       setError(translate(signUp.error.code, signUp.error.message));
@@ -58,8 +68,9 @@ export function RegisterForm() {
       return;
     }
 
-    router.push(`/verificar?rol=${rol}`);
+    // Invalidar antes de navegar (ver VerifyForm).
     router.refresh();
+    router.push(`/verificar?rol=${rol}`);
   }
 
   return (

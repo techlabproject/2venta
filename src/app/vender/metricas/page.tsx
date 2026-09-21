@@ -10,6 +10,7 @@ import { Price } from "@/components/Price";
 import { ButtonLink } from "@/components/ui";
 import { StatusButton } from "@/features/publish/EditForms";
 import { mediaUrl } from "@/lib/media";
+import { Volver } from "@/components/Volver";
 
 // D-24: métricas del vendedor. Vistas, favoritos y conversaciones por publicación.
 //
@@ -64,9 +65,7 @@ export default async function Metricas() {
       <main className="mx-auto max-w-6xl px-5 py-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <Link href="/vender" className="text-sm text-ink2 underline">
-              Volver a tu espacio de vendedor
-            </Link>
+            <Volver href="/vender">Volver a tu espacio de vendedor</Volver>
             <h1 className="mt-2 font-title text-2xl font-semibold">
               Tus publicaciones
             </h1>

@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import {
   getPublicSeller,
   listSellerListings,
@@ -12,6 +11,11 @@ import { getReputation, listReviews } from "@/features/ratings/queries";
 import { ReportUserForm } from "@/features/profile/Forms";
 import { currentUser } from "@/lib/session";
 import { query } from "@/lib/db";
+import { Volver } from "@/components/Volver";
+
+// Debajo de esto, un porcentaje de disputas dice más sobre el tamaño de la
+// muestra que sobre quien vende.
+const MIN_VENTAS_PARA_TASA = 5;
 
 // Pantalla 1g del mockup: perfil público del vendedor.
 // D-04: solo alias y zona. Nombre completo, correo, celular y dirección no salen
@@ -42,9 +46,7 @@ export default async function PerfilVendedor({
     <>
       <AppHeader zone={seller.zone} />
       <main className="mx-auto max-w-3xl px-5 py-6">
-        <Link href="/" className="text-sm text-ink2 underline">
-          Volver
-        </Link>
+        <Volver href="/" />
 
         <h1 className="mt-5 font-title text-2xl font-semibold">
           {seller.is_store ? seller.legal_name : seller.alias}
@@ -102,10 +104,21 @@ export default async function PerfilVendedor({
                 {reputation.sales}
               </dd>
             </div>
+            {/* Un porcentaje sobre menos de cinco ventas no es una tasa: es
+                ruido. Una sola venta que terminó en reclamo mostraba «Disputas
+                100%» en el perfil público, que cualquiera lee como «este señor
+                estafa» cuando lo único que dice es que tiene un historial de
+                uno (H-2 de Luna, 2026-09-20). */}
             <div className="rounded-2xl bg-white shadow-xs p-3 ring-1 ring-line">
               <dt className="text-xs text-muted">Disputas</dt>
               <dd className="font-title text-xl font-semibold">
-                {reputation.disputeRate?.toString().replace(".", ",")}%
+                {reputation.sales < MIN_VENTAS_PARA_TASA ? (
+                  <span className="text-base font-normal text-muted">
+                    Historial corto
+                  </span>
+                ) : (
+                  `${reputation.disputeRate?.toString().replace(".", ",")}%`
+                )}
               </dd>
             </div>
           </dl>

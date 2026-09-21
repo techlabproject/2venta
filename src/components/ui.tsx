@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "./Logo";
 import type { ComponentProps, ReactNode } from "react";
 
 // Primitivas de interfaz con la marca ya aplicada. Existen para que ninguna
@@ -125,6 +126,19 @@ export function AuthShell({
 }) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-5 py-10">
+      {/* El logo, y que además sea la salida.
+          Las cuatro pantallas de entrada no tenían marca ni forma de volver al
+          catálogo: se llegaba a ellas desde un botón y la única salida era el
+          «atrás» del navegador. Quien cae aquí desde un enlace quedaba encerrado
+          en un formulario sin saber de qué sitio es (ronda de diseño, Sol,
+          2026-09-20). */}
+      <Link
+        href="/"
+        aria-label="Volver al inicio de 2venta"
+        className="mb-8 inline-flex w-fit rounded-lg text-brand transition duration-200 ease-salida hover:opacity-80"
+      >
+        <Logo className="h-8 w-auto" />
+      </Link>
       <h1 className="font-title text-2xl font-semibold">{title}</h1>
       {subtitle && <p className="mt-2 text-sm text-ink2">{subtitle}</p>}
       <div className="mt-7 flex flex-col gap-4">{children}</div>

@@ -4,6 +4,7 @@ import { currentAdmin } from "@/lib/session";
 import { query } from "@/lib/db";
 import { ReviewForm } from "@/features/moderation/Forms";
 import { AppHeader } from "@/components/AppHeader";
+import { countOpenChatReports } from "@/features/chat/queries";
 import { formatCop } from "@/lib/money";
 
 // Pantalla 1m del mockup, en su versión mínima: la cola de revisión y los
@@ -42,15 +43,34 @@ export default async function Admin() {
       order by l.created_at`,
   );
 
+  const chatsReportados = await countOpenChatReports();
+
   return (
     <>
       <AppHeader />
       <main className="mx-auto max-w-3xl px-5 py-6">
-        <div className="flex items-baseline justify-between gap-4">
+        {/* Envuelve. En 390 px el título y los cuatro enlaces no caben en una
+            línea, y como ninguno de los dos contenedores envolvía, la página
+            entera se hacía 443 px de ancho y había que arrastrarla de lado para
+            leer cualquier cosa (ronda de diseño, Sol, 2026-09-20). */}
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
           <h1 className="font-title text-2xl font-semibold">Moderación</h1>
-          <span className="flex gap-4 text-sm">
+          <span className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
             <Link href="/admin/disputas" className="text-brand underline">
               Disputas
+            </Link>
+            <Link href="/admin/conversaciones" className="text-brand underline">
+              Chats
+              {/* El número solo si hay algo: un cero dibujado es ruido con
+                  forma de alerta. */}
+              {chatsReportados > 0 && (
+                <span
+                  data-testid="chats-reportados"
+                  className="ml-1 rounded-full bg-accent px-1.5 text-xs font-bold text-on-accent"
+                >
+                  {chatsReportados}
+                </span>
+              )}
             </Link>
             <Link href="/admin/usuarios" className="text-brand underline">
               Cuentas

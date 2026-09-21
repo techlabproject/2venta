@@ -14,20 +14,38 @@ export function VerifyForm({ phone }: { phone: string }) {
     async (prev, form) => {
       const res = await verifyCode(prev, form);
       if (!res.error) {
-        router.push("/");
+        // El orden importa y costó tres corridas intermitentes averiguarlo.
+        // `push` primero navegaba a «/» pudiendo servir la copia en caché que el
+        // router tomó ANTES de que existiera la sesión, y entonces la cabecera se
+        // dibujaba como si nadie hubiera entrado. Invalidar antes de navegar hace
+        // que «/» se pida de nuevo, ya con la cookie puesta.
         router.refresh();
+        router.push("/");
       }
       return res;
     },
     null,
   );
 
+  // Sin esto, tres clics seguidos mandaban tres códigos: el límite del servidor
+  // existe, pero rechazar peticiones que no debieron salir no es lo mismo que no
+  // hacerlas.
+  const [reenviando, setReenviando] = useState(false);
+
   async function resend() {
+    if (reenviando) return;
+    setReenviando(true);
     setNote(null);
     setResendError(null);
-    const res = await sendCode();
-    if (res.error) setResendError(res.error);
-    else setNote("Te mandamos otro código.");
+    try {
+      const res = await sendCode();
+      if (res.error) setResendError(res.error);
+      else setNote("Te mandamos otro código.");
+    } catch {
+      setResendError("No pudimos mandar el código. Revisa tu conexión.");
+    } finally {
+      setReenviando(false);
+    }
   }
 
   return (
@@ -60,8 +78,14 @@ export function VerifyForm({ phone }: { phone: string }) {
         {pending ? "Confirmando…" : "Confirmar celular"}
       </Button>
 
-      <Button type="button" variant="ghost" onClick={resend}>
-        No me llegó, mandar otro
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={resend}
+        disabled={reenviando}
+        aria-busy={reenviando}
+      >
+        {reenviando ? "Mandando…" : "No me llegó, mandar otro"}
       </Button>
     </form>
   );

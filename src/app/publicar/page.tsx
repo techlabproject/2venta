@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { activeUser } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
@@ -6,6 +5,7 @@ import { listCategories } from "@/features/catalog/queries";
 import { suggestAll } from "@/features/pricing/suggest";
 import { PublishForm } from "@/features/publish/PublishForm";
 import { AppHeader } from "@/components/AppHeader";
+import { Volver } from "@/components/Volver";
 
 // Pantalla 1k del mockup.
 export const dynamic = "force-dynamic";
@@ -30,9 +30,7 @@ export default async function Publicar() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Link href="/" className="text-sm text-ink2 underline">
-          Cancelar
-        </Link>
+        <Volver href="/">Cancelar</Volver>
         <h1 className="mt-4 mb-6 font-title text-2xl font-semibold">
           Publicar artículo
         </h1>

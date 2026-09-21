@@ -153,3 +153,60 @@ test("la comisión reportada coincide con la de los pedidos", async ({ browser }
   await venta.ctx.close();
   await admin.ctx.close();
 });
+
+/*
+ * Ronda de verificación 2026-09-20 (hallazgo H-1 de Luna).
+ *
+ * El resumen contaba como «ventas» los pedidos liberados MÁS los reembolsados,
+ * pero el volumen, la comisión y la tabla por categoría solo contaban los
+ * liberados. El ticket promedio dividía la plata de unos entre el número de los
+ * otros, así que una sola venta de $300.000 con un reembolso al lado se reportaba
+ * como «Ventas 2 · Volumen $300.000 · Ticket promedio $150.000»: un promedio que
+ * no corresponde a ningún pedido que haya existido.
+ */
+test("el ticket promedio no se diluye con los pedidos reembolsados", async ({
+  browser,
+}) => {
+  const venta = await completedSale(browser, 300_000);
+  const admin = await adminPage(browser);
+
+  // El panel agrega todo el periodo, así que lo que se mide no es una cifra
+  // absoluta sino un efecto: meter un pedido devuelto no puede mover el promedio
+  // de las ventas que sí ocurrieron.
+  await admin.page.goto("/admin/reportes");
+  const antes = await admin.page.getByTestId("ticket").textContent();
+  const leerVentas = async () => {
+    const t = (await admin.page.getByTestId("ventas").textContent()) ?? "";
+    const m = t.match(/(\d+)\s+de\s+(\d+)/);
+    return m ? { cerradas: Number(m[1]), total: Number(m[2]) } : null;
+  };
+  const ventasAntes = await leerVentas();
+
+  await withDb(async (c) => {
+    const { rows } = await c.query<{ seller_id: string; buyer_id: string }>(
+      `select seller_id, buyer_id from orders order by created_at desc limit 1`,
+    );
+    const { seller_id, buyer_id } = rows[0];
+    await c.query(
+      `insert into orders
+         (buyer_id, seller_id, status, provider, idempotency_key,
+          subtotal_cop, shipping_cop, commission_cop, seller_payout_cop)
+       values ($1, $2, 'reembolsado', 'prueba', $3, 900000, 12000, 45000, 855000)`,
+      [buyer_id, seller_id, `devuelto-${Date.now()}`],
+    );
+  });
+
+  await admin.page.reload();
+
+  // Antes, un reembolso de $900.000 entraba al denominador sin entrar al volumen
+  // y bajaba el promedio de todo el mes. Ahora no lo toca.
+  await expect(admin.page.getByTestId("ticket")).toHaveText(antes!);
+  // Y la cifra separa las dos cosas: un pedido más que terminó, ninguna venta más.
+  const ventasDespues = await leerVentas();
+  expect(ventasDespues!.total).toBe(ventasAntes!.total + 1);
+  expect(ventasDespues!.cerradas).toBe(ventasAntes!.cerradas);
+
+  await venta.seller.context.close();
+  await venta.ctx.close();
+  await admin.ctx.close();
+});

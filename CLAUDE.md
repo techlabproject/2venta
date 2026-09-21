@@ -35,7 +35,15 @@ estado; lleva lo que no se puede adivinar leyendo el código.**
   (tipos + linter + pruebas unitarias + siembra + pruebas de punta a punta)
 
 - Imagen de producción contra la base local: `docker compose --profile imagen up -d --build app`
-  y la suite completa contra ella: `E2E_BASE_URL=http://localhost:3200 npx playwright test`.
+  y la suite completa contra ella: `E2E_BASE_URL=http://localhost:3200 npx playwright test --workers=3`.
+  IMPORTANT: **cuando la suite falle de formas que cambian en cada corrida, el veredicto
+  se saca aquí, no con `npm run verify`.** `next dev` compila cada ruta la primera vez que
+  se pide y al hacerlo reconstruye el manifiesto de acciones de servidor; las páginas ya
+  dibujadas en los otros procesos pierden sus acciones y fallan repartidas por pantallas
+  sin relación (`Failed to find Server Action`). Contra la imagen eso no existe: 297 de 297
+  en 3,6 minutos, frente a entre 15 y 98 fallos en desarrollo con el mismo código. Por lo
+  mismo, **no toques ningún archivo del proyecto mientras corre la suite**: crear un archivo
+  que nadie importa ya invalida el manifiesto.
   Migraciones dentro de la imagen: `docker compose --profile imagen run --rm app node db/migrate.mts`.
 
 - Nube: `infra/` es Terraform; `dev` se despliega solo al hacer push a `main`

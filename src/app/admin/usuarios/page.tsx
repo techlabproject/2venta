@@ -4,6 +4,7 @@ import { currentAdmin } from "@/lib/session";
 import { query } from "@/lib/db";
 import { SuspendForm } from "@/features/moderation/SuspendForm";
 import { AppHeader } from "@/components/AppHeader";
+import { Volver } from "@/components/Volver";
 
 // RF-41. Cuentas reportadas y suspensión.
 export const dynamic = "force-dynamic";
@@ -47,9 +48,7 @@ export default async function Usuarios() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-3xl px-5 py-6">
-        <Link href="/admin" className="text-sm text-ink2 underline">
-          Moderación
-        </Link>
+        <Volver href="/admin">Moderación</Volver>
         <h1 className="mt-4 font-title text-2xl font-semibold">
           Cuentas reportadas
         </h1>

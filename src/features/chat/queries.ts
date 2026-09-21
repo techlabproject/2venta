@@ -3,8 +3,11 @@ import { pool, query } from "@/lib/db";
 export type Message = {
   id: string;
   sender_id: string;
-  body: string;
+  /** Nulo cuando el mensaje es solo una foto (S-37). */
+  body: string | null;
   redactions: string[];
+  /** Clave del bucket, nunca una dirección: se arma con `mediaUrl()` al pintar. */
+  image_path: string | null;
   created_at: Date;
 };
 
@@ -70,7 +73,7 @@ export async function getConversation(
 
 export function listMessages(conversationId: string): Promise<Message[]> {
   return query<Message>(
-    `select id::text, sender_id, body, redactions, created_at
+    `select id::text, sender_id, body, redactions, image_path, created_at
        from messages where conversation_id = $1 order by created_at`,
     [conversationId],
   );
@@ -245,4 +248,96 @@ export async function markConversationRead(
        do update set last_read_at = now()`,
     [conversationId, userId],
   );
+}
+
+export type ChatReport = {
+  id: string;
+  conversation_id: string;
+  reason: string;
+  detail: string | null;
+  created_at: Date;
+  reporter_alias: string;
+  reported_alias: string;
+  reported_id: string;
+  listing_title: string;
+};
+
+export const REPORT_REASON_LABEL: Record<string, string> = {
+  insultos: "Insultos o amenazas",
+  contenido_sexual: "Contenido sexual",
+  estafa: "Intento de estafa",
+  datos_personales: "Pide datos o pagos por fuera",
+  otro: "Otra cosa",
+};
+
+/**
+ * Los reportes de conversación sin resolver, para la cola de moderación (S-37).
+ *
+ * «Reportado» es la otra parte de la conversación, sea comprador o vendedor: el
+ * acoso va en las dos direcciones y suponer que siempre lo comete quien vende
+ * dejaría la mitad de los casos sin nombre.
+ */
+export function listOpenChatReports(): Promise<ChatReport[]> {
+  return query<ChatReport>(
+    `select r.id::text, r.conversation_id, r.reason, r.detail, r.created_at,
+            coalesce(quien.alias, quien.name) as reporter_alias,
+            coalesce(otro.alias, otro.name)   as reported_alias,
+            otro.id as reported_id,
+            l.title as listing_title
+       from chat_reports r
+       join conversations c on c.id = r.conversation_id
+       join listings l      on l.id = c.listing_id
+       join "user" quien    on quien.id = r.reporter_id
+       join "user" otro
+         on otro.id = case when c.buyer_id = r.reporter_id
+                           then c.seller_id else c.buyer_id end
+      where r.resolved_at is null
+      order by r.created_at`,
+  );
+}
+
+/** Cuántos reportes de conversación esperan, para el resumen de moderación. */
+export async function countOpenChatReports(): Promise<number> {
+  const rows = await query<{ n: number }>(
+    `select count(*)::int as n from chat_reports where resolved_at is null`,
+  );
+  return rows[0]?.n ?? 0;
+}
+
+/**
+ * La conversación tal cual, para moderar — y SOLO si tiene un reporte abierto.
+ *
+ * IMPORTANT: esta es la única puerta por la que alguien que no es parte de una
+ * conversación puede leerla, y la condición va en el `where`, no en la pantalla.
+ * Un administrador no puede leer conversaciones privadas porque sí: puede leer las
+ * que alguien pidió que se revisaran, mientras esa revisión siga abierta.
+ */
+export async function getReportedConversation(id: string): Promise<{
+  conversation: Conversation;
+  messages: Message[];
+} | null> {
+  const UUID =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID.test(id)) return null;
+
+  const rows = await query<Conversation>(
+    `select c.id, c.listing_id, c.buyer_id, c.seller_id,
+            l.title as listing_title, l.price_cop as listing_price_cop,
+            l.poster_path as listing_poster_path, l.status as listing_status,
+            coalesce(b.alias, b.name) as buyer_alias,
+            coalesce(s.alias, s.name) as seller_alias
+       from conversations c
+       join listings l on l.id = c.listing_id
+       join "user" b   on b.id = c.buyer_id
+       join "user" s   on s.id = c.seller_id
+      where c.id = $1
+        and exists (
+          select 1 from chat_reports r
+           where r.conversation_id = c.id and r.resolved_at is null
+        )`,
+    [id],
+  );
+  if (!rows[0]) return null;
+
+  return { conversation: rows[0], messages: await listMessages(id) };
 }

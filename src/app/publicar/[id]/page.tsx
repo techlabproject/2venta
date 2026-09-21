@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { DraftVideoForm } from "@/features/publish/DraftVideoForm";
 import { AppHeader } from "@/components/AppHeader";
 import { formatCop } from "@/lib/money";
+import { Volver } from "@/components/Volver";
 
 // Graba el video de un borrador de carga en lote (S-13). Todo lo demás ya está
 // escrito; lo único que falta es lo que no se puede subir de un archivo.
@@ -36,9 +36,7 @@ export default async function PublicarBorrador({
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Link href="/tienda" className="text-sm text-ink2 underline">
-          Volver a la tienda
-        </Link>
+        <Volver href="/tienda">Volver a la tienda</Volver>
         <h1 className="mt-4 font-title text-xl font-semibold">{draft.title}</h1>
         <p className="mt-1 text-sm text-muted">
           {formatCop(draft.price_cop)} · {draft.label}

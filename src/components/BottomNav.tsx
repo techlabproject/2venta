@@ -23,6 +23,12 @@ const DESTINOS = [
 export function BottomNav({ sinLeer = 0 }: { sinLeer?: number }) {
   const ruta = usePathname();
 
+  // Dentro de una conversación no hay barra (D-91). Es lo que hace cualquier app
+  // de chat: ahí abajo el pulgar quiere el campo de escribir, no navegar a otra
+  // parte. Y al no estar en el árbol, el hueco que reserva `globals.css` con
+  // `body:has(...)` desaparece solo y el compositor llega hasta el borde.
+  if (ruta.startsWith("/chat/")) return null;
+
   const activo = (href: string) =>
     href === "/" ? ruta === "/" : ruta === href || ruta.startsWith(`${href}/`);
 

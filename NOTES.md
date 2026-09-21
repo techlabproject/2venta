@@ -1,12 +1,68 @@
 # Estado
 
-**Última actualización:** 2026-09-15
+**Última actualización:** 2026-09-20
 
 ## En qué voy
 
-Las tres fases del plan más dieciocho rebanadas posteriores. 283 pruebas de
-navegador y 125 unitarias (seis de ellas contra MinIO), más 52 comparaciones
-visuales sobre 72 referencias.
+Las tres fases del plan más veinte rebanadas posteriores. 297 pruebas de navegador
+y 125 unitarias (seis de ellas contra MinIO), más 52 comparaciones visuales sobre
+72 referencias.
+
+**Ronda de verificación con dos agentes (2026-09-20).** Nicolás pidió revisar que
+cada botón y cada flujo hicieran de verdad lo que dicen. Se corrieron tres pasadas
+independientes: Codex leyendo el código elemento por elemento, Sol mirando las 72
+capturas como usuaria, y Luna usando la aplicación en el navegador. Salieron nueve
+defectos reales, todos arreglados con su prueba (D-93 a D-96).
+
+El más grave: **pagar una oferta aceptada era imposible**. La acción de pago
+comparaba el total contra el precio publicado antes de aplicar el de la oferta, así
+que toda negociación moría en «el precio cambió mientras comprabas». La prueba que
+decía cubrirlo llegaba a la pantalla de pago, comprobaba el total en pantalla y se
+detenía sin pulsar el botón: el defecto vivía justo debajo de donde la prueba paraba.
+
+Los otros ocho: una oferta se resolvía sin comprobar de quién era; el vendedor veía
+la dirección de un pedido sin pagar (con un comentario encima afirmando lo
+contrario); una cuenta suspendida podía reportar; se podía ofertar por algo ya
+vendido; sin celular confirmado se podía escribir en una conversación existente; el
+ticket promedio del panel dividía la plata de las ventas liberadas entre un conteo
+que incluía los reembolsos; un pedido cancelado decía «Pagaste»; y un perfil con una
+sola venta mostraba «Disputas 100%».
+
+**S-36 y S-37 — el chat (2026-09-18):** las dos salieron del mismo mensaje de
+Nicolás con una captura. La conversación pasa a altura completa con burbujas, hora y
+separadores de día; ofertar sale del compositor y se va a `/chat/[id]/oferta` (D-91);
+el vendedor adjunta fotos y las dos partes pueden reportar la conversación, con cola
+propia en moderación (D-92, migración `0013`).
+
+Tres cosas que salieron de construirlas:
+
+- **La causa de los intermitentes, encontrada.** Los seis formularios de sesión
+  hacían `router.push()` **antes** de `router.refresh()`. La navegación podía servir
+  la copia en caché tomada antes de que existiera la sesión, y la cabecera se
+  dibujaba como si nadie hubiera entrado. Explicaba las tres intermitentes anotadas
+  (`chat.spec.ts:19`, `store.spec.ts:142`, `seguimiento.spec.ts:31`). En
+  `SignOutButton` era peor que flakiness: «/» podía dibujar a la persona como si
+  siguiera dentro después de salir.
+- **IMPORTANT: la salida del linter se estaba leyendo mal.** «0 errors and 1 warning
+  potentially fixable» es solo lo **autocorregible**, no el total. La línea que
+  cuenta es `✖ N problems (M errors, K warnings)`. Por leer la otra se coló un error
+  real de React (`react-hooks/immutability`) que solo saltó cuando `npm run verify`
+  murió en el linter.
+- **Sin clases en el backend.** Al documentar se confirmó que `grep "^export class"`
+  sobre `src` devuelve **una sola** (`UploadError`). No es un monolito «con clases»:
+  es funciones por rebanada vertical.
+
+**Diagramas de ingeniería (2026-09-18):** `docs/diagramas/`, generados contra el
+estado real del repositorio y de la cuenta AWS, con la evidencia (comando o archivo)
+de cada componente. Tres cosas que quedaron confirmadas por CLI y conviene no
+volver a suponer: **Amplify no se usa** (0 apps), **App Runner y MediaConvert no
+están disponibles** en la cuenta (`SubscriptionRequiredException`, aunque el rol
+`2venta-dev-mediaconvert` sí existe), y **el EventBridge Scheduler encola directo en
+SQS**, no llama a `/api/tareas/liberar` como parecía.
+
+Y una observación de seguridad que salió de mirar IAM: **`2venta-despliegue-github`
+tiene `AdministratorAccess`** y confía en el OIDC de GitHub, sobre un repositorio
+público. Sin decidir.
 
 **Campos de formulario, al sistema de diseño (2026-09-18):** la pasada de la S-34
 normalizó las 42 tarjetas pero **se saltó los formularios**: quedaron 22 campos
@@ -275,6 +331,35 @@ Lo que sigue abierto de ese repaso:
   propia, y una prueba de punta a punta por rebanada en `e2e/`.
 
 ## Qué aprendí que no está en ningún otro archivo
+
+### La suite es fiable contra la imagen, no contra el servidor de desarrollo (2026-09-20)
+
+Costó cuatro corridas entenderlo, así que queda escrito. Contra `npm run verify` (que
+levanta `next dev`) la suite dio 44, 15, 98 y 67 fallos en corridas seguidas, sin que
+el código cambiara entre ellas. Contra la imagen compilada dio **297 de 297**.
+
+La causa es una sola y tiene nombre en el registro: `Failed to find Server Action.
+This request might be from an older or newer deployment.` Next en desarrollo compila
+cada ruta la primera vez que alguien la pide, y al hacerlo **reconstruye el manifiesto
+de acciones de servidor**. Las páginas ya dibujadas en los otros procesos de Playwright
+pierden sus acciones de golpe, y fallan repartidas por pantallas que no tienen nada que
+ver entre sí. Por eso el síntoma parece aleatorio y cambia de corrida en corrida.
+
+Dos consecuencias prácticas:
+
+- **Crear o tocar CUALQUIER archivo del proyecto mientras corre la suite invalida el
+  manifiesto.** No hace falta que nadie lo importe. Se perdió una corrida entera por
+  crear un componente nuevo con las pruebas a medio camino.
+- **Para un veredicto de verdad, correr contra la imagen**: 3,6 minutos contra 8–12, y
+  cero de esos errores. El comando está en `CLAUDE.md`.
+
+El segundo factor, menor pero real: `signUpVerified` crea una cuenta y Better Auth
+hace hash de la contraseña, que es caro. Con la máquina cargada y varios procesos
+haciéndolo a la vez, el registro pasa de 5 segundos y la prueba muere en
+`toHaveURL(/verificar/)` con el botón en «Creando tu cuenta…». Se ve como un fallo de
+registro y no lo es. `--workers=3` lo quita.
+
+
 
 - Las categorías (D-05b) solo las creaba `db/seed.ts`. En la nube la tabla
   estaba vacía y no se podía publicar. Ahora las crea la migración 0008; el

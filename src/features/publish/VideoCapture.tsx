@@ -105,7 +105,21 @@ export function VideoCapture({ onCaptured }: Props) {
     // La portada se toma de la cámara en vivo, antes de cerrarla. Sacarla del
     // archivo grabado no funciona: un video recién producido por MediaRecorder no
     // trae duración, así que no siempre se puede rebobinar para leer un cuadro.
-    const poster = await posterFromLive(videoRef.current);
+    // Si sacar la portada falla, antes no se pintaba nada y el componente se
+    // quedaba en «grabando» para siempre: `onCaptured` nunca se llamaba, así que
+    // el botón de publicar seguía bloqueado sin explicación (ronda de
+    // verificación, 2026-09-20).
+    let poster;
+    try {
+      poster = await posterFromLive(videoRef.current);
+    } catch {
+      setError(
+        "No pudimos sacar la portada del video. Vuelve a grabarlo, por favor.",
+      );
+      setState("listo");
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      return;
+    }
 
     const url = URL.createObjectURL(blob);
     setPreview(url);

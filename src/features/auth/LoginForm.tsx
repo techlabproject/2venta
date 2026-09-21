@@ -23,10 +23,20 @@ export function LoginForm() {
     setBusy(true);
 
     const form = new FormData(e.currentTarget);
-    const res = await authClient.signIn.email({
-      email: String(form.get("email")).trim().toLowerCase(),
-      password: String(form.get("password")),
-    });
+    // Si el SDK rechaza —red caída, servidor sin responder— antes no se pintaba
+    // nada: el formulario se quedaba pensando para siempre con el botón apagado
+    // y sin decir por qué (ronda de verificación, 2026-09-20).
+    let res;
+    try {
+      res = await authClient.signIn.email({
+        email: String(form.get("email")).trim().toLowerCase(),
+        password: String(form.get("password")),
+      });
+    } catch {
+      setError("No pudimos conectarnos. Revisa tu conexión e intenta otra vez.");
+      setBusy(false);
+      return;
+    }
 
     if (res.error) {
       // No se distingue entre "ese correo no existe" y "esa contraseña no es":
@@ -42,8 +52,10 @@ export function LoginForm() {
       return;
     }
 
-    router.push(destino);
+    // Invalidar antes de navegar: al revés, el destino podía servirse de la copia
+    // en caché tomada sin sesión (ver VerifyForm).
     router.refresh();
+    router.push(destino);
   }
 
   return (

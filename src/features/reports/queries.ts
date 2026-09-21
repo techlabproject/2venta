@@ -3,7 +3,10 @@ import { query } from "@/lib/db";
 export type Period = { from: Date; to: Date };
 
 export type BusinessReport = {
+  /** Pedidos que llegaron a un final: liberados y reembolsados. */
   sales: number;
+  /** Los que terminaron en venta de verdad. El volumen y las categorías son de estos. */
+  settled: number;
   gmvCop: number;
   commissionCop: number;
   averageTicketCop: number;
@@ -24,13 +27,22 @@ export type BusinessReport = {
 export async function businessReport(period: Period): Promise<BusinessReport> {
   const rows = await query<{
     sales: string;
+    settled: string;
     gmv: string | null;
     commission: string | null;
     disputes: string;
     refunded: string;
   }>(
+    // `settled` son las que de verdad terminaron en venta. El volumen y la tabla
+    // por categoría solo cuentan 'liberado', así que el ticket promedio tiene que
+    // dividirse por ese conteo y no por `sales`, que además incluye los
+    // reembolsados. Dividía plata de unos pedidos entre el número de otros, y el
+    // panel llegó a enseñar «Ventas 2 · Volumen $300.000 · Ticket promedio
+    // $150.000» cuando la única venta del periodo valía $300.000 completos
+    // (hallazgo H-1 de Luna, 2026-09-20).
     `select
        count(*) filter (where o.status in ('liberado','reembolsado'))::text as sales,
+       count(*) filter (where o.status = 'liberado')::text as settled,
        coalesce(sum(o.subtotal_cop) filter (where o.status = 'liberado'), 0)::text as gmv,
        coalesce(sum(o.commission_cop) filter (where o.status = 'liberado'), 0)::text as commission,
        count(*) filter (where exists (select 1 from claims c where c.order_id = o.id))::text as disputes,
@@ -73,15 +85,17 @@ export async function businessReport(period: Period): Promise<BusinessReport> {
 
   const r = rows[0];
   const sales = Number(r.sales);
+  const settled = Number(r.settled);
   const gmvCop = Number(r.gmv ?? 0);
   const disputes = Number(r.disputes);
 
   return {
     sales,
+    settled,
     gmvCop,
     commissionCop: Number(r.commission ?? 0),
     // Sin ventas no hay promedio. Dividir por cero daría un número inventado.
-    averageTicketCop: sales === 0 ? 0 : Math.round(gmvCop / sales),
+    averageTicketCop: settled === 0 ? 0 : Math.round(gmvCop / settled),
     disputes,
     disputeRate: sales === 0 ? null : Math.round((disputes / sales) * 1000) / 10,
     refunded: Number(r.refunded),

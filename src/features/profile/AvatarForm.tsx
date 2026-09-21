@@ -70,7 +70,17 @@ export function AvatarForm({ tieneFoto }: { tieneFoto: boolean }) {
             variant="ghost"
             className="w-auto"
             disabled={quitando}
-            onClick={() => quitar(() => void removeAvatar())}
+            onClick={() =>
+              quitar(async () => {
+                // `void removeAvatar()` descartaba la promesa: si la acción
+                // fallaba, la foto seguía ahí y nadie decía nada.
+                try {
+                  await removeAvatar();
+                } catch {
+                  setError("No pudimos quitar la foto. Intenta de nuevo.");
+                }
+              })
+            }
           >
             {quitando ? "Quitando…" : "Quitar"}
           </Button>

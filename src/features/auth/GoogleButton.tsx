@@ -24,11 +24,17 @@ export function GoogleButton({
         disabled={busy}
         onClick={async () => {
           setBusy(true);
-          const res = await authClient.signIn.social({
-            provider: "google",
-            callbackURL: "/verificar",
-          });
-          if (res?.error) {
+          try {
+            const res = await authClient.signIn.social({
+              provider: "google",
+              callbackURL: "/verificar",
+            });
+            if (res?.error) {
+              setError("No pudimos conectar con Google. Intenta con tu correo.");
+              setBusy(false);
+            }
+          } catch {
+            // Un rechazo del SDK dejaba el botón apagado y mudo.
             setError("No pudimos conectar con Google. Intenta con tu correo.");
             setBusy(false);
           }

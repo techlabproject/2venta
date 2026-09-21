@@ -364,3 +364,60 @@ test("al vendedor se le dice cuándo cobra, en todos los estados del pedido", as
   await seller.context.close();
   await ctx.close();
 });
+
+/*
+ * Ronda de verificación 2026-09-20.
+ *
+ * La pantalla del pedido llevaba escrito, en un comentario, que «el vendedor ve la
+ * dirección solo desde que el pedido está pagado, que es cuando la necesita para
+ * despachar. Nunca antes». El código no lo hacía: pintaba la sección en cuanto
+ * existía una dirección, y la dirección se captura ANTES de pagar. Un vendedor
+ * veía dónde vive alguien que se arrepintió a medio pago.
+ *
+ * Un comentario que explica por qué algo es seguro no es prueba de que lo sea.
+ */
+test("el vendedor no ve la dirección de un pedido que nadie pagó", async ({
+  browser,
+}) => {
+  const seller = await sellerWithListing(
+    browser,
+    `Escritorio ${Date.now()}`,
+    300_000,
+  );
+  const ctx = await browser.newContext();
+  const buyer = await ctx.newPage();
+  await signUpVerified(buyer, "comprador", "Laura Compradora");
+
+  // Se llena la dirección y se llega a la pasarela, pero no se paga.
+  await buyer.goto(`/comprar/${seller.listingId}`);
+  await buyer.getByLabel("Quién recibe").fill(QUIEN_RECIBE);
+  await buyer.getByLabel("Celular de quien recibe").fill("300 412 88 05");
+  await buyer.getByLabel("Dirección").fill(DIRECCION);
+  await buyer.getByLabel("Zona").selectOption("Chapinero");
+  await buyer.getByRole("button", { name: "Ir a pagar" }).click();
+  await expect(
+    buyer.getByRole("button", { name: "Simular pago aprobado" }),
+  ).toBeVisible();
+
+  const orderId = await withDb(async (c) => {
+    const { rows } = await c.query<{ id: string }>(
+      `select o.id from orders o
+         join order_items i on i.order_id = o.id
+        where i.listing_id = $1 and o.status = 'pendiente_pago'
+        order by o.created_at desc limit 1`,
+      [seller.listingId],
+    );
+    return rows[0].id;
+  });
+
+  await seller.page.goto(`/pedido/${orderId}`);
+  await expect(seller.page.getByRole("main")).not.toContainText(DIRECCION);
+  await expect(seller.page.getByRole("main")).not.toContainText(QUIEN_RECIBE);
+
+  // El comprador sí ve la suya: es la que acaba de escribir.
+  await buyer.goto(`/pedido/${orderId}`);
+  await expect(buyer.getByRole("main")).toContainText(DIRECCION);
+
+  await seller.context.close();
+  await ctx.close();
+});

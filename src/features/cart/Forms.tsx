@@ -9,6 +9,7 @@ import {
   type CartResult,
 } from "./actions";
 import { Button, ErrorNote } from "@/components/ui";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export function AddToCartButton({
   listingId,
@@ -78,9 +79,9 @@ export function RemoveFromCartButton({ listingId }: { listingId: string }) {
 export function ClearCartButton() {
   return (
     <form action={clearCart}>
-      <Button type="submit" variant="ghost">
+      <SubmitButton variant="ghost" pendingLabel="Vaciando…">
         Vaciar el carrito
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

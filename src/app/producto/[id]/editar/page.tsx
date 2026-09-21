@@ -4,6 +4,7 @@ import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { EditForm } from "@/features/publish/EditForms";
 import { AppHeader } from "@/components/AppHeader";
+import { Volver } from "@/components/Volver";
 
 // RF-16. Editar una publicación propia.
 export const dynamic = "force-dynamic";
@@ -73,9 +74,7 @@ export default async function Editar({
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Link href={`/producto/${id}`} className="text-sm text-ink2 underline">
-          Volver al artículo
-        </Link>
+        <Volver href={`/producto/${id}`}>Volver al artículo</Volver>
         <h1 className="mt-4 font-title text-xl font-semibold">
           Editar publicación
         </h1>

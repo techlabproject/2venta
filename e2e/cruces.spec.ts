@@ -78,6 +78,22 @@ test("una cuenta suspendida no puede publicar ni reportar", async ({ browser }) 
   await seller.page.goto("/publicar");
   await expect(seller.page).toHaveURL(/\/suspendida/);
 
+  // Ronda de verificación 2026-09-20: esta prueba se llamaba «no puede publicar ni
+  // reportar» y solo probaba publicar. La mitad que faltaba era justo la que
+  // fallaba: `reportListing()` leía la sesión con `currentUser()` en vez de
+  // `activeUser()`, así que una cuenta suspendida seguía llenando la cola de
+  // moderación. El nombre de una prueba no prueba nada.
+  const otro = await sellerWithListing(browser, `Ajeno ${Date.now()}`, 50_000, "ropa");
+  await seller.page.goto(`/producto/${otro.listingId}`);
+  await seller.page
+    .getByRole("group")
+    .filter({ hasText: "Reportar esta publicación" })
+    .click();
+  await seller.page.getByLabel("Motivo").selectOption("robado");
+  await seller.page.getByRole("button", { name: "Reportar" }).click();
+  await expect(seller.page).toHaveURL(/\/suspendida/);
+
+  await otro.context.close();
   await seller.context.close();
 });
 

@@ -34,7 +34,17 @@ export function PhoneForm() {
     }
     const phone = `+57${digits}`;
 
-    const updated = await authClient.updateUser({ phoneNumber: phone });
+    // Si el SDK rechaza —red caída, servidor sin responder— antes no se pintaba
+    // nada: el formulario se quedaba pensando para siempre con el botón apagado
+    // y sin decir por qué (ronda de verificación, 2026-09-20).
+    let updated;
+    try {
+      updated = await authClient.updateUser({ phoneNumber: phone });
+    } catch {
+      setError("No pudimos conectarnos. Revisa tu conexión e intenta otra vez.");
+      setBusy(false);
+      return;
+    }
     if (updated.error) {
       setError(
         /exist/i.test(updated.error.message ?? "")
@@ -52,8 +62,9 @@ export function PhoneForm() {
       return;
     }
 
-    router.push("/verificar");
+    // Invalidar antes de navegar (ver VerifyForm).
     router.refresh();
+    router.push("/verificar");
   }
 
   return (

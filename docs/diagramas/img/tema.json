@@ -1,0 +1,31 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "fontFamily": "Poppins, Helvetica Neue, Arial, sans-serif",
+    "fontSize": "15px",
+
+    "background": "#F2F5F3",
+    "primaryColor": "#FFFFFF",
+    "primaryTextColor": "#0B2422",
+    "primaryBorderColor": "#D6E0DD",
+    "secondaryColor": "#E3EAE7",
+    "tertiaryColor": "#FFFFFF",
+
+    "lineColor": "#0F4C4A",
+    "textColor": "#0B2422",
+
+    "clusterBkg": "#E3EAE7",
+    "clusterBorder": "#0F4C4A",
+    "titleColor": "#0F4C4A",
+
+    "edgeLabelBackground": "#F2F5F3",
+
+    "nodeBorder": "#0F4C4A",
+    "mainBkg": "#FFFFFF",
+
+    "attributeBackgroundColorOdd": "#FFFFFF",
+    "attributeBackgroundColorEven": "#F2F5F3"
+  },
+  "er": { "useMaxWidth": false, "entityPadding": 12 },
+  "flowchart": { "useMaxWidth": false, "htmlLabels": true, "curve": "basis", "padding": 18 }
+}

@@ -27,8 +27,9 @@ export function RecoveryForm() {
   >(async (prev, form) => {
     const res = await resetPassword(prev, form);
     if (res.verified) {
-      router.push("/ingresar?recuperada=1");
+      // Invalidar antes de navegar (ver VerifyForm).
       router.refresh();
+      router.push("/ingresar?recuperada=1");
     }
     return res;
   }, null);

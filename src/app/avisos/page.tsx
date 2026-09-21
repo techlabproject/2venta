@@ -8,7 +8,7 @@ import {
 import { markAllRead } from "@/features/alerts/actions";
 import { DeleteSearchButton } from "@/features/alerts/Forms";
 import { AppHeader } from "@/components/AppHeader";
-import { Button } from "@/components/ui";
+import { SubmitButton } from "@/components/SubmitButton";
 
 // S-15. Las alertas se generan y se guardan; no hay canal de salida conectado.
 // Una alerta que hay que entrar a ver no sirve para lo que existe, que es traer a
@@ -55,9 +55,9 @@ export default async function Avisos() {
               ))}
             </ul>
             <form action={markAllRead} className="mt-3">
-              <Button type="submit" variant="ghost">
+              <SubmitButton variant="ghost" pendingLabel="Marcando…">
                 Marcar todo como visto
-              </Button>
+              </SubmitButton>
             </form>
           </>
         )}

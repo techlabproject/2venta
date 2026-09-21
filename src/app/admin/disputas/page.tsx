@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { mediaUrl } from "@/lib/media";
-import Link from "next/link";
 import { currentAdmin } from "@/lib/session";
 import { KIND_LABEL, listOpenClaims } from "@/features/claims/queries";
 import { ResolveClaimForm } from "@/features/claims/Forms";
 import { AppHeader } from "@/components/AppHeader";
 import { formatCop } from "@/lib/money";
+import { Volver } from "@/components/Volver";
 
 // El panel de arbitraje de la D-13. Sin esto, "2venta arbitra con la evidencia de
 // ambas partes" es una promesa que nadie puede cumplir.
@@ -21,9 +21,7 @@ export default async function Disputas() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-3xl px-5 py-6">
-        <Link href="/admin" className="text-sm text-ink2 underline">
-          Moderación
-        </Link>
+        <Volver href="/admin">Moderación</Volver>
         <h1 className="mt-4 font-title text-2xl font-semibold">Disputas</h1>
         <p data-testid="cola-disputas" className="mt-1 text-sm text-muted">
           {claims.length === 1

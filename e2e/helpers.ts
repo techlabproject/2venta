@@ -194,3 +194,18 @@ export async function runWorkerOnce(): Promise<string> {
 export async function enqueueJob(job: Job): Promise<void> {
   await enqueue(job);
 }
+
+/**
+ * Hace una oferta desde el chat (S-36).
+ *
+ * Desde la S-36 el campo de precio ya no vive en la conversación: es un panel
+ * aparte al que se llega por un enlace discreto. El ayudante recorre ese camino
+ * entero para que las pruebas que solo necesitan «una oferta hecha» no tengan que
+ * saber cómo está montado.
+ */
+export async function ofertar(page: Page, precio: number) {
+  await page.getByRole("link", { name: "Hacer una oferta" }).click();
+  await page.getByLabel("Cuánto ofreces").fill(String(precio));
+  await page.getByRole("button", { name: "Enviar la oferta" }).click();
+  await expect(page).toHaveURL(/\/chat\/[0-9a-f-]+$/);
+}

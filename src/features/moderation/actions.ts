@@ -1,8 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentAdmin, currentUser } from "@/lib/session";
+import { activeUser, currentAdmin } from "@/lib/session";
 import { query } from "@/lib/db";
 
 export type ModerationResult = { error: string };
@@ -13,8 +12,11 @@ export async function reportListing(
   _prev: ModerationResult | null,
   form: FormData
 ): Promise<ModerationResult> {
-  const user = await currentUser();
-  if (!user) redirect("/ingresar");
+  // `activeUser()` y no `currentUser()`: una cuenta suspendida no reporta. Lo dice
+  // la propia documentación de `activeUser`, y la prueba que decía cubrirlo —«no
+  // puede publicar ni reportar»— solo probaba publicar (ronda de verificación,
+  // 2026-09-20).
+  const user = await activeUser();
 
   const listingId = String(form.get("listingId") ?? "");
   const reason = String(form.get("reason") ?? "");

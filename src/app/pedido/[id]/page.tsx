@@ -1,5 +1,4 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { currentUser } from "@/lib/session";
 import { getOrder, getOrderItems } from "@/features/payments/orders";
 import { query } from "@/lib/db";
@@ -20,6 +19,7 @@ import { CancelCheckoutButton } from "@/features/payments/CancelCheckoutButton";
 import { CHECKOUT_TTL_MINUTES } from "@/features/payments/abandon";
 import { OrderTimeline } from "@/features/payments/OrderTimeline";
 import { ButtonLink } from "@/components/ui";
+import { Volver } from "@/components/Volver";
 
 // Pantalla 1j del mockup: seguimiento y liberación del pago.
 export const dynamic = "force-dynamic";
@@ -59,6 +59,21 @@ export default async function Pedido({
   if (order.buyer_id !== user.id && order.seller_id !== user.id) notFound();
 
   const isBuyer = order.buyer_id === user.id;
+  /*
+   * Quién puede ver la dirección.
+   *
+   * El comprador, la suya, siempre. El vendedor, solo desde que el pedido está
+   * pagado, que es cuando la necesita para despachar.
+   *
+   * Esto estaba escrito como comentario justo encima de la sección y no estaba
+   * implementado: se pintaba con que existiera una dirección. Y la dirección se
+   * captura ANTES de pagar, así que el vendedor veía dónde vive alguien que llenó
+   * el formulario y se arrepintió en la pasarela (ronda de verificación,
+   * 2026-09-20).
+   */
+  const verDireccion =
+    isBuyer ||
+    (order.status !== "pendiente_pago" && order.status !== "cancelado");
   const items = await getOrderItems(order.id);
   // La dirección se pide a propósito y solo después de comprobar que quien mira es
   // una de las dos partes. Nunca llega arrastrada por la consulta del pedido.
@@ -95,9 +110,7 @@ export default async function Pedido({
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Link href="/" className="text-sm text-ink2 underline">
-          Volver
-        </Link>
+        <Volver href="/" />
 
         <h1 className="mt-4 font-title text-xl font-semibold">
           Pedido {order.id.slice(0, 8)}
@@ -143,7 +156,15 @@ export default async function Pedido({
           {isBuyer && (
             <>
               <dt className="text-muted">
-                {order.status === "pendiente_pago" ? "Vas a pagar" : "Pagaste"}
+                {/* Un pedido cancelado nunca cobró nada: el propio aviso de
+                    arriba dice «no se cobró nada». Rotular el desglose como
+                    «Pagaste» lo contradecía en la misma pantalla (H-3 de Luna,
+                    2026-09-20). */}
+                {order.status === "pendiente_pago"
+                  ? "Vas a pagar"
+                  : order.status === "cancelado"
+                    ? "Habrías pagado"
+                    : "Pagaste"}
               </dt>
               <dd data-testid="total" className="font-medium">
                 {formatCop(money.buyerTotalCop)}
@@ -251,11 +272,9 @@ export default async function Pedido({
           </div>
         )}
 
-        {address && (
+        {address && verDireccion && (
           <section className="mt-6 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line">
             <h2 className="font-medium">Entrega</h2>
-            {/* El vendedor ve la dirección solo desde que el pedido está pagado, que
-                es cuando la necesita para despachar. Nunca antes. */}
             <p className="mt-1 text-ink2">{address.recipient}</p>
             <p className="text-ink2">
               {address.line1}

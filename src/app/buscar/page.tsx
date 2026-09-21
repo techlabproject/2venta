@@ -10,6 +10,7 @@ import {
   parseFilters,
   searchListings,
 } from "@/features/catalog/search";
+import { Volver } from "@/components/Volver";
 
 // Pantalla 1e del mockup. Renderizada en servidor: los filtros viven en la
 // dirección, así que un resultado se puede compartir por chat y el buscador la
@@ -41,9 +42,7 @@ export default async function Buscar({
     <>
       <AppHeader />
       <main className="mx-auto max-w-6xl px-5 py-6">
-        <Link href="/" className="text-sm text-ink2 underline">
-          Volver
-        </Link>
+        <Volver href="/" />
 
         <h1 className="mt-4 mb-5 font-title text-xl font-semibold">
           {filters.q ? `Resultados para “${filters.q}”` : "Buscar"}

@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { currentAdmin } from "@/lib/session";
 import { businessReport, parsePeriod } from "@/features/reports/queries";
 import { AppHeader } from "@/components/AppHeader";
 import { formatCop } from "@/lib/money";
+import { Volver } from "@/components/Volver";
 
 // RF-42. El último requisito funcional que quedaba.
 export const dynamic = "force-dynamic";
@@ -33,9 +33,7 @@ export default async function Reportes({
     <>
       <AppHeader />
       <main className="mx-auto max-w-3xl px-5 py-6">
-        <Link href="/admin" className="text-sm text-ink2 underline">
-          Moderación
-        </Link>
+        <Volver href="/admin">Moderación</Volver>
         <h1 className="mt-4 font-title text-2xl font-semibold">Reportes</h1>
 
         <form
@@ -102,7 +100,20 @@ export default async function Reportes({
           data-testid="cifras"
           className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4"
         >
-          <Cifra label="Ventas" value={String(report.sales)} />
+          {/* «Ventas» cuenta los pedidos que llegaron a un final, reembolsos
+              incluidos, porque es el denominador de la tasa de disputa. El
+              volumen, la comisión y la tabla por categoría son solo de los que
+              terminaron en venta. Sin decirlo, el panel parecía contradecirse
+              solo: «Ventas 2» arriba y una sola fila abajo (H-1 de Luna). */}
+          <Cifra
+            label="Ventas"
+            testid="ventas"
+            value={
+              report.settled === report.sales
+                ? String(report.sales)
+                : `${report.settled} de ${report.sales}`
+            }
+          />
           <Cifra label="Volumen" value={formatCop(report.gmvCop)} />
           <Cifra
             label="Comisiones"
@@ -112,10 +123,14 @@ export default async function Reportes({
           <Cifra
             label="Ticket promedio"
             value={formatCop(report.averageTicketCop)}
+            testid="ticket"
           />
         </dl>
 
         <h2 className="mt-8 font-title text-lg font-semibold">Por categoría</h2>
+        <p className="mt-1 text-sm text-muted">
+          Solo las ventas completadas. Los pedidos reembolsados no aparecen aquí.
+        </p>
         {report.byCategory.length === 0 ? (
           <p className="mt-2 text-sm text-muted">
             Sin ventas completadas en este periodo.

@@ -1,13 +1,13 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { activeUser } from "@/lib/session";
 import { getListing } from "@/features/catalog/queries";
 import { listZones } from "@/features/catalog/search";
 import { shippingProvider } from "@/features/shipping/provider";
 import { AddressForm } from "@/features/shipping/AddressForm";
 import { AppHeader } from "@/components/AppHeader";
-import { getOffer } from "@/features/chat/queries";
+import { getConversation, getOffer } from "@/features/chat/queries";
 import { listCart } from "@/features/cart/queries";
+import { Volver } from "@/components/Volver";
 
 // Paso previo al pago: a dónde llega y cuánto cuesta llevarlo. El comprador ve el
 // total completo antes de que le cobren nada.
@@ -37,10 +37,21 @@ export default async function Comprar({
   // de que sea válida vuelve a hacerse en el servidor al pagar.
   const { oferta } = await searchParams;
   const offer = oferta ? await getOffer(oferta) : null;
+  // La oferta tiene que ser de quien está mirando. Sin esto, el precio que negoció
+  // otra persona se le enseñaba a cualquiera que llegara con el identificador en
+  // la dirección (ronda de verificación, 2026-09-20).
+  const offerConversation = offer
+    ? await getConversation(offer.conversation_id)
+    : null;
+  const ofertaPropia =
+    offer &&
+    offer.listing_id === listing.id &&
+    offer.status === "aceptada" &&
+    offerConversation?.buyer_id === user.id;
   const priceCop =
     id === "carrito"
       ? cart.reduce((sum, i) => sum + i.price_cop, 0)
-      : offer && offer.listing_id === listing.id && offer.status === "aceptada"
+      : ofertaPropia
         ? offer.price_cop
         : listing.price_cop;
 
@@ -63,12 +74,7 @@ export default async function Comprar({
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Link
-          href={`/producto/${listing.id}`}
-          className="text-sm text-ink2 underline"
-        >
-          Volver al artículo
-        </Link>
+        <Volver href={`/producto/${listing.id}`}>Volver al artículo</Volver>
         <h1 className="mt-4 font-title text-xl font-semibold">
           ¿A dónde lo llevamos?
         </h1>
@@ -83,7 +89,7 @@ export default async function Comprar({
         <AddressForm
           listingId={listing.id}
           priceCop={priceCop}
-          offerId={offer && offer.status === "aceptada" ? offer.id : undefined}
+          offerId={ofertaPropia ? offer.id : undefined}
           fromCart={id === "carrito"}
           shippingCop={quote.costCop}
           zones={zoneNames}

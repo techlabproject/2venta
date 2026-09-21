@@ -25,6 +25,7 @@ import { listPhotos } from "@/features/publish/photo-queries";
 import { currentUser } from "@/lib/session";
 import { Avatar } from "@/components/Avatar";
 import { getReputation } from "@/features/ratings/queries";
+import { Volver } from "@/components/Volver";
 
 export const dynamic = "force-dynamic";
 
@@ -80,9 +81,7 @@ export default async function ListingPage({
     <>
       <AppHeader zone={listing.seller_zone} />
       <main className="mx-auto max-w-6xl px-5 py-6">
-        <Link href="/" className="text-sm text-ink2 underline">
-          Volver
-        </Link>
+        <Volver href="/" />
 
         {/* En escritorio, el medio a la izquierda y la decisión de compra a la
             derecha: antes todo iba apilado en una columna estrecha y el botón de

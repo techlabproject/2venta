@@ -874,3 +874,122 @@ filtrada que la lista.
 **Lo que no lleva.** Tiempo real, buscar dentro de las conversaciones, archivar,
 silenciar ni marcar como no leído a mano. Nada de eso se pidió y ninguno tiene
 volumen que lo justifique todavía.
+
+### D-91 — El chat parece un chat, y la oferta tiene su propio panel
+La conversación pasa a altura completa con tres franjas —el artículo arriba, los
+mensajes en el medio con su desplazamiento, el compositor abajo—, burbujas con hora,
+separadores de día, y las ofertas dentro de la línea de tiempo en su sitio
+cronológico. Ofertar sale del compositor y pasa a `/chat/[id]/oferta`.
+**Por qué.** Lo pidió Nicolás (2026-09-18) con una captura. «Ofertar» pesaba lo mismo
+que «Enviar»: debajo del campo de escribir había un segundo campo, de precio,
+siempre visible. La acción de cada día —preguntar— y la excepcional —negociar—
+competían por el mismo sitio.
+**Por qué una pantalla y no un diálogo.** Una oferta es un compromiso con
+vencimiento; merece una decisión consciente y así funciona sin JavaScript.
+**La barra inferior desaparece dentro de la conversación.** Es lo que hace cualquier
+app de chat: ahí abajo el pulgar quiere el campo de escribir. Al no estar en el
+árbol, el hueco que reserva `globals.css` con `body:has(...)` desaparece solo.
+**Lo que costó averiguar.** `router.push()` antes de `router.refresh()` en los seis
+formularios de sesión era una condición de carrera real: la navegación podía servir
+la copia en caché tomada **antes** de que existiera la sesión, y la cabecera se
+dibujaba como si nadie hubiera entrado. Explicaba tres intermitentes anotadas. Al
+cerrar sesión era peor: «/» podía dibujar a la persona como si siguiera dentro.
+
+### D-92 — Fotos en el chat, y una salida cuando se pone feo
+El vendedor puede adjuntar una foto por mensaje; las dos partes pueden reportar la
+conversación.
+**Por qué van juntas.** La segunda es la condición de la primera. Abrir un canal por
+el que entran imágenes a una conversación privada entre desconocidos, sin salida para
+quien recibe algo que no pidió, sería añadir una superficie de abuso y ninguna
+defensa. El filtro de la D-19 lee texto; una imagen se lo salta entera.
+**Solo el vendedor adjunta.** Es lo que se pidió y es el lado que tiene algo que
+enseñar. Queda pendiente para el día que haya un reclamo con fotos del defecto.
+**Reportar no le avisa a la otra parte.** Un reporte que el reportado puede ver
+convierte el botón en algo que da miedo usar, y quien está siendo acosado es justo
+quien menos puede permitirse ese miedo.
+**Tabla propia y no `reports`.** «Este artículo es falso» y «esta persona me está
+acosando» son cosas distintas, van a manos distintas, y la restricción única de
+`reports` impediría reportar las dos.
+**Quien modera puede leer la conversación, y solo esa.** La condición —que tenga un
+reporte sin resolver— vive en el `where` de la consulta, no en la pantalla. Un
+administrador no lee conversaciones privadas porque sí: lee las que alguien pidió que
+se revisaran, mientras esa revisión siga abierta. Y es de solo lectura: quien modera
+juzga lo que pasó, no participa.
+
+### D-93 — El botón de volver es un objeto, no una palabra subrayada
+En las dieciséis pantallas que lo tienen, devolverse era
+`<Link className="text-sm text-ink2 underline">Volver</Link>`: texto subrayado, sin
+forma, sin contorno y sin dirección, con el mismo peso visual que un enlace dentro de
+un párrafo. Pasa a ser `src/components/Volver.tsx`: cápsula blanca con el mismo
+anillo `line` que las tarjetas, y una flecha que se corre dos píxeles a la izquierda
+al pasar el puntero.
+**Por qué importa más de lo que parece.** Es el control que más se usa en un teléfono
+y era el único de todo el producto que no parecía un control. Un subrayado dice
+«esto es un enlace»; no dice hacia dónde va ni que sea el camino de salida de esta
+pantalla.
+**La flecha es el único movimiento y cumple la D-86.** No adorna: explica la
+dirección, que es justo lo que el subrayado no hacía.
+**Lo que NO se convirtió.** «Limpiar» en los filtros y los dos `<summary>` que
+despliegan un formulario comparten el estilo viejo y se quedan como están: no son
+salidas de pantalla, y ponerles una flecha de volver sería mentir sobre lo que hacen.
+
+### D-94 — El coral de la cabecera se perfila; el relleno queda para la acción de la pantalla
+«Vender» y «Entrar» usaban el mismo relleno coral sólido que la acción principal de
+cada pantalla. En una ficha sin sesión se veían dos botones naranjas del mismo peso
+—«Entrar» arriba y «Comprar con pago protegido» abajo— y nada distinguía cuál era el
+importante. Ahora la cabecera va perfilada sobre el petróleo con `accent-on-brand`,
+un token que ya existía y no se usaba para esto.
+**Por qué no se quitó el coral del todo.** Publicar es lo que hace crecer el
+catálogo; la invitación tiene que seguir llamando. Lo que no puede es competir.
+**La D-84 seguía incumpliéndose donde más se ve.** El repintado a petróleo y coral
+arregló las pantallas y no tocó la cabecera, que sale en todas. Encontrado en la
+ronda de diseño de Sol, 2026-09-20.
+
+### D-95 — Las pantallas de entrada llevan marca y llevan salida
+`AuthShell` no pintaba el logo. Las cuatro pantallas de entrada eran título, campos y
+botón flotando sobre la crema, sin identidad y sin más salida que el «atrás» del
+navegador.
+**Por qué ahí y no en otra parte.** Es el momento exacto en que alguien decide
+confiarle un correo, un celular y una contraseña a una empresa que no conoce. Es
+cuando más debería verse de quién es el formulario.
+**El logo es además la salida.** Enlazado a `/`. No hace falta la cabecera completa:
+a quien no tiene sesión no hay carrito ni avisos que mostrarle.
+**Se había encontrado antes y se quedó sin decisión.** El informe de arte del
+2026-09-13 lo señaló (H6) con la causa exacta y no entró ni en los hallazgos cerrados
+ni en los abiertos. Siete días de diferencia entre encontrar algo y decidir sobre
+ello es el hueco real que esto también cierra.
+
+### D-96 — Lo que encontró la ronda de verificación del 2026-09-20
+Cinco defectos confirmados leyendo el código y reproducidos con pruebas antes de
+arreglarlos. Se anotan juntos porque comparten una misma causa de fondo.
+
+**Pagar una oferta aceptada era imposible.** La acción de pago comparaba el total que
+manda el comprador contra el precio PUBLICADO, y solo después aplicaba el de la
+oferta. Como una oferta aceptada vale distinto por definición, toda negociación
+terminaba en «el precio cambió mientras comprabas». Negociar y después no poder pagar
+es el peor final posible para esa función.
+
+**Una oferta se resolvía sin mirar de quién era.** Se comprobaba el artículo y el
+estado, no el dueño. Ahora se comprueba que quien paga sea el comprador de la
+conversación donde vive la oferta, y la pantalla tampoco enseña el precio negociado a
+quien no es.
+
+**El vendedor veía la dirección de un pedido sin pagar.** La dirección se captura
+antes de pagar; la sección se pintaba con que existiera.
+
+**Una cuenta suspendida podía reportar.** `reportListing()` leía la sesión con
+`currentUser()` en vez de `activeUser()`.
+
+**Se podía ofertar por un artículo ya vendido**, y el vendedor aceptaba algo que
+nadie podía pagar.
+
+**Sin celular confirmado se podía escribir en una conversación ya existente.** La
+comprobación estaba solo en las acciones que CREAN la conversación. Reportar sí
+queda exento a propósito: poner un trámite delante de quien pide ayuda es lo contrario
+de lo que se decidió en la D-92.
+
+**La causa de fondo, que es lo que hay que recordar.** Tres de los cinco tenían
+encima un comentario que afirmaba justo la comprobación que faltaba, y uno tenía una
+prueba llamada «no puede publicar ni reportar» que solo probaba publicar. Un
+comentario que explica por qué algo es seguro no es prueba de que lo sea, y el nombre
+de una prueba no prueba nada: hay que leer el cuerpo.

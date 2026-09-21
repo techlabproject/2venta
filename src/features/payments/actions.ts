@@ -11,7 +11,7 @@ import { MIN_PRICE_COP, breakdown } from "./money";
 import { cancelPendingOrder, findOwnPendingOrder } from "./abandon";
 import { shippingProvider } from "@/features/shipping/provider";
 import { saveAddress } from "@/features/shipping/queries";
-import { getOffer } from "@/features/chat/queries";
+import { getConversation, getOffer } from "@/features/chat/queries";
 import { listCart } from "@/features/cart/queries";
 import { clearCart } from "@/features/cart/actions";
 
@@ -70,9 +70,32 @@ export async function buyListing(
   // D-21: si hay una oferta aceptada, el precio es el de la oferta, no el de la
   // publicación. Se comprueba en el servidor que sea de este comprador, de este
   // artículo, y que siga aceptada: si no, cualquiera pagaría lo que quisiera.
+  //
+  // Esto tiene que resolverse ANTES de comparar contra el total que mandó el
+  // comprador. Estaba después, y el efecto era que toda oferta aceptada —que por
+  // definición vale distinto al precio publicado— chocaba contra la comprobación
+  // de «el precio cambió» y no se podía pagar nunca. El comentario decía que la
+  // pertenencia se comprobaba; el código solo miraba el artículo y el estado, así
+  // que el identificador de una oferta ajena servía para comprar al precio que
+  // negoció otra persona (ronda de verificación, 2026-09-20).
   let priceCop = fromCart
     ? cart.reduce((sum, i) => sum + i.price_cop, 0)
     : listing.price_cop;
+
+  const offerId = String(form.get("offerId") ?? "");
+  if (offerId && !fromCart) {
+    const offer = await getOffer(offerId);
+    if (!offer || offer.listing_id !== listing.id || offer.status !== "aceptada") {
+      return { error: "Esa oferta ya no está en pie." };
+    }
+    // De quién es. Una oferta vive en una conversación, y quien paga tiene que ser
+    // el comprador de esa conversación; no basta con conocer el identificador.
+    const conversation = await getConversation(offer.conversation_id);
+    if (!conversation || conversation.buyer_id !== user.id) {
+      return { error: "Esa oferta ya no está en pie." };
+    }
+    priceCop = offer.price_cop;
+  }
 
   /*
    * El comprador manda el total que vio en pantalla. Si no coincide con el de
@@ -90,15 +113,6 @@ export async function buyListing(
       error: `El precio cambió mientras comprabas: ahora son $${priceCop.toLocaleString("es-CO")} en vez de $${expected.toLocaleString("es-CO")}. Vuelve a revisar antes de pagar.`,
     };
   }
-  const offerId = String(form.get("offerId") ?? "");
-  if (offerId) {
-    const offer = await getOffer(offerId);
-    if (!offer || offer.listing_id !== listing.id || offer.status !== "aceptada") {
-      return { error: "Esa oferta ya no está en pie." };
-    }
-    priceCop = offer.price_cop;
-  }
-
   if (priceCop < MIN_PRICE_COP) {
     return { error: "Ese artículo está por debajo del precio mínimo." };
   }

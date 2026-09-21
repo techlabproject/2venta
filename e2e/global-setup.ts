@@ -35,13 +35,23 @@ const ROUTES = [
   "/recuperar",
   "/vender/metricas",
   "/dev/destacar/00000000-0000-4000-8000-000000000000",
+  // Las tres que faltaban. `/dev/pago` lo pisa casi toda prueba que compra, y
+  // compilarlo tarde reconstruye el manifiesto de acciones de servidor: las
+  // páginas ya dibujadas en los otros procesos pierden sus acciones y fallan con
+  // «Failed to find Server Action», repartido por pantallas que no tienen nada
+  // que ver entre sí (2026-09-20).
+  "/dev/pago/00000000-0000-4000-8000-000000000000",
+  "/dev/kyc/ref-inexistente",
+  "/admin/conversaciones/00000000-0000-4000-8000-000000000000",
   "/publicar/00000000-0000-4000-8000-000000000000",
   "/admin",
   "/admin/disputas",
+  "/admin/conversaciones",
   "/producto/00000000-0000-4000-8000-000000000000",
   "/producto/00000000-0000-4000-8000-000000000000/editar",
   "/pedido/00000000-0000-4000-8000-000000000000",
   "/chat/00000000-0000-4000-8000-000000000000",
+  "/chat/00000000-0000-4000-8000-000000000000/oferta",
   "/comprar/00000000-0000-4000-8000-000000000000",
   "/vendedor/no-existe",
   "/api/auth/get-session",
