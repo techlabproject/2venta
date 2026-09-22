@@ -1,8 +1,21 @@
 # Estado
 
-**Última actualización:** 2026-09-21
+**Última actualización:** 2026-09-22
 
 ## En qué voy
+
+**Correcciones de Catalina (2026-09-22).** Catalina revisó `dev` a mano y dejó 47
+filas (`qa/correcciones/2026-09-22.md`). Se resuelven de una en una: Nicolás decide
+lo de producto, se arregla con prueba, y Luna (Codex, `gpt-5.6-luna` en `xhigh`) la
+prueba en un navegador hasta que pasa. **Fila 1 hecha** (D-99): «Volver» en todas las
+pantallas menos la portada, con recorrido por pestaña; sin cuenta, «Escribirle al
+vendedor» sigue derecho al chat después de entrar o registrarse. Luna encontró en el
+camino que se podía abrir un chat con «Hacer una oferta» sobre un artículo retirado.
+
+Cómo corre Luna: Chromium no arranca dentro del sandbox de Codex (se cae con
+SIGTRAP), así que el navegador se levanta afuera con `chromium.launchServer()` y Luna
+se conecta por WebSocket desde el sandbox. Codex no puede escribir en el repositorio,
+y **mientras corre no se toca ningún archivo**: usa el servidor de desarrollo.
 
 Las tres fases del plan más veintiuna rebanadas posteriores. 300 pruebas de navegador
 y 125 unitarias (seis de ellas contra MinIO), más 52 comparaciones visuales sobre

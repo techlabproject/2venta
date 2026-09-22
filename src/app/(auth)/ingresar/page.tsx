@@ -3,6 +3,7 @@ import { AuthShell } from "@/components/ui";
 import { LoginForm } from "@/features/auth/LoginForm";
 import { GoogleButton } from "@/features/auth/GoogleButton";
 import { googleConfigured } from "@/lib/auth";
+import { conVolver, destinoInterno } from "@/lib/destino";
 
 const MOTIVO: Record<string, string> = {
   comprar:
@@ -18,14 +19,16 @@ export default async function Ingresar({
 }) {
   // Se dice por qué se pide la cuenta: antes se caía en esta pantalla sin
   // explicación, y quien venía de un artículo no sabía por qué se la pedían.
-  const { motivo } = await searchParams;
+  const { motivo, volver: crudo } = await searchParams;
   const razon = motivo ? MOTIVO[motivo] : undefined;
+  // Quien no tiene cuenta y va a crearla no debe perder a dónde iba.
+  const volver = destinoInterno(crudo) ?? undefined;
 
   return (
     <AuthShell title="Iniciar sesión" subtitle={razon}>
       {googleConfigured() && (
         <>
-          <GoogleButton />
+          <GoogleButton volver={volver} />
           <p className="text-center text-xs text-muted">o con tu correo</p>
         </>
       )}
@@ -37,7 +40,10 @@ export default async function Ingresar({
       </p>
       <p className="text-center text-sm text-ink2">
         ¿No tienes cuenta?{" "}
-        <Link href="/bienvenida" className="font-medium text-brand underline">
+        <Link
+          href={conVolver("/bienvenida", volver)}
+          className="font-medium text-brand underline"
+        >
           Crear una
         </Link>
       </p>

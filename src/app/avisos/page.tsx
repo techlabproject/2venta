@@ -9,6 +9,7 @@ import { markAllRead } from "@/features/alerts/actions";
 import { DeleteSearchButton } from "@/features/alerts/Forms";
 import { AppHeader } from "@/components/AppHeader";
 import { SubmitButton } from "@/components/SubmitButton";
+import { Volver } from "@/components/Volver";
 
 // S-15. Las alertas se generan y se guardan; no hay canal de salida conectado.
 // Una alerta que hay que entrar a ver no sirve para lo que existe, que es traer a
@@ -29,6 +30,9 @@ export default async function Avisos() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
+        <div className="mb-4">
+          <Volver href="/" />
+        </div>
         <h1 className="font-title text-2xl font-semibold">Avisos</h1>
 
         {notifications.length === 0 ? (

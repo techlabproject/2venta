@@ -120,7 +120,7 @@ export default async function Pedido({
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Volver href="/" />
+        <Volver href="/actividad" />
 
         <h1 className="mt-4 font-title text-xl font-semibold">
           Pedido {order.id.slice(0, 8)}

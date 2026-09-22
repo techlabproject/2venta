@@ -10,6 +10,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { Vacio } from "@/components/Vacio";
 import { formatCop } from "@/lib/money";
 import { breakdown } from "@/features/payments/money";
+import { Volver } from "@/components/Volver";
 
 // S-18. No es una función nueva: hasta ahora la única forma de volver a un pedido
 // era tener su dirección guardada. Se pagaba, se cerraba la pestaña, y no se
@@ -45,6 +46,9 @@ export default async function Actividad() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-3xl px-5 py-6">
+        <div className="mb-4">
+          <Volver href="/" />
+        </div>
         <h1 className="font-title text-2xl font-semibold">Tu actividad</h1>
 
         <Section

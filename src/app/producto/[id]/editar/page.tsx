@@ -52,7 +52,10 @@ export default async function Editar({
     return (
       <>
         <AppHeader />
-        <main className="mx-auto max-w-md px-5 py-16">
+        <main className="mx-auto max-w-md px-5 py-10">
+          <div className="mb-6">
+            <Volver href={`/producto/${id}`} />
+          </div>
           <h1 className="font-title text-2xl font-semibold">
             Esta publicación no es tuya
           </h1>
@@ -74,7 +77,7 @@ export default async function Editar({
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Volver href={`/producto/${id}`}>Volver al artículo</Volver>
+        <Volver href={`/producto/${id}`} fijo>Volver al artículo</Volver>
         <h1 className="mt-4 font-title text-xl font-semibold">
           Editar publicación
         </h1>

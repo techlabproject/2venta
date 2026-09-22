@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
+import { Volver } from "./Volver";
 import type { ComponentProps, ReactNode } from "react";
 
 // Primitivas de interfaz con la marca ya aplicada. Existen para que ninguna
@@ -132,9 +133,15 @@ export function AuthShell({
           «atrás» del navegador. Quien cae aquí desde un enlace quedaba encerrado
           en un formulario sin saber de qué sitio es (ronda de diseño, Sol,
           2026-09-20). */}
+      {/* Y además el «Volver» de siempre (corrección 1, 2026-09-22): el logo lleva
+          a la portada, pero quien llegó aquí desde un artículo quiere volver al
+          artículo, y un logo no se lee como «atrás». */}
+      <div className="mb-6">
+        <Volver href="/" />
+      </div>
       <Link
         href="/"
-        aria-label="Volver al inicio de 2venta"
+        aria-label="Ir al inicio de 2venta"
         className="mb-8 inline-flex w-fit rounded-lg text-brand transition duration-200 ease-salida hover:opacity-80"
       >
         <Logo className="h-8 w-auto" />

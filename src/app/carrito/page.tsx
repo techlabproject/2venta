@@ -5,6 +5,7 @@ import { ClearCartButton, RemoveFromCartButton } from "@/features/cart/Forms";
 import { AppHeader } from "@/components/AppHeader";
 import { formatCop } from "@/lib/money";
 import { commissionCop } from "@/features/payments/money";
+import { Volver } from "@/components/Volver";
 
 // D-20: un vendedor por pedido. Un pedido es un envío, un escrow y una disputa.
 export const dynamic = "force-dynamic";
@@ -29,6 +30,9 @@ export default async function Carrito() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
+        <div className="mb-4">
+          <Volver href="/" />
+        </div>
         <h1 className="font-title text-2xl font-semibold">Tu carrito</h1>
 
         {items.length === 0 ? (

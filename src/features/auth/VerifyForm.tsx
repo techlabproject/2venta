@@ -1,12 +1,14 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { sendCode, verifyCode, type OtpResult } from "./actions";
 import { Button, ErrorNote, Field } from "@/components/ui";
+import { destinoInterno } from "@/lib/destino";
 
 export function VerifyForm({ phone }: { phone: string }) {
   const router = useRouter();
+  const destino = destinoInterno(useSearchParams().get("volver")) ?? "/";
   const [note, setNote] = useState<string | null>(null);
   const [resendError, setResendError] = useState<string | null>(null);
 
@@ -20,7 +22,7 @@ export function VerifyForm({ phone }: { phone: string }) {
         // dibujaba como si nadie hubiera entrado. Invalidar antes de navegar hace
         // que «/» se pida de nuevo, ya con la cookie puesta.
         router.refresh();
-        router.push("/");
+        router.replace(destino);
       }
       return res;
     },

@@ -3,14 +3,17 @@
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Button, ErrorNote } from "@/components/ui";
+import { conVolver } from "@/lib/destino";
 
 // Entrar con Google no exime del celular verificado (D-01): trae correo, no
 // número. Después de volver de Google, la app manda a confirmar el celular, y
 // hasta que eso pase la cuenta no puede comprar, escribir ni publicar.
 export function GoogleButton({
   label = "Continuar con Google",
+  volver,
 }: {
   label?: string;
+  volver?: string;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -27,7 +30,7 @@ export function GoogleButton({
           try {
             const res = await authClient.signIn.social({
               provider: "google",
-              callbackURL: "/verificar",
+              callbackURL: conVolver("/verificar", volver),
             });
             if (res?.error) {
               setError("No pudimos conectar con Google. Intenta con tu correo.");

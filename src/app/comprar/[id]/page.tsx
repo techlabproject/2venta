@@ -74,7 +74,7 @@ export default async function Comprar({
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Volver href={`/producto/${listing.id}`}>Volver al artículo</Volver>
+        <Volver href={`/producto/${listing.id}`} fijo>Volver al artículo</Volver>
         <h1 className="mt-4 font-title text-xl font-semibold">
           ¿A dónde lo llevamos?
         </h1>

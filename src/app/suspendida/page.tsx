@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { AppHeader } from "@/components/AppHeader";
+import { Volver } from "@/components/Volver";
 
 // Una cuenta suspendida ve esto en vez de las pantallas que escriben. Sigue
 // pudiendo entrar a su cuenta y a sus pedidos: si tiene dinero retenido en una
@@ -23,6 +24,9 @@ export default async function Suspendida() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-10">
+        <div className="mb-4">
+          <Volver href="/" />
+        </div>
         <h1 className="font-title text-2xl font-semibold">
           Tu cuenta está suspendida
         </h1>

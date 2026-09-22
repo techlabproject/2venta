@@ -7,6 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { Vacio } from "@/components/Vacio";
 import { mediaUrl } from "@/lib/media";
 import { cuandoFue } from "@/lib/tiempo";
+import { Volver } from "@/components/Volver";
 
 // La bandeja de conversaciones (S-35, D-90).
 //
@@ -26,6 +27,9 @@ export default async function Chats() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-3xl px-5 py-6">
+        <div className="mb-4">
+          <Volver href="/" />
+        </div>
         <div className="flex items-baseline justify-between gap-3">
           <h1 className="font-title text-2xl font-semibold">Conversaciones</h1>
           {sinLeer > 0 && (

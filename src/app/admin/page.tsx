@@ -6,6 +6,7 @@ import { ReviewForm } from "@/features/moderation/Forms";
 import { AppHeader } from "@/components/AppHeader";
 import { countOpenChatReports } from "@/features/chat/queries";
 import { formatCop } from "@/lib/money";
+import { Volver } from "@/components/Volver";
 
 // Pantalla 1m del mockup, en su versión mínima: la cola de revisión y los
 // reportes. El panel completo (verificaciones, disputas, usuarios) llega después.
@@ -49,6 +50,9 @@ export default async function Admin() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-3xl px-5 py-6">
+        <div className="mb-4">
+          <Volver href="/" />
+        </div>
         {/* Envuelve. En 390 px el título y los cuatro enlaces no caben en una
             línea, y como ninguno de los dos contenedores envolvía, la página
             entera se hacía 443 px de ancho y había que arrastrarla de lado para

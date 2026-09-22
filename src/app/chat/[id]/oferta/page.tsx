@@ -48,7 +48,7 @@ export default async function Oferta({
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Volver href={`/chat/${conversation.id}`}>Volver a la conversación</Volver>
+        <Volver href={`/chat/${conversation.id}`} fijo>Volver a la conversación</Volver>
 
         <h1 className="mt-4 font-title text-2xl font-semibold">
           Haz una oferta

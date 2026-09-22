@@ -36,7 +36,7 @@ export default async function PublicarBorrador({
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Volver href="/tienda">Volver a la tienda</Volver>
+        <Volver href="/tienda" fijo>Volver a la tienda</Volver>
         <h1 className="mt-4 font-title text-xl font-semibold">{draft.title}</h1>
         <p className="mt-1 text-sm text-muted">
           {formatCop(draft.price_cop)} · {draft.label}

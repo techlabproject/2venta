@@ -30,7 +30,7 @@ export default async function Publicar() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Volver href="/">Cancelar</Volver>
+        <Volver href="/vender">Cancelar</Volver>
         <h1 className="mt-4 mb-6 font-title text-2xl font-semibold">
           Publicar artículo
         </h1>

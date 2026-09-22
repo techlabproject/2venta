@@ -3,12 +3,19 @@
 import { notifyUser } from "@/features/alerts/queries";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { activeUser } from "@/lib/session";
+import { activeUser, currentUser } from "@/lib/session";
+import { conVolver } from "@/lib/destino";
 import { query } from "@/lib/db";
 import { getListing } from "@/features/catalog/queries";
 import { redact } from "./redact";
 import { claim } from "@/features/publish/claim";
-import { getConversation, getOffer, openConversation } from "./queries";
+import {
+  ESTADOS_PARA_ESCRIBIR,
+  findConversation,
+  getConversation,
+  getOffer,
+  openConversation,
+} from "./queries";
 import { parseCop } from "@/features/payments/money";
 import { formatCop } from "@/lib/money";
 
@@ -19,14 +26,29 @@ export async function startConversation(
   _prev: ChatResult | null,
   form: FormData,
 ) {
+  const listingId = String(form.get("listingId") ?? "");
+  // Sin cuenta, antes se caía en «Iniciar sesión» sin decir por qué ni cómo
+  // volver, y al entrar se terminaba en la portada. Ahora se explica el motivo y,
+  // al entrar (o al crear la cuenta y confirmar el celular), se sigue derecho a la
+  // conversación que se iba a abrir (corrección 1, 2026-09-22).
+  const abrir = `/chat/abrir/${encodeURIComponent(listingId)}`;
+  if (!(await currentUser())) {
+    redirect(`/ingresar?motivo=chat&volver=${encodeURIComponent(abrir)}`);
+  }
   const user = await activeUser();
   // D-01: sin celular confirmado no se escribe.
-  if (!user.phoneNumberVerified) redirect("/verificar");
+  if (!user.phoneNumberVerified) redirect(conVolver("/verificar", abrir));
 
-  const listing = await getListing(String(form.get("listingId") ?? ""));
+  const listing = await getListing(listingId);
   if (!listing) return { error: "Ese artículo ya no existe." };
   if (listing.seller_id === user.id) {
     return { error: "Es tu propio artículo." };
+  }
+
+  const existente = await findConversation(listing.id, user.id);
+  if (existente) redirect(`/chat/${existente}`);
+  if (!ESTADOS_PARA_ESCRIBIR.includes(listing.status)) {
+    return { error: "Este artículo ya no está disponible." };
   }
 
   const id = await openConversation(listing.id, user.id, listing.seller_id);

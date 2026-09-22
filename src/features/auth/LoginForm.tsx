@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Button, ErrorNote, Field } from "@/components/ui";
+import { destinoInterno } from "@/lib/destino";
 
 export function LoginForm() {
   const router = useRouter();
@@ -11,9 +12,7 @@ export function LoginForm() {
   // vendedor terminaba en la portada y tenía que buscar el artículo otra vez
   // (hallazgo de la ronda de agentes, 2026-09-13). Solo se admiten rutas de
   // esta misma aplicación: una URL completa aquí sería un salto a otro sitio.
-  const volverA = useSearchParams().get("volver");
-  const destino =
-    volverA?.startsWith("/") && !volverA.startsWith("//") ? volverA : "/";
+  const destino = destinoInterno(useSearchParams().get("volver")) ?? "/";
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -54,8 +53,10 @@ export function LoginForm() {
 
     // Invalidar antes de navegar: al revés, el destino podía servirse de la copia
     // en caché tomada sin sesión (ver VerifyForm).
+    // `replace` y no `push`: la pantalla de entrar no debe quedar detrás del
+    // destino, o el «atrás» del navegador devolvía a un formulario ya usado.
     router.refresh();
-    router.push(destino);
+    router.replace(destino);
   }
 
   return (

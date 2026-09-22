@@ -33,7 +33,7 @@ export default async function Conversaciones() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-3xl px-5 py-6">
-        <Volver href="/admin">Moderación</Volver>
+        <Volver href="/admin" fijo>Moderación</Volver>
         <h1 className="mt-4 font-title text-2xl font-semibold">
           Conversaciones reportadas
         </h1>

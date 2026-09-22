@@ -26,6 +26,7 @@ import { currentUser } from "@/lib/session";
 import { Avatar } from "@/components/Avatar";
 import { getReputation } from "@/features/ratings/queries";
 import { Volver } from "@/components/Volver";
+import { ESTADOS_PARA_ESCRIBIR, findConversation } from "@/features/chat/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,12 @@ export default async function ListingPage({
   const favorited = user ? await isFavorite(user.id, listing.id) : false;
   const inCart = user ? await isInCart(user.id, listing.id) : false;
   const photos = await listPhotos(listing.id);
+  // Sobre un artículo vendido el botón solo servía para ver un error; quien ya
+  // había escrito sí lo conserva, porque su conversación sigue abierta.
+  const puedeEscribir =
+    !isSeller &&
+    (ESTADOS_PARA_ESCRIBIR.includes(listing.status) ||
+      (user ? Boolean(await findConversation(listing.id, user.id)) : false));
 
   return (
     <>
@@ -297,7 +304,7 @@ export default async function ListingPage({
                 {user && !isSeller && listing.status === "activa" && (
                   <AddToCartButton listingId={listing.id} inCart={inCart} />
                 )}
-                {!isSeller && <ChatButton listingId={listing.id} />}
+                {puedeEscribir && <ChatButton listingId={listing.id} />}
                 {user && !isSeller && (
                   <div className="mt-3">
                     <FavoriteButton listingId={listing.id} saved={favorited} />

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
+import { Volver } from "@/components/Volver";
 
 // La pantalla por defecto de Next sale en inglés y sin la marca. Un comprador que
 // abre un enlace viejo de un artículo ya vendido llega aquí, así que vale la pena
@@ -14,7 +15,10 @@ export default function NotFound() {
   return (
     <>
       <AppHeader />
-      <main className="mx-auto max-w-md px-5 py-16">
+      <main className="mx-auto max-w-md px-5 py-10">
+        <div className="mb-6">
+          <Volver href="/" />
+        </div>
         <h1 className="font-title text-2xl font-semibold">
           No pudimos abrir esto
         </h1>

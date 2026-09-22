@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { sendCode } from "./actions";
 import { Button, ErrorNote, Field } from "@/components/ui";
+import { conVolver } from "@/lib/destino";
 
 /**
  * Pide el celular a quien entró con Google.
@@ -15,6 +16,7 @@ import { Button, ErrorNote, Field } from "@/components/ui";
  */
 export function PhoneForm() {
   const router = useRouter();
+  const volver = useSearchParams().get("volver");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -64,7 +66,7 @@ export function PhoneForm() {
 
     // Invalidar antes de navegar (ver VerifyForm).
     router.refresh();
-    router.push("/verificar");
+    router.replace(conVolver("/verificar", volver));
   }
 
   return (

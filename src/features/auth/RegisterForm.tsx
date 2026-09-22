@@ -5,11 +5,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { sendCode } from "./actions";
 import { Button, ErrorNote, Field } from "@/components/ui";
+import { conVolver } from "@/lib/destino";
 
 export function RegisterForm() {
   const router = useRouter();
-  const rol =
-    useSearchParams().get("rol") === "vendedor" ? "vendedor" : "comprador";
+  const params = useSearchParams();
+  const rol = params.get("rol") === "vendedor" ? "vendedor" : "comprador";
+  // Lo que la persona iba a hacer antes de que le pidieran la cuenta. Sigue de
+  // largo hasta confirmar el celular (corrección 1, 2026-09-22).
+  const volver = params.get("volver");
 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -70,7 +74,7 @@ export function RegisterForm() {
 
     // Invalidar antes de navegar (ver VerifyForm).
     router.refresh();
-    router.push(`/verificar?rol=${rol}`);
+    router.replace(conVolver(`/verificar?rol=${rol}`, volver));
   }
 
   return (

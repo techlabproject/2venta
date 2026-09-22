@@ -7,6 +7,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { Button, ButtonLink } from "@/components/ui";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { listSellerMetrics } from "@/features/metrics/queries";
+import { Volver } from "@/components/Volver";
 
 // Pantalla 1c del mockup. D-02: el vendedor verifica identidad al crear la cuenta,
 // antes de publicar, no antes de cobrar.
@@ -32,6 +33,9 @@ export default async function Vender() {
       <main
         className={`mx-auto px-5 py-8 ${aprobado ? "max-w-5xl" : "max-w-md"}`}
       >
+        <div className="mb-4">
+          <Volver href="/" />
+        </div>
         {aprobado ? (
           <>
             <div className="rounded-3xl bg-brand px-6 py-7 text-cream sm:px-8">

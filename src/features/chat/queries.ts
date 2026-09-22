@@ -49,6 +49,29 @@ export async function openConversation(
   return rows[0].id;
 }
 
+/** La conversación de esta compradora sobre este artículo, si ya existe. */
+export async function findConversation(
+  listingId: string,
+  buyerId: string,
+): Promise<string | null> {
+  const rows = await query<{ id: string }>(
+    `select id from conversations where listing_id = $1 and buyer_id = $2`,
+    [listingId, buyerId],
+  );
+  return rows[0]?.id ?? null;
+}
+
+/**
+ * Sobre qué artículos se puede empezar una conversación nueva.
+ *
+ * Solo sobre lo que está a la venta o reservado (quien lo reservó necesita
+ * coordinar la entrega). Sobre uno vendido o retirado no hay nada que preguntar,
+ * y abrir un chat vacío con «Hacer una oferta» prometía una compra imposible
+ * (Luna, corrección 1, 2026-09-22). Las conversaciones que ya existían se siguen
+ * abriendo: son la evidencia de lo que se acordó.
+ */
+export const ESTADOS_PARA_ESCRIBIR = ["activa", "reservada"];
+
 export async function getConversation(
   id: string,
 ): Promise<Conversation | null> {

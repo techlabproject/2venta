@@ -10,6 +10,7 @@ import { ButtonLink } from "@/components/ui";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { getVerification } from "@/features/kyc/queries";
 import { mediaUrl } from "@/lib/media";
+import { Volver } from "@/components/Volver";
 
 // RF-05: ver las sesiones abiertas por dispositivo y cerrarlas.
 export const dynamic = "force-dynamic";
@@ -76,6 +77,9 @@ export default async function Cuenta() {
           tercios de pantalla en blanco. Lo que eres va a la izquierda; desde dónde
           entras, a la derecha (D-70). */}
       <main className="mx-auto max-w-5xl px-5 py-8">
+        <div className="mb-4">
+          <Volver href="/" />
+        </div>
         <h1 className="font-title text-2xl font-semibold">Tu cuenta</h1>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">

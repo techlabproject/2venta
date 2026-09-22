@@ -1023,3 +1023,30 @@ pedido a disputa. Al revés, quien se equivoca de archivo se queda con un reclam
 abierto que no pidió.
 **No se pueden borrar.** Una prueba que se retira después de que la otra parte la vio
 no es una prueba.
+
+### D-99 — «Volver» lleva a la pantalla de la que se vino (corrección 1 de Catalina, 2026-09-22)
+Hay «Volver» en todas las pantallas menos la portada, incluidas las de error. Lleva a
+la pantalla de 2venta de la que se vino, según un recorrido que se anota por pestaña
+en `sessionStorage` (`src/lib/rastro.ts`); su `href` es solo el respaldo —entrada por
+enlace externo, pestaña nueva o sin JavaScript— y es la pantalla padre, no la portada.
+Decisión de Nicolás.
+**Por qué no el historial del navegador.** Guarda los formularios intermedios: «atrás»
+desde el chat recién abierto devolvía a «Iniciar sesión» con la sesión ya iniciada.
+El recorrido salta las pantallas de paso (entrar, registro, verificar, bienvenida,
+recuperar, pagar) y, al llegar a una pantalla que ya estaba, descarta lo posterior.
+**Cuando el texto nombra el destino, manda el texto.** «Volver a tu cuenta»,
+«Moderación» o «Volver al artículo» llevan `fijo` e ignoran el recorrido.
+**Sin cuenta, lo que se iba a hacer sigue de largo.** «Escribirle al vendedor» manda
+a entrar con `volver=/chat/abrir/<artículo>`, que viaja por bienvenida, registro y
+verificar el celular. `destinoInterno()` solo deja pasar rutas propias (`//x` y `/\x`
+son otro dominio para el navegador). Al terminar se usa `router.replace`, para que
+el formulario usado no quede detrás.
+**`/chat/abrir` crea con un GET**, y eso tiene un precio: un enlace desde otro sitio
+podría abrirle a alguien una conversación vacía que no pidió. Si la petición llega
+marcada `Sec-Fetch-Site: cross-site` no crea nada y deja en la ficha. Consecuencia
+conocida: quien entra con Google ya verificado cae en la ficha y no en el chat.
+**Solo se empieza una conversación sobre lo que está a la venta o reservado**
+(`ESTADOS_PARA_ESCRIBIR`). Antes se podía abrir un chat con «Hacer una oferta» sobre un
+artículo retirado. Las conversaciones que ya existían se siguen abriendo porque son
+la evidencia de lo acordado, pero sin ofertar, y su tarjeta solo enlaza a la ficha si
+la ficha existe para quien mira (Luna, tres vueltas).

@@ -17,6 +17,7 @@ import { Burbujas } from "@/features/chat/Burbujas";
 import { AppHeader } from "@/components/AppHeader";
 import { formatCop } from "@/lib/money";
 import { mediaUrl } from "@/lib/media";
+import { Volver } from "@/components/Volver";
 
 // Pantalla 1h del mockup: chat interno con los pagos fuera de la app bloqueados.
 export const dynamic = "force-dynamic";
@@ -49,6 +50,34 @@ export default async function Chat({
   ]);
 
   const isBuyer = conversation.buyer_id === user.id;
+  // Las mismas reglas de la ficha: lo vendido y lo reservado siguen siendo
+  // públicos; lo retirado o en revisión solo lo ve quien lo publicó.
+  const fichaVisible =
+    ["activa", "reservada", "vendida"].includes(conversation.listing_status) ||
+    conversation.seller_id === user.id;
+  const tarjeta =
+    "mt-3 flex shrink-0 items-center gap-3 rounded-2xl bg-white p-3 shadow-xs ring-1 ring-line";
+  const contenidoTarjeta = (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={mediaUrl(conversation.listing_poster_path)}
+        alt=""
+        aria-hidden
+        className="h-12 w-12 shrink-0 rounded-xl bg-ph object-cover"
+      />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium">
+          {conversation.listing_title}
+        </span>
+        <span className="block text-xs text-muted">
+          {formatCop(conversation.listing_price_cop)} · Hablas con{" "}
+          {isBuyer ? conversation.seller_alias : conversation.buyer_alias}
+          {!fichaVisible && " · Ya no está publicado"}
+        </span>
+      </span>
+    </>
+  );
   const pending = offers.find((o) => o.status === "pendiente");
   const accepted = offers.find((o) => o.status === "aceptada");
 
@@ -63,27 +92,24 @@ export default async function Chat({
           La barra inferior no se dibuja aquí (lo decide `BottomNav` por la ruta),
           así que el fondo de la pantalla queda libre para el compositor. */}
       <main className="mx-auto flex h-[calc(100dvh-4rem)] max-w-md flex-col px-5">
-        <Link
-          href={`/producto/${conversation.listing_id}`}
-          className="mt-4 flex shrink-0 items-center gap-3 rounded-2xl bg-white p-3 shadow-xs ring-1 ring-line transition duration-200 ease-salida hover:ring-brand/30"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={mediaUrl(conversation.listing_poster_path)}
-            alt=""
-            aria-hidden
-            className="h-12 w-12 shrink-0 rounded-xl bg-ph object-cover"
-          />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium">
-              {conversation.listing_title}
-            </span>
-            <span className="block text-xs text-muted">
-              {formatCop(conversation.listing_price_cop)} · Hablas con{" "}
-              {isBuyer ? conversation.seller_alias : conversation.buyer_alias}
-            </span>
-          </span>
-        </Link>
+        <div className="mt-4 shrink-0">
+          <Volver href="/chats" />
+        </div>
+        {/* La tarjeta del artículo lleva a su ficha solo si la ficha existe para
+            quien mira: un artículo retirado ya no tiene ficha pública, y el
+            enlace terminaba en «No pudimos abrir esto» (Luna, 2026-09-22). */}
+        {fichaVisible ? (
+          <Link
+            href={`/producto/${conversation.listing_id}`}
+            className={`${tarjeta} transition duration-200 ease-salida hover:ring-brand/30`}
+          >
+            {contenidoTarjeta}
+          </Link>
+        ) : (
+          <div className={tarjeta}>
+            {contenidoTarjeta}
+          </div>
+        )}
 
         {/* La conversación. `overflow-y-auto` con `flex-1` es lo que hace que el
             compositor se quede abajo por larga que sea. */}
@@ -136,7 +162,9 @@ export default async function Chat({
           <div className="mt-2 flex items-center justify-between gap-3">
             {/* Ofertar es excepcional, así que es un enlace y no un campo
                 permanente: antes competía con «Enviar» por el mismo sitio. */}
-            {!pending && !accepted ? (
+            {/* Sin artículo a la venta no hay nada que ofertar: el servidor ya
+                lo rechazaba, pero el enlace seguía invitando a hacerlo. */}
+            {!pending && !accepted && conversation.listing_status === "activa" ? (
               <Link
                 href={`/chat/${conversation.id}/oferta`}
                 className="text-xs text-ink2 underline transition hover:text-brand"

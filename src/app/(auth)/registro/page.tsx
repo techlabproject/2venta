@@ -4,10 +4,16 @@ import { AuthShell } from "@/components/ui";
 import { RegisterForm } from "@/features/auth/RegisterForm";
 import { GoogleButton } from "@/features/auth/GoogleButton";
 import { googleConfigured } from "@/lib/auth";
+import { conVolver, destinoInterno } from "@/lib/destino";
 
 // Pantalla 1b del mockup. Aquí no se pide ningún documento: la verificación de
 // identidad del vendedor es un paso aparte (S-02, decisión D-02).
-export default function Registro() {
+export default async function Registro({
+  searchParams,
+}: {
+  searchParams: Promise<{ volver?: string }>;
+}) {
+  const volver = destinoInterno((await searchParams).volver) ?? undefined;
   return (
     <AuthShell
       title="Crea tu cuenta"
@@ -15,7 +21,7 @@ export default function Registro() {
     >
       {googleConfigured() && (
         <>
-          <GoogleButton label="Crear cuenta con Google" />
+          <GoogleButton label="Crear cuenta con Google" volver={volver} />
           <p className="text-center text-xs text-muted">o con tu correo</p>
         </>
       )}
@@ -24,7 +30,10 @@ export default function Registro() {
       </Suspense>
       <p className="text-center text-sm text-ink2">
         Ya tengo cuenta ·{" "}
-        <Link href="/ingresar" className="font-medium text-brand underline">
+        <Link
+          href={conVolver("/ingresar", volver)}
+          className="font-medium text-brand underline"
+        >
           Iniciar sesión
         </Link>
       </p>

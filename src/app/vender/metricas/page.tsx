@@ -65,7 +65,7 @@ export default async function Metricas() {
       <main className="mx-auto max-w-6xl px-5 py-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <Volver href="/vender">Volver a tu espacio de vendedor</Volver>
+            <Volver href="/vender" fijo>Volver a tu espacio de vendedor</Volver>
             <h1 className="mt-2 font-title text-2xl font-semibold">
               Tus publicaciones
             </h1>

@@ -4,6 +4,7 @@ import { listFavorites } from "@/features/favorites/queries";
 import { ListingCard } from "@/features/catalog/ListingCard";
 import { AppHeader } from "@/components/AppHeader";
 import { Vacio } from "@/components/Vacio";
+import { Volver } from "@/components/Volver";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,9 @@ export default async function Favoritos() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-3xl px-5 py-6">
+        <div className="mb-4">
+          <Volver href="/" />
+        </div>
         <h1 className="font-title text-2xl font-semibold">Guardados</h1>
 
         {favorites.length === 0 ? (

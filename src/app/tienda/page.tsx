@@ -6,6 +6,7 @@ import { getStore, listDrafts } from "@/features/store/queries";
 import { BulkUploadForm, RegisterStoreForm } from "@/features/store/Forms";
 import { AppHeader } from "@/components/AppHeader";
 import { formatCop } from "@/lib/money";
+import { Volver } from "@/components/Volver";
 
 // D-07: cuenta de tienda. Es lo que hace viable traer casas de empeño y tiendas
 // pequeñas, que era una de las oportunidades que detectó la investigación.
@@ -26,6 +27,9 @@ export default async function Tienda() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
+        <div className="mb-4">
+          <Volver href="/vender" />
+        </div>
         <h1 className="font-title text-2xl font-semibold">
           {store ? store.legal_name : "Registra tu tienda"}
         </h1>

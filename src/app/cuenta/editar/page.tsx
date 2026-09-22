@@ -26,7 +26,7 @@ export default async function EditarPerfil() {
     <>
       <AppHeader />
       <main className="mx-auto max-w-md px-5 py-6">
-        <Volver href="/cuenta">Volver a tu cuenta</Volver>
+        <Volver href="/cuenta" fijo>Volver a tu cuenta</Volver>
         <h1 className="mt-4 font-title text-xl font-semibold">
           Editar tu perfil
         </h1>

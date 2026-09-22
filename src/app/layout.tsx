@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Poppins, Work_Sans } from "next/font/google";
 import "./globals.css";
+import { RastroDeNavegacion } from "@/components/RastroDeNavegacion";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -26,7 +28,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es-CO" className={`${poppins.variable} ${workSans.variable}`}>
-      <body className="min-h-dvh">{children}</body>
+      <body className="min-h-dvh">
+        {children}
+        {/* No dibuja nada: solo anota el recorrido para «Volver» (D-99). El
+            `Suspense` lo pide `useSearchParams` y no le quita HTML a la página
+            (D-87): lo único que queda dentro es este componente vacío. */}
+        <Suspense fallback={null}>
+          <RastroDeNavegacion />
+        </Suspense>
+      </body>
     </html>
   );
 }
