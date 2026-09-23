@@ -146,7 +146,7 @@ test("el promedio se calcula sobre varias calificaciones", async ({ browser }) =
 });
 
 test("no se puede calificar un pedido que todavía no terminó", async ({ browser }) => {
-  const seller = await sellerWithListing(browser, `Cinturón ${Date.now()}`, 80_000, "ropa");
+  const seller = await sellerWithListing(browser, `Billetera ${Date.now()}`, 80_000, "ropa");
   const ctx = await browser.newContext();
   const buyer = await ctx.newPage();
   await signUpVerified(buyer, "comprador", "Laura Compradora");

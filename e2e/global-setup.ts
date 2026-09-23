@@ -14,6 +14,7 @@ import { baseURL } from "../playwright.config";
 const ROUTES = [
   "/",
   "/buscar",
+  "/api/buscar/conteo",
   "/bienvenida",
   "/registro",
   "/ingresar",

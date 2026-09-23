@@ -38,6 +38,9 @@ test("comprador y vendedor conversan en el mismo hilo", async ({ browser }) => {
   );
   await seller.page.getByLabel("Mensaje").fill("Sí, todavía la tengo.");
   await seller.page.getByRole("button", { name: "Enviar" }).click();
+  // Esperar a que el mensaje exista antes de recargar la otra punta: recargar justo
+  // después del clic a veces llegaba antes que la acción y la prueba fallaba sola.
+  await expect(seller.page.getByRole("main")).toContainText("Sí, todavía la tengo.");
 
   await buyer.reload();
   await expect(buyer.getByRole("main")).toContainText("Sí, todavía la tengo.");

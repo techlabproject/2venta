@@ -1050,3 +1050,50 @@ conocida: quien entra con Google ya verificado cae en la ficha y no en el chat.
 artículo retirado. Las conversaciones que ya existían se siguen abriendo porque son
 la evidencia de lo acordado, pero sin ofertar, y su tarjeta solo enlaza a la ficha si
 la ficha existe para quien mira (Luna, tres vueltas).
+
+### D-100 — La portada filtra en su sitio y las categorías se suman (corrección 2, 2026-09-22)
+Tocar una etiqueta de la portada (Verificados, Tecnología, Ropa, Niños) filtra la
+portada misma: la etiqueta queda marcada, se quita tocándola otra vez y la dirección
+cambia (`/?categoria=ropa&categoria=ninos&verificados=1`) para poder compartirla.
+Antes llevaba a `/buscar` con el formulario de filtros abierto encima de todo.
+Decisión de Nicolás, igual que las dos siguientes.
+**Todas las etiquetas se combinan.** El buscador pasó de una categoría a varias
+(`categories: string[]`, `any($1::text[])`); las búsquedas guardadas lo heredan porque
+usan el mismo `parseFilters`. Las categorías que no existen se descartan antes de
+filtrar y contar (`conCategoriasConocidas`); si no, «Filtros 1» aparecía sin nada
+marcado. El tope de 50 se aplica antes de ese descarte, por eso es alto.
+**«Filtros» es un panel lateral** (`<dialog>` modal que entra desde la izquierda) con
+los campos compartidos de `CamposDeFiltro` y un «Ver N resultados» que cuenta en vivo
+contra `/api/buscar/conteo`. Va como primera etiqueta de la fila: junto al buscador
+no cabía en 375 px sin aplastarlo. Sin JavaScript es un enlace a `/buscar` (D-25).
+El foco del teclado no se atrapa dentro del panel: el `<dialog>` nativo ya deja inerte
+el fondo, y atraparlo impediría llegar a la barra del navegador.
+Mientras no haya paginación la grilla filtrada trae 60 y lo dice («Se muestran los 60
+primeros») en vez de anunciar un total que no enseña.
+
+### D-101 — En la búsqueda, los resultados van primero (corrección 3, 2026-09-22)
+En el teléfono (menos de 1024 px) los filtros van en el mismo panel lateral de la
+portada (D-100), abierto desde un botón junto al conteo; en escritorio, en una
+columna fija a la izquierda de la grilla. Antes eran un bloque plegable que, abierto,
+empujaba los productos fuera de la pantalla. Decisión de Nicolás.
+**La columna entera es la que se queda fija**, con alto máximo de la pantalla y
+desplazamiento propio, y «Limpiar / Aplicar» van en su cabecera: abajo quedaban fuera
+de la pantalla al cargar, porque la columna empieza a media página (Luna).
+**Buscar otra palabra conserva los filtros** (van como campos ocultos en la barra), y
+el panel conserva la palabra buscada.
+**Sin JavaScript** el botón del panel es `#filtros`, y un `<noscript><style>` muestra la
+columna también en el teléfono: el catálogo sigue siendo HTML del servidor (D-25).
+
+### D-102 — Precio en los filtros: rangos rápidos y campos solo numéricos (corrección 4, 2026-09-22)
+Cuatro rangos generales («Menos de $50.000», «$50.000 a $200.000», «$200.000 a
+$1.000.000», «Más de $1.000.000») llenan «Desde» y «Hasta»; los campos solo aceptan
+dígitos y ponen los puntos de miles al escribir (`CampoPesos`, reutilizable para la
+corrección 24). Decisión de Nicolás; los rangos no cambian por categoría. Los límites
+son inclusivos, así que $50.000 exacto aparece en los dos rangos que lo tocan.
+**El servidor solo acepta pesos bien escritos**: sin puntos, o con los puntos de miles
+bien puestos, con o sin «$». Antes se le quitaba todo lo que no fuera dígito y
+«1abc2» filtraba por 12, «-999999» por 999.999 y «1.5» por 15.
+**Un número bien escrito pero enorme es «el máximo»**, no basura, y se recorta a
+2.147.483.647: `price_cop` es `integer` y pasarle más tumbaba la página con un 500
+(Luna). La caja admite diez dígitos, que ya exceden cualquier precio real.
+Sin JavaScript no se dibujan los rangos y los campos funcionan como formulario normal.

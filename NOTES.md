@@ -7,10 +7,17 @@
 **Correcciones de Catalina (2026-09-22).** Catalina revisó `dev` a mano y dejó 47
 filas (`qa/correcciones/2026-09-22.md`). Se resuelven de una en una: Nicolás decide
 lo de producto, se arregla con prueba, y Luna (Codex, `gpt-5.6-luna` en `xhigh`) la
-prueba en un navegador hasta que pasa. **Fila 1 hecha** (D-99): «Volver» en todas las
-pantallas menos la portada, con recorrido por pestaña; sin cuenta, «Escribirle al
-vendedor» sigue derecho al chat después de entrar o registrarse. Luna encontró en el
-camino que se podía abrir un chat con «Hacer una oferta» sobre un artículo retirado.
+prueba en un navegador hasta que pasa. **Filas 1 a 4 hechas** (D-99 a D-102):
+«Volver» con recorrido y chat sin cuenta; la portada filtra en su sitio con
+categorías que se suman y panel lateral; la búsqueda con resultados primero y
+columna fija en escritorio; precio con rangos rápidos y campos solo numéricos.
+**Nada de esto está desplegado**: Nicolás pidió aprobar por fases antes de
+confirmar. La fila 1 quedó en `main` (65e3d94) con su CI cancelado; las filas 2 a 4
+están sin confirmar. Pausa pedida antes de la fila 5, con resumen para aprobar.
+
+Suite contra la imagen: 337 de 338. La que falla, «un pedido abandonado caduca
+solo», pasa sola en 23 s y en la corrida completa se pasa de 60 s; no la tocan
+estas filas. Queda anotada como lenta bajo carga.
 
 Cómo corre Luna: Chromium no arranca dentro del sandbox de Codex (se cae con
 SIGTRAP), así que el navegador se levanta afuera con `chromium.launchServer()` y Luna

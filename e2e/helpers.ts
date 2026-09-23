@@ -209,3 +209,27 @@ export async function ofertar(page: Page, precio: number) {
   await page.getByRole("button", { name: "Enviar la oferta" }).click();
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]+$/);
 }
+
+// Grillas filtradas sin palabra: traen los 60 más recientes y las demás pruebas
+// crean artículos todo el tiempo, así que no se busca uno sembrado concreto en
+// ellas; se comprueba lo que dicen TODAS las tarjetas.
+const tarjetasDe = (page: Page) => page.getByRole("main").getByRole("listitem");
+
+/** Todas las tarjetas son de alguna de estas categorías, y hay al menos una. */
+export async function soloDe(page: Page, ...categorias: string[]): Promise<string[]> {
+  await expect(tarjetasDe(page).first()).toBeVisible();
+  const textos = await tarjetasDe(page).allInnerTexts();
+  for (const t of textos) {
+    expect(categorias.some((c) => t.includes(`${c} ·`)), t).toBe(true);
+  }
+  return textos;
+}
+
+/** El precio de cada tarjeta, en pesos. */
+export async function preciosVisibles(page: Page): Promise<number[]> {
+  await expect(tarjetasDe(page).first()).toBeVisible();
+  return (await tarjetasDe(page).allInnerTexts()).map((t) => {
+    const m = t.match(/\$\s?([\d.]+)/);
+    return m ? Number(m[1].replaceAll(".", "")) : NaN;
+  });
+}

@@ -3,9 +3,17 @@ import { AppHeader } from "@/components/AppHeader";
 import { SaveSearchForm } from "@/features/alerts/Forms";
 import { currentUser } from "@/lib/session";
 import { ListingCard } from "@/features/catalog/ListingCard";
-import { SearchFilters } from "@/features/catalog/SearchFilters";
+import {
+  BarraDeBusqueda,
+  FiltrosLaterales,
+} from "@/features/catalog/SearchFilters";
+import { CamposDeFiltro } from "@/features/catalog/CamposDeFiltro";
+import { PanelDeFiltros } from "@/features/catalog/PanelDeFiltros";
 import { listCategories } from "@/features/catalog/queries";
 import {
+  conCategoriasConocidas,
+  countListings,
+  cuantosFiltros,
   listZones,
   parseFilters,
   searchListings,
@@ -30,13 +38,17 @@ export default async function Buscar({
     }
   }
 
-  const filters = parseFilters(params);
-  const user = await currentUser();
-  const [listings, categories, zones] = await Promise.all([
-    searchListings(filters),
+  const [user, categories, zones] = await Promise.all([
+    currentUser(),
     listCategories(),
     listZones(),
   ]);
+  const filters = conCategoriasConocidas(parseFilters(params), categories);
+  const [listings, total] = await Promise.all([
+    searchListings(filters),
+    countListings(filters),
+  ]);
+  const nombresDeZona = zones.map((z) => z.zone);
 
   return (
     <>
@@ -48,39 +60,81 @@ export default async function Buscar({
           {filters.q ? `Resultados para “${filters.q}”` : "Buscar"}
         </h1>
 
-        <SearchFilters
-          filters={filters}
-          categories={categories}
-          zones={zones.map((z) => z.zone)}
-        />
+        <BarraDeBusqueda filters={filters} />
 
-        {user && <SaveSearchForm params={params.toString()} />}
+        {/* Corrección 3: los resultados primero. En el teléfono los filtros van
+            en el panel lateral; en escritorio, en una columna fija a la izquierda.
+            Antes eran un bloque plegable que, abierto, ocupaba toda la pantalla
+            antes del primer producto. */}
+        <div className="mt-6 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+          {/* Sin JavaScript el panel no abre y su botón trae a esta columna, que
+              entonces se muestra también en el teléfono (D-25). */}
+          <noscript>
+            <style>{`.filtros-lateral{display:block;margin-bottom:1.5rem}`}</style>
+          </noscript>
+          <FiltrosLaterales
+            filters={filters}
+            categories={categories}
+            zones={nombresDeZona}
+          />
 
-        <p data-testid="conteo" className="mt-6 text-sm text-muted">
-          {listings.length === 1
-            ? "1 resultado"
-            : `${listings.length} resultados`}
-        </p>
+          <div>
+            {user && <SaveSearchForm params={params.toString()} />}
 
-        {listings.length === 0 ? (
-          // Una lista vacía y muda deja al comprador sin saber qué hacer.
-          <div className="mt-4 rounded-2xl bg-white p-6 text-sm shadow-xs ring-1 ring-line">
-            <p className="font-medium">No encontramos nada con eso.</p>
-            <p className="mt-1 text-ink2">
-              Prueba con menos filtros o con otra palabra. También puedes{" "}
-              <Link href="/buscar" className="text-brand underline">
-                ver todo lo publicado
-              </Link>
-              .
-            </p>
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <div>
+                <p data-testid="conteo" className="text-sm text-muted">
+                  {total === 1 ? "1 resultado" : `${total} resultados`}
+                </p>
+                {/* Hasta que haya paginación (corrección 33) se traen 60. */}
+                {total > listings.length && (
+                  <p className="text-xs text-muted">
+                    Se muestran los {listings.length} primeros.
+                  </p>
+                )}
+              </div>
+              <div className="lg:hidden">
+                <PanelDeFiltros
+                  accion="/buscar"
+                  respaldo="#filtros"
+                  activos={cuantosFiltros(filters)}
+                  total={total}
+                  limpiar={filters.q ? `/buscar?q=${encodeURIComponent(filters.q)}` : "/buscar"}
+                  tono="claro"
+                >
+                  {filters.q && <input type="hidden" name="q" value={filters.q} />}
+                  <CamposDeFiltro
+                    key={params.toString()}
+                    filters={filters}
+                    categories={categories}
+                    zones={nombresDeZona}
+                    prefijo="panel"
+                  />
+                </PanelDeFiltros>
+              </div>
+            </div>
+
+            {listings.length === 0 ? (
+              // Una lista vacía y muda deja al comprador sin saber qué hacer.
+              <div className="mt-4 rounded-2xl bg-white p-6 text-sm shadow-xs ring-1 ring-line">
+                <p className="font-medium">No encontramos nada con eso.</p>
+                <p className="mt-1 text-ink2">
+                  Prueba con menos filtros o con otra palabra. También puedes{" "}
+                  <Link href="/buscar" className="text-brand underline">
+                    ver todo lo publicado
+                  </Link>
+                  .
+                </p>
+              </div>
+            ) : (
+              <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
+                {listings.map((l) => (
+                  <ListingCard key={l.id} listing={l} />
+                ))}
+              </ul>
+            )}
           </div>
-        ) : (
-          <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">
-            {listings.map((l) => (
-              <ListingCard key={l.id} listing={l} />
-            ))}
-          </ul>
-        )}
+        </div>
       </main>
     </>
   );
