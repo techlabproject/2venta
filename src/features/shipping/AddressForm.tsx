@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { buyListing, type BuyResult } from "@/features/payments/actions";
 import { Button, ErrorNote, Field } from "@/components/ui";
 import { formatCop } from "@/lib/money";
+import { CampoCelular } from "@/components/CampoCelular";
 
 // Los datos de entrega se recuerdan en este navegador mientras se arma la compra.
 //
@@ -177,14 +178,12 @@ export function AddressForm({
             autoComplete="name"
             placeholder="Laura Torres"
           />
-          <Field
+          <CampoCelular
             id="phone"
             name="phone"
             label="Celular de quien recibe"
-            type="tel"
             required
             autoComplete="tel"
-            placeholder="300 412 88 05"
             hint="Lo usa la transportadora para coordinar la entrega."
           />
           <Field

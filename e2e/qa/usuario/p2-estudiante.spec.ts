@@ -127,7 +127,7 @@ test.describe("Persona 2 — estudiante, ropa, poca fricción, entrega presencia
     });
 
     await test.step('Guardar la búsqueda ("avísame")', async () => {
-      const avisame = page.getByText("Avísame cuando aparezca algo así");
+      const avisame = page.getByText(/^Avísame cuando aparezca/);
       await expect(avisame).toBeVisible({ timeout: 10_000 });
       await avisame.click();
       await page.getByLabel("Nombre de la búsqueda").fill("Ropa que me gusta");

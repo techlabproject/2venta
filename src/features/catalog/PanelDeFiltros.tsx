@@ -91,7 +91,9 @@ export function PanelDeFiltros({
     conteo === null
       ? "Ver resultados"
       : conteo === 0
-        ? "Ningún resultado"
+        ? // Se deja aplicar igual: el mensaje vacío ofrece salidas y el aviso de
+          // cuando aparezca (corrección 5). Bloquearlo dejaba sin esa salida.
+          "Aplicar igual (0 resultados)"
         : conteo === 1
           ? "Ver 1 resultado"
           : `Ver ${conteo} resultados`;
@@ -175,7 +177,6 @@ export function PanelDeFiltros({
             </a>
             <button
               type="submit"
-              disabled={conteo === 0}
               aria-busy={contando}
               className="flex-1 rounded-xl border border-accent-edge/50 bg-accent px-4 py-3 text-sm font-medium text-on-accent transition duration-200 ease-salida hover:brightness-[0.97] active:scale-[0.98] disabled:opacity-60"
             >

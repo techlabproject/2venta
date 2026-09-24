@@ -7,6 +7,7 @@ import {
   countListings,
   conCategoriasConocidas,
   cuantosFiltros,
+  describirFiltros,
   hayFiltros,
   listZones,
   parseFilters,
@@ -14,6 +15,8 @@ import {
 } from "@/features/catalog/search";
 import { CamposDeFiltro } from "@/features/catalog/CamposDeFiltro";
 import { PanelDeFiltros } from "@/features/catalog/PanelDeFiltros";
+import { SinResultados } from "@/features/catalog/SinResultados";
+import { currentUser } from "@/lib/session";
 
 // Pantalla 1d del mockup. Renderizado en servidor y sin caché: la lista y la ficha
 // tienen que existir como HTML para que un buscador las indexe (D-25).
@@ -35,7 +38,11 @@ export default async function Home({
   }
   // La búsqueda por texto sigue siendo cosa de `/buscar`.
   params.delete("q");
-  const [categories, zonas] = await Promise.all([listCategories(), listZones()]);
+  const [categories, zonas, user] = await Promise.all([
+    listCategories(),
+    listZones(),
+    currentUser(),
+  ]);
   const filtros = conCategoriasConocidas(parseFilters(params), categories);
   const filtrando = hayFiltros(filtros);
   const listings = filtrando ? await searchListings(filtros) : await listListings();
@@ -159,16 +166,16 @@ export default async function Home({
         )}
 
         {filtrando && listings.length === 0 && (
-          <div className="mt-5 rounded-2xl bg-white p-6 text-sm shadow-xs ring-1 ring-line">
-            <p className="font-medium">No encontramos nada con eso.</p>
-            <p className="mt-1 text-ink2">
-              Prueba quitando algún filtro, o{" "}
-              <Link href="/" scroll={false} className="text-brand underline">
-                mira todo lo publicado
-              </Link>
-              .
-            </p>
-          </div>
+          <SinResultados
+            q=""
+            conFiltros
+            quitarFiltros="/"
+            verTodo="/"
+            params={params.toString()}
+            aquí={`/?${params}`}
+            conSesion={Boolean(user)}
+            sugerencia={describirFiltros(filtros, categories)}
+          />
         )}
 
         <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">

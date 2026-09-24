@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { sendCode } from "./actions";
 import { Button, ErrorNote, Field } from "@/components/ui";
+import { CampoCorreo } from "@/components/CampoCorreo";
+import { CampoCelular } from "@/components/CampoCelular";
+import { normalizarCelular } from "@/lib/celular";
 import { conVolver } from "@/lib/destino";
 
 export function RegisterForm() {
@@ -24,7 +27,7 @@ export function RegisterForm() {
     setBusy(true);
 
     const form = new FormData(e.currentTarget);
-    const phone = normalizePhone(String(form.get("phone")));
+    const phone = normalizarCelular(String(form.get("phone")));
     const name = String(form.get("name")).trim();
 
     // La validación del navegador es comodidad, no control: el servidor vuelve a
@@ -89,23 +92,20 @@ export function RegisterForm() {
         required
         placeholder="Catalina Ríos"
       />
-      <Field
+      <CampoCorreo
         id="email"
         name="email"
-        type="email"
         label="Correo"
         autoComplete="email"
         required
         placeholder="catalina@correo.com"
       />
-      <Field
+      <CampoCelular
         id="phone"
         name="phone"
-        type="tel"
         label="Celular"
         autoComplete="tel"
         required
-        placeholder="300 412 88 05"
         hint="Te mandamos un código para confirmarlo. Sin celular confirmado no puedes comprar ni escribirle a nadie."
       />
       <Field
@@ -131,13 +131,6 @@ export function RegisterForm() {
   );
 }
 
-// Guardamos el celular en formato internacional para que sea único sin importar
-// cómo lo escriba cada quien. Versión 1: solo Colombia (D-06).
-function normalizePhone(raw: string): string | null {
-  const digits = raw.replace(/\D/g, "").replace(/^57/, "");
-  return /^3\d{9}$/.test(digits) ? `+57${digits}` : null;
-}
-
 function toAlias(name: string): string {
   const [first, ...rest] = name.split(/\s+/).filter(Boolean);
   if (!first) return "Usuario";
@@ -151,8 +144,18 @@ function translate(code: string | undefined, fallback?: string): string {
   if (/already exists/i.test(fallback ?? ""))
     return "Ese correo ya tiene una cuenta. Inicia sesión o usa otro.";
   if (/demasiados códigos/i.test(fallback ?? "")) return fallback!;
+  // El esquema de better-auth rechaza el correo antes del manejador, con otro
+  // código y un mensaje en inglés que menciona el campo (Luna, corrección 6).
+  if (/email/i.test(fallback ?? "") && /invalid/i.test(fallback ?? ""))
+    return "¡Uy! Ese correo no parece válido. Revisa que se vea como nombre@gmail.com.";
 
   switch (code) {
+    // El servidor revisa el correo aunque la pantalla ya lo haya hecho: esto es lo
+    // que ve quien llega con JavaScript a medias (corrección 6).
+    case "INVALID_EMAIL":
+      return "¡Uy! Ese correo no parece válido. Revisa que se vea como nombre@gmail.com.";
+    case "INVALID_PHONE":
+      return "Ese celular no es válido: son 10 dígitos que empiezan por 3.";
     case "USER_ALREADY_EXISTS":
       return "Ese correo ya tiene una cuenta. Inicia sesión o usa otro.";
     case "PASSWORD_TOO_SHORT":

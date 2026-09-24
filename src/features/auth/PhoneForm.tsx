@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { sendCode } from "./actions";
 import { Button, ErrorNote, Field } from "@/components/ui";
+import { CampoCelular } from "@/components/CampoCelular";
 import { conVolver } from "@/lib/destino";
 
 /**
@@ -72,14 +73,12 @@ export function PhoneForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
       {error && <ErrorNote>{error}</ErrorNote>}
-      <Field
+      <CampoCelular
         id="phone"
         name="phone"
-        type="tel"
         label="Tu celular"
         autoComplete="tel"
         required
-        placeholder="300 412 88 05"
         hint="Te mandamos un código para confirmarlo."
       />
       <Button type="submit" disabled={busy}>

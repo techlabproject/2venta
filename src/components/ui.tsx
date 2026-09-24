@@ -76,24 +76,57 @@ export function ButtonLink({
 export function Field({
   label,
   hint,
+  error,
+  prefijo,
+  grande = false,
   id,
   ...props
-}: ComponentProps<"input"> & { label: string; hint?: string; id: string }) {
+}: ComponentProps<"input"> & {
+  label: string;
+  hint?: string;
+  /** Qué está mal en lo escrito. Pone el borde en rojo y lo anuncia. */
+  error?: string | null;
+  /** Algo fijo a la izquierda dentro de la caja, como «+57». */
+  prefijo?: ReactNode;
+  /** Letra grande y espaciada, para un código que se copia de un SMS. */
+  grande?: boolean;
+  id: string;
+}) {
+  const describe = [error ? `${id}-error` : null, hint ? `${id}-hint` : null]
+    .filter(Boolean)
+    .join(" ");
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-sm font-medium">
         {label}
       </label>
+      <span className="relative flex">
+      {prefijo && (
+        <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-sm text-ink2">
+          {prefijo}
+        </span>
+      )}
       <input
         id={id}
         // El foco engorda el borde con una sombra en vez de con un ancho mayor:
         // cambiar el ancho mueve el campo un pixel y salta toda la columna.
-        className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida placeholder:text-muted hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
+        className={`w-full rounded-xl border bg-white pr-4 outline-none ${grande ? "py-3.5 text-center font-title text-2xl tracking-[0.4em] tabular-nums placeholder:tracking-[0.4em]" : "py-3 text-sm"} transition duration-200 ease-salida placeholder:text-muted focus:ring-3 ${prefijo ? "pl-13" : "pl-4"} ${
+          error
+            ? "border-danger focus:border-danger focus:ring-danger/15"
+            : "border-line hover:border-brand/30 focus:border-brand focus:ring-brand/15"
+        }`}
         // Describir el campo por su pista es lo que hace que un lector de
         // pantalla la anuncie junto al campo, en vez de dejarla suelta.
-        aria-describedby={hint ? `${id}-hint` : undefined}
+        aria-describedby={describe || undefined}
+        aria-invalid={error ? true : undefined}
         {...props}
       />
+      </span>
+      {/* Siempre en el DOM y con `aria-live`: si apareciera de golpe, algunos
+          lectores de pantalla no lo anuncian. */}
+      <p id={`${id}-error`} aria-live="polite" className="text-xs text-danger empty:hidden">
+        {error ?? ""}
+      </p>
       {hint && (
         <p id={`${id}-hint`} className="text-xs text-muted">
           {hint}

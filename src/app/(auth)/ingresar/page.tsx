@@ -10,6 +10,8 @@ const MOTIVO: Record<string, string> = {
     "Entra para comprar con pago protegido. Tu plata queda guardada hasta que confirmes que recibiste.",
   chat: "Entra para escribirle al vendedor. Las conversaciones van dentro de 2venta para que el pago siga protegido.",
   favoritos: "Entra para guardar lo que te gusta y volver después.",
+  avisos:
+    "Entra y te avisamos apenas aparezca lo que buscas: en segunda mano, lo de mañana no es lo de hoy.",
 };
 
 export default async function Ingresar({

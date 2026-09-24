@@ -112,6 +112,45 @@ export function conCategoriasConocidas(
   return { ...f, categories: f.categories.filter((c) => slugs.has(c)) };
 }
 
+/**
+ * Los filtros en palabras, para proponer el nombre de un aviso: «Tecnología
+ * hasta $999» o «Ropa y Niños en Chapinero». Sin esto, quien pedía el aviso
+ * desde la portada tenía que inventarle un nombre (Luna, corrección 5).
+ */
+export function describirFiltros(f: SearchFilters, categorias: { slug: string; label: string }[]): string {
+  const pesos = (n: number) => `$${n.toLocaleString("es-CO")}`;
+  const nombres = f.categories
+    .map((s) => categorias.find((c) => c.slug === s)?.label)
+    .filter(Boolean) as string[];
+  const partes = [
+    f.q,
+    nombres.length > 1
+      ? `${nombres.slice(0, -1).join(", ")} y ${nombres.at(-1)}`
+      : nombres[0],
+    // Los tres estados marcados no filtran nada: nombrarlos solo alargaba el
+    // nombre con «nuevo o usado, buen estado o usado, estado regular» (Luna).
+    f.conditions.length && f.conditions.length < Object.keys(CONDITION_LABEL).length
+      ? `(${f.conditions.map((c) => CONDITION_LABEL[c].toLowerCase()).join(" o ")})`
+      : "",
+    f.minCop && f.maxCop
+      ? `de ${pesos(f.minCop)} a ${pesos(f.maxCop)}`
+      : f.maxCop
+        ? `hasta ${pesos(f.maxCop)}`
+        : f.minCop
+          ? `desde ${pesos(f.minCop)}`
+          : "",
+    f.zone ? `en ${f.zone}` : "",
+    f.verifiedOnly ? "de vendedores verificados" : "",
+  ].filter(Boolean);
+  const texto = partes.join(" ");
+  if (texto.length <= 80) return texto;
+  // Se corta en un espacio y se dice que se cortó: «de vendedo» sin más parecía
+  // un error (Luna, corrección 5).
+  const corte = texto.slice(0, 79);
+  const espacio = corte.lastIndexOf(" ");
+  return `${corte.slice(0, espacio > 40 ? espacio : 79).replace(/[\s,(]+$/, "")}…`;
+}
+
 /** Cuántos filtros hay puestos, para la marca del botón «Filtros». */
 export function cuantosFiltros(f: SearchFilters): number {
   return (

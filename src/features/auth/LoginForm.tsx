@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Button, ErrorNote, Field } from "@/components/ui";
+import { CampoCorreo } from "@/components/CampoCorreo";
 import { destinoInterno } from "@/lib/destino";
 
 export function LoginForm() {
@@ -62,10 +63,9 @@ export function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
       {error && <ErrorNote>{error}</ErrorNote>}
-      <Field
+      <CampoCorreo
         id="email"
         name="email"
-        type="email"
         label="Correo"
         autoComplete="email"
         required

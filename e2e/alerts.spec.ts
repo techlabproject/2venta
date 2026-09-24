@@ -21,7 +21,7 @@ async function buyerWithSavedSearch(
   await signUpVerified(page, "comprador", "Laura Compradora");
 
   await page.goto(`/buscar?${params}`);
-  await page.getByText("Avísame cuando aparezca algo así").click();
+  await page.getByText(/^Avísame cuando aparezca/).click();
   await page.getByLabel("Nombre de la búsqueda").fill(label);
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("status")).toContainText("Guardada");
@@ -119,7 +119,7 @@ test("no avisa de la publicación de uno mismo", async ({ browser }) => {
   await approveKycFor(email);
 
   await page.goto("/buscar?categoria=ropa");
-  await page.getByText("Avísame cuando aparezca algo así").click();
+  await page.getByText(/^Avísame cuando aparezca/).click();
   await page.getByLabel("Nombre de la búsqueda").fill(`Mi ropa ${marca}`);
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("status")).toContainText("Guardada");
@@ -151,7 +151,7 @@ test("no se avisa dos veces de la misma publicación", async ({ browser }) => {
   );
   // Dos búsquedas guardadas del mismo usuario que coinciden con lo mismo.
   await buyer.page.goto("/buscar?categoria=ninos&estado=usado_bueno");
-  await buyer.page.getByText("Avísame cuando aparezca algo así").click();
+  await buyer.page.getByText(/^Avísame cuando aparezca/).click();
   await buyer.page
     .getByLabel("Nombre de la búsqueda")
     .fill(`Niños usados ${marca}`);
@@ -260,7 +260,7 @@ test("sin sesión no se puede guardar una búsqueda", async ({ browser }) => {
   const anonCtx = await browser.newContext();
   const anon = await anonCtx.newPage();
   await anon.goto("/buscar?categoria=ropa");
-  await expect(anon.getByText("Avísame cuando aparezca algo así")).toHaveCount(
+  await expect(anon.getByText(/^Avísame cuando aparezca/)).toHaveCount(
     0,
   );
   await anonCtx.close();

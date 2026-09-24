@@ -3,6 +3,7 @@ import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { pool } from "./db";
 import { isProduction } from "./env";
+import { CELULAR_GUARDADO } from "./celular";
 
 // La autenticación se delega en una biblioteca establecida a propósito: el manejo
 // de contraseñas, tokens y sesiones es exactamente lo que no se implementa a mano
@@ -106,6 +107,20 @@ export const auth = betterAuth({
           }
         }
         return;
+      }
+
+      // El celular se comprueba aquí y no solo en la pantalla: el código SMS se
+      // manda al número guardado, y sin esto una petición armada a mano guardaba
+      // cualquier cosa y hacía mandar códigos a números de otro país o inventados
+      // (corrección 7).
+      if (ctx.path === "/sign-up/email" || ctx.path === "/update-user") {
+        const celular = ctx.body?.phoneNumber;
+        if (celular !== undefined && celular !== null && !CELULAR_GUARDADO.test(String(celular))) {
+          throw new APIError("BAD_REQUEST", {
+            code: "INVALID_PHONE",
+            message: "Ese celular no es válido: son 10 dígitos que empiezan por 3.",
+          });
+        }
       }
 
       if (ctx.path !== "/sign-up/email") return;

@@ -14,6 +14,7 @@ import { saveAddress } from "@/features/shipping/queries";
 import { getConversation, getOffer } from "@/features/chat/queries";
 import { listCart } from "@/features/cart/queries";
 import { clearCart } from "@/features/cart/actions";
+import { normalizarCelular } from "@/lib/celular";
 
 export type BuyResult = { error: string };
 
@@ -44,13 +45,18 @@ export async function buyListing(
   // S-06: sin dirección no hay envío y sin envío no hay total que cobrar.
   const address = {
     recipient: String(form.get("recipient") ?? "").trim(),
-    phone: String(form.get("phone") ?? "").trim(),
+    // Se guarda normalizado (+57…): es un celular colombiano, como en la cuenta
+    // (corrección 7). Si no lo es, `null` y abajo se pide corregirlo.
+    phone: normalizarCelular(String(form.get("phone") ?? "")) ?? "",
     line1: String(form.get("line1") ?? "").trim(),
     details: String(form.get("details") ?? "").trim() || null,
     city: "Bogotá",
     zone: String(form.get("zone") ?? "").trim(),
     notes: String(form.get("notes") ?? "").trim() || null,
   };
+  if (!presencial && String(form.get("phone") ?? "").trim() && !address.phone) {
+    return { error: "Revisa el celular de quien recibe: son 10 dígitos que empiezan por 3." };
+  }
   if (!presencial && (!address.recipient || !address.phone || !address.line1 || !address.zone)) {
     return { error: "Completa la dirección de entrega para poder pagar." };
   }

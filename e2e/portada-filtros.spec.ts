@@ -82,7 +82,8 @@ test("el panel de filtros cuenta en vivo y aplica en la portada", async ({ page 
   await expect(panel.getByRole("button", { name: /^Ver \d+ resultados?$/ })).toBeVisible();
   // Algo imposible: tecnología por menos de mil pesos.
   await panel.getByLabel("Precio máximo").fill("999");
-  await expect(panel.getByRole("button", { name: "Ningún resultado" })).toBeDisabled();
+  // Se puede aplicar igual: el mensaje vacío ofrece salidas y el aviso (fila 5).
+  await expect(panel.getByRole("button", { name: "Aplicar igual (0 resultados)" })).toBeEnabled();
 
   await panel.getByLabel("Precio máximo").fill("");
   await expect(panel.getByRole("button", { name: /^Ver \d+ resultados?$/ })).toBeEnabled();

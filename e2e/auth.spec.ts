@@ -179,7 +179,10 @@ test("un celular que no es colombiano se rechaza antes de crear nada", async ({ 
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(alertIn(page)).toContainText("celular colombiano");
+  // Desde la corrección 7 el aviso va debajo del campo y dice qué está mal.
+  await expect(page.getByLabel("Celular")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.getByText("Los celulares en Colombia empiezan por 3")).toBeVisible();
+  await expect(page).toHaveURL(/\/registro/);
 });
 
 test("el sexto código pedido para el mismo celular se bloquea", async ({ page }) => {

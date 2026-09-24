@@ -95,8 +95,8 @@ test("ordena por menor y por mayor precio", async ({ page }) => {
 test("una búsqueda sin resultados explica qué hacer", async ({ page }) => {
   await page.goto("/buscar?q=submarino");
   await expect(results(page)).toHaveCount(0);
-  await expect(page.getByRole("main")).toContainText("No encontramos nada");
-  await expect(page.getByRole("link", { name: "ver todo lo publicado" })).toBeVisible();
+  await expect(page.getByTestId("sin-resultados")).toContainText("no hay «submarino»");
+  await expect(page.getByRole("link", { name: "Ver todo lo publicado" })).toBeVisible();
 });
 
 test("los atajos del feed llevan a una búsqueda filtrada", async ({ page }) => {

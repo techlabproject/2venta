@@ -1097,3 +1097,56 @@ bien puestos, con o sin «$». Antes se le quitaba todo lo que no fuera dígito 
 2.147.483.647: `price_cop` es `integer` y pasarle más tumbaba la página con un 500
 (Luna). La caja admite diez dígitos, que ya exceden cualquier precio real.
 Sin JavaScript no se dibujan los rangos y los campos funcionan como formulario normal.
+
+### D-103 — Tono cálido y juguetón; el «no hay resultados» da salidas (corrección 5, 2026-09-22)
+**Tono de voz de la app**, decisión de Nicolás para este y los textos que siguen
+(correcciones 14, 35, 39, 41): tuteo colombiano, cálido y con algo de juego («¡Uy!»),
+sin empalagar. Sigue valiendo lo de siempre: el texto dice qué pasa y qué hacer.
+**El mensaje vacío nombra lo buscado, consuela y da salidas como botones** (antes:
+«No encontramos nada con eso.» y un enlace en el párrafo): «Ver todo lo publicado»,
+«Quitar filtros» si hay palabra y filtros, y el aviso. El aviso es la respuesta
+honesta a «no hay» en segunda mano, así que vive dentro del mensaje: con sesión
+abre el formulario con un nombre ya sugerido desde la palabra y los filtros
+(`describirFiltros`); sin sesión lleva a entrar con el motivo explicado y vuelve.
+**El panel deja aplicar una combinación vacía** («Aplicar igual (0 resultados)»):
+bloquearlo, como decía la D-100, dejaba sin llegar a ese aviso (Luna).
+«Ver todo lo publicado» va en petróleo y no en coral: en esas pantallas el coral ya
+es del botón «Buscar».
+
+### D-104 — Los campos se revisan al salir de ellos (corrección 6, 2026-09-22)
+Patrón de validación de la app, decisión de Nicolás (lo heredan el celular y el
+código, correcciones 7 y 8): mientras se escribe no se regaña; al salir del campo, si
+está mal, borde rojo y un mensaje debajo que dice qué falta; el error se va solo al
+corregir; al enviar se revisa otra vez y el envío no sale. Vive en `CampoValidado`
+(escucha el `submit` del formulario en captura para frenarlo antes que el `onSubmit`
+de React) y `Field` acepta `error` con `aria-invalid` y `aria-live`.
+**Correo** (`src/lib/correo.ts`): se revisa la forma, no que exista. Cada mensaje dice
+qué falta («Le falta el final del dominio: ¿cata@mail.com?», el caso de Catalina).
+Se sugieren dominios comunes mal escritos («¿Quisiste decir…?»), pero **nunca se
+corrige un `.co` a `.com`**: en Colombia hay miles de dominios `.co` reales; solo
+`gmail.co`, que no existe. Rechazar un correo real es peor que dejar pasar uno raro,
+así que tildes, ñ, `+` y subdominios pasan (Luna probó la batería).
+El servidor sigue validando: su error de esquema (`VALIDATION_ERROR`) se traduce.
+
+### D-105 — El celular: «+57» fijo, solo dígitos y validado también en el servidor (correcciones 7 y 10, 2026-09-22)
+Solo Colombia y sin selector de país (corrección 10, decisión de Nicolás; sigue a la
+D-06). El campo muestra «+57» fijo —sin bandera, pedido expreso de Nicolás—, deja
+entrar solo dígitos, máximo diez, y los agrupa solos (300 412 8805); pegar «+57 …» o
+«(300) 412-8805» los limpia. Se revisa al salir (D-104). Es el mismo `CampoCelular` en
+los cuatro sitios: registro, «Falta tu celular», recuperar y quien recibe el envío.
+**El servidor ya no le cree a la pantalla**: el registro y `/update-user` rechazan un
+celular que no sea `+573` y nueve dígitos (`INVALID_PHONE`). Antes una petición armada
+a mano guardaba cualquier cosa, y el código SMS se manda al número guardado. El
+celular de quien recibe se valida y se guarda normalizado (`+57…`).
+Borrar hacia atrás un espacio que puso el campo borra el dígito anterior: si no, la
+tecla parecía muerta (Luna).
+
+### D-106 — El código del SMS: una caja grande, solo dígitos y sin envío automático (corrección 8, 2026-09-22)
+Una sola caja grande (no seis casillas: el autocompletado del SMS y pegar funcionan
+sin trucos), solo seis dígitos, revisada al salir (D-104). **No se confirma sola**:
+cada intento fallido cuenta, así que lo decide la persona con el botón (decisión de
+Nicolás). Con el código incompleto el envío no sale y no gasta intento.
+Al pegar el SMS entero se toma el **último** bloque de seis dígitos, seguidos o
+partidos por guion, espacio o punto: el mensaje dice «2venta» y puede llevar fechas.
+Eso obliga a que el SMS tenga el código al final; está anotado en `src/lib/sms.ts`.
+El aviso muestra el número como se dice («+57 300 111 0003»).

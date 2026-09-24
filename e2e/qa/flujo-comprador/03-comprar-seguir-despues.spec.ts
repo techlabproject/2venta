@@ -262,7 +262,7 @@ test("circuito del comprador: evaluar, negociar, comprar en carrito, seguir, rec
     await buyer.screenshot({ path: `${EVID}/21-favoritos.png`, fullPage: true });
 
     await buyer.goto("/buscar?q=ropa");
-    const avisame = buyer.getByText("Avísame cuando aparezca algo así");
+    const avisame = buyer.getByText(/^Avísame cuando aparezca/);
     if (await avisame.count()) {
       await avisame.click();
       await buyer.getByLabel("Nombre de la búsqueda").fill("Ropa QA flujo-comprador");

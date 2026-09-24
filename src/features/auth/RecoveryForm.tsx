@@ -8,6 +8,8 @@ import {
   type RecoveryResult,
 } from "./recovery";
 import { Button, ErrorNote, Field } from "@/components/ui";
+import { CampoCodigo } from "@/components/CampoCodigo";
+import { CampoCelular } from "@/components/CampoCelular";
 
 export function RecoveryForm() {
   const router = useRouter();
@@ -38,14 +40,12 @@ export function RecoveryForm() {
     return (
       <form action={ask} className="flex flex-col gap-4">
         {asked?.error ? <ErrorNote>{asked.error}</ErrorNote> : null}
-        <Field
+        <CampoCelular
           id="phone"
           name="phone"
-          type="tel"
           label="Tu celular"
           required
           autoComplete="tel"
-          placeholder="300 412 88 05"
           hint="Te mandamos un código para cambiar tu contraseña."
         />
         <Button type="submit" disabled={asking}>
@@ -68,15 +68,10 @@ export function RecoveryForm() {
       </p>
       <input type="hidden" name="phone" value={phone} />
 
-      <Field
+      <CampoCodigo
         id="code"
         name="code"
-        label="Código de seis dígitos"
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        maxLength={6}
         required
-        placeholder="000000"
       />
       <Field
         id="password"

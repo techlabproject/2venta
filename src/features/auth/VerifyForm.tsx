@@ -3,7 +3,12 @@
 import { useActionState, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { sendCode, verifyCode, type OtpResult } from "./actions";
-import { Button, ErrorNote, Field } from "@/components/ui";
+import { Button, ErrorNote } from "@/components/ui";
+import { CampoCodigo } from "@/components/CampoCodigo";
+import { digitosDeCelular, formatearCelular } from "@/lib/celular";
+
+/** «+573001110003» → «+57 300 111 0003», como se dice en voz alta. */
+const mostrarCelular = (p: string) => `+57 ${formatearCelular(digitosDeCelular(p))}`;
 import { destinoInterno } from "@/lib/destino";
 
 export function VerifyForm({ phone }: { phone: string }) {
@@ -64,16 +69,11 @@ export function VerifyForm({ phone }: { phone: string }) {
         </p>
       )}
 
-      <Field
+      <CampoCodigo
         id="code"
         name="code"
-        label="Código de seis dígitos"
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        maxLength={6}
         required
-        placeholder="000000"
-        hint={`Lo mandamos al ${phone}. Vence en cinco minutos.`}
+        hint={`Lo mandamos al ${mostrarCelular(phone)}. Vence en cinco minutos.`}
       />
 
       <Button type="submit" disabled={pending}>
