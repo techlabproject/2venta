@@ -20,7 +20,12 @@ services:
   # contenedor crea el bucket y lo deja con lectura pública, que es lo que hace
   # CloudFront en AWS.
   minio:
-    image: quay.io/minio/minio:latest
+    # Chainguard: MinIO dejó de publicar imágenes en quay.io (401 desde el
+    # 2026-09-24) y antes en Docker Hub. Esta trae el servidor, `mc` y `sh`.
+    image: cgr.dev/chainguard/minio:latest
+    # Corre sin privilegios por defecto, y los volúmenes que creó la imagen
+    # anterior son de root: sin esto MinIO no arranca en un portátil ya montado.
+    user: "0:0"
     container_name: 2venta-minio
     command: server /data --console-address ":9001"
     environment:
@@ -38,7 +43,8 @@ services:
       retries: 20
 
   minio-init:
-    image: quay.io/minio/mc:latest
+    # La misma imagen del servidor: la del cliente de Chainguard no trae `sh`.
+    image: cgr.dev/chainguard/minio:latest
     depends_on:
       minio:
         condition: service_healthy

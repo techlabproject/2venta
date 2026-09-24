@@ -187,7 +187,9 @@ el número y se le manda el código antes de dejarlo comprar o escribir.
   como HTML del servidor para que un buscador los indexe. Lo cazan dos pruebas
   («la búsqueda funciona sin JavaScript del cliente», «la ficha se sirve como
   HTML»). En pantallas privadas no hay conflicto. Ver D-87.
-- Las imágenes de MinIO viven en `quay.io/minio/*`; las de Docker Hub ya no existen.
+- Las imágenes de MinIO son las de Chainguard (`cgr.dev/chainguard/minio`): MinIO dejó
+  de publicar en Docker Hub y después en `quay.io` (401 desde 2026-09-24, CI caído).
+  La del cliente (`minio-client`) no trae `sh`; por eso `minio-init` usa la del servidor.
 - En S3 de verdad, `HeadObject` sobre una clave inexistente devuelve **403, no 404**,
   si el rol no tiene `s3:ListBucket` sobre el bucket. MinIO no lo hace. Los roles
   de web y worker lo tienen por eso; no quitarlo.
