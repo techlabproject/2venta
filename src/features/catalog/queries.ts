@@ -57,7 +57,7 @@ export const LISTING_SELECT = `
   join "user" u          on u.id = l.seller_id and u.suspended_at is null
   join categories c      on c.slug = l.category
   left join kyc_verifications k on k.user_id = l.seller_id
-  left join stores st on st.user_id = l.seller_id
+  left join stores st on st.user_id = l.seller_id and st.archivada_at is null and st.nit_confirmado_at is not null
   left join lateral (
     select p.id from promotions p
      where p.listing_id = l.id and p.status = 'activa' and p.ends_at > now()
@@ -114,7 +114,7 @@ export async function getPublicSeller(id: string): Promise<PublicSeller | null> 
             (select count(*)::int from listings l where l.seller_id = u.id) as listing_count
        from "user" u
        left join kyc_verifications k on k.user_id = u.id
-       left join stores st on st.user_id = u.id
+       left join stores st on st.user_id = u.id and st.archivada_at is null and st.nit_confirmado_at is not null
       where u.id = $1`,
     [id]
   );

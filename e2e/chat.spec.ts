@@ -656,3 +656,23 @@ test("no se puede ofertar por un artículo que ya no está disponible", async ({
   await seller.context.close();
   await ctx.close();
 });
+
+// Corrección 19 (Catalina): en un chat todavía vacío, quien vende veía el consejo
+// para el comprador («Pregúntale lo que necesites saber antes de comprar…»).
+test("el chat vacío le habla a cada lado desde su punto de vista", async ({ browser, page }) => {
+  const titulo = `Parlante ${Date.now()}`;
+  const vendedor = await sellerWithListing(browser, titulo, 85_000, "tecnologia");
+
+  await signUpVerified(page, "vacio", "Valeria Vacío");
+  await page.goto(`/producto/${vendedor.listingId}`);
+  await page.getByRole("button", { name: "Escribirle al vendedor" }).click();
+  await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}$/);
+  await expect(page.getByTestId("chat-vacio")).toContainText("Pregúntale lo que necesites saber antes de comprar");
+
+  await vendedor.page.goto(new URL(page.url()).pathname);
+  const vacio = vendedor.page.getByTestId("chat-vacio");
+  await expect(vacio).toContainText("le echó el ojo a tu artículo");
+  await expect(vacio).not.toContainText("antes de comprar");
+
+  await vendedor.context.close();
+});

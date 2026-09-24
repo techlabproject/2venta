@@ -8,18 +8,32 @@ import { Button, ButtonLink } from "@/components/ui";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { listSellerMetrics } from "@/features/metrics/queries";
 import { Volver } from "@/components/Volver";
+import { getJuridica, getVendedor } from "@/features/sellers/queries";
+import { CompletarDatosForm, FormularioVendedor } from "@/features/sellers/Forms";
 
 // Pantalla 1c del mockup. D-02: el vendedor verifica identidad al crear la cuenta,
 // antes de publicar, no antes de cobrar.
 export const dynamic = "force-dynamic";
 
-export default async function Vender() {
+export default async function Vender({
+  searchParams,
+}: {
+  searchParams: Promise<{ autorizacion?: string; tipo?: string }>;
+}) {
+  const sp = await searchParams;
+  const faltaAutorizacion = sp.autorizacion === "falta";
+  const tipoElegido = sp.tipo === "natural" || sp.tipo === "juridica" ? sp.tipo : null;
   // Una cuenta suspendida no llega a las pantallas que escriben.
   const user = await activeUser();
   // D-01: sin celular confirmado no se entra al circuito de vendedor.
   if (!user.phoneNumberVerified) redirect("/verificar");
 
-  const v = await getVerification(user.id);
+  const [v, vendedor, juridica] = await Promise.all([
+    getVerification(user.id),
+    getVendedor(user.id),
+    getJuridica(user.id),
+  ]);
+  const telefonoInicial = user.phoneNumber?.replace(/^\+57/, "") ?? undefined;
   const aprobado = v?.status === "aprobado";
   // Las cifras de la portada del panel salen de las mismas publicaciones que se
   // gestionan un clic más adentro: no hay una segunda fuente que pueda mentir.
@@ -46,9 +60,10 @@ export default async function Vender() {
                 <VerifiedBadge label="Identidad verificada" />
               </p>
               <p className="mt-3 max-w-xl text-sm text-cream/85">
-                Tu perfil muestra el distintivo de identidad verificada, que es
-                lo que hace que un comprador se anime a pagarle a alguien que no
-                conoce.
+                {/* Corrección 14: el resto de la frase («…lo que hace que un
+                    comprador se anime a pagarle a alguien que no conoce») sonaba
+                    a texto generado; Catalina pidió quitarlo. */}
+                Tu perfil muestra el distintivo de identidad verificada.
               </p>
 
               {metrics.length > 0 && (
@@ -99,13 +114,35 @@ export default async function Vender() {
               />
             </div>
 
-            <p className="mt-7 text-sm text-muted">
-              ¿Vendes con frecuencia?{" "}
-              <Link href="/tienda" className="text-brand underline">
-                Registra tu tienda con NIT
-              </Link>{" "}
-              y publica varios artículos de una vez.
-            </p>
+            {/* Corrección 15: ya no hay «Registra tu tienda»; la empresa se elige
+                al empezar a vender, y la carga en lote es solo para ella. */}
+            {juridica?.nit_confirmado_at ? (
+              <p className="mt-7 text-sm text-muted">
+                Vendes como {sinPunto(juridica.legal_name)}.{" "}
+                <Link href="/tienda" className="text-brand underline">
+                  Cargar varios artículos de una vez
+                </Link>
+                .
+              </p>
+            ) : juridica ? (
+              <p className="mt-7 rounded-xl bg-white p-4 text-sm text-ink2 shadow-xs ring-1 ring-line">
+                Estamos revisando el RUT de {sinPunto(juridica.legal_name)}. Cuando confirmemos el
+                NIT se activan la insignia de empresa y la carga en lote.
+              </p>
+            ) : null}
+
+            {!vendedor && (
+              <section className="mt-7 rounded-2xl bg-white p-5 shadow-xs ring-1 ring-line">
+                <h2 className="font-title text-lg font-semibold">
+                  Completa tus datos de vendedor
+                </h2>
+                <p className="mt-1 text-sm text-ink2">
+                  La ley pide que tengamos una dirección y un teléfono de quien vende,
+                  por si un comprador presenta una queja. No se muestran a nadie.
+                </p>
+                <CompletarDatosForm telefonoInicial={telefonoInicial} />
+              </section>
+            )}
           </>
         ) : v?.status === "pendiente" ? (
           <>
@@ -147,21 +184,94 @@ export default async function Vender() {
               </div>
             )}
 
-            <ol className="mt-6 flex flex-col gap-3 text-sm text-ink2">
-              <li>1. Foto de tu cédula por ambos lados, sin reflejos.</li>
-              <li>2. Una selfie para confirmar que eres tú.</li>
-              <li>
-                3. Listo. Nosotros no guardamos ni la cédula ni la selfie.
-              </li>
-            </ol>
+            {vendedor && v && !tipoElegido ? (
+              <>
+              <ol className="mt-6 flex flex-col gap-3 text-sm text-ink2">
+                <li>1. Foto de tu cédula por ambos lados, sin reflejos.</li>
+                <li>2. Una selfie para confirmar que eres tú.</li>
+                <li>
+                  3. Listo. Nosotros no guardamos ni la cédula ni la selfie.
+                </li>
+              </ol>
 
-            <form action={beginVerification} className="mt-7">
-              <Button type="submit">
-                {v?.status === "rechazado"
-                  ? "Volver a intentar"
-                  : "Empezar verificación"}
-              </Button>
-            </form>
+              <form action={beginVerification} className="mt-7 flex flex-col gap-4">
+                {/* Corrección 11: autorización explícita y aparte para el dato
+                    biométrico, antes de que el proveedor lo pida. */}
+                <label className="flex items-start gap-2.5 rounded-xl bg-white p-4 text-sm text-ink2 shadow-xs ring-1 ring-line">
+                  <input
+                    type="checkbox"
+                    name="autorizoBiometricos"
+                    value="si"
+                    required
+                    className="mt-0.5 size-4 shrink-0 accent-brand"
+                  />
+                  <span>
+                    Autorizo que el proveedor de verificación trate la foto de mi rostro
+                    para confirmar que soy quien dice mi cédula. Es un dato biométrico, y
+                    por eso sensible: darlo es voluntario, pero sin él no puedo vender en
+                    2venta. Ver la{" "}
+                    <a href="/legal#datos" className="font-medium text-brand underline">
+                      política de datos
+                    </a>
+                    .
+                  </span>
+                </label>
+                {faltaAutorizacion && (
+                  <p role="alert" className="text-sm text-danger">
+                    Para verificar tu identidad necesitamos tu autorización para la foto
+                    de tu rostro.
+                  </p>
+                )}
+                <Button type="submit">
+                  {v?.status === "rechazado"
+                    ? "Volver a intentar"
+                    : "Empezar verificación"}
+                </Button>
+              </form>
+              <p className="mt-4 text-center text-sm">
+                <Link href={`/vender?tipo=${vendedor.tipo}`} className="text-brand underline">
+                  Cambiar mis datos de vendedor
+                </Link>
+              </p>
+              </>
+            ) : tipoElegido ? (
+              <>
+                <p className="mt-6 text-sm text-ink2">
+                  {tipoElegido === "natural"
+                    ? "Vendes como persona. Después verificas tu identidad con tu cédula y una selfie."
+                    : "Vendes como empresa. Después, el representante legal verifica su identidad con su cédula y una selfie."}{" "}
+                  <Link href="/vender" className="text-brand underline">
+                    Cambiar
+                  </Link>
+                </p>
+                <FormularioVendedor tipo={tipoElegido} telefonoInicial={telefonoInicial} />
+              </>
+            ) : (
+              // Corrección 15 (decisión de Nicolás): persona natural o jurídica se
+              // elige aquí, al empezar a vender, no al registrarse.
+              <div className="mt-6 flex flex-col gap-3">
+                <p className="text-sm font-medium">¿Cómo vas a vender?</p>
+                <Link
+                  href="/vender?tipo=natural"
+                  className="rounded-2xl bg-white p-4 shadow-xs ring-1 ring-line transition duration-200 ease-salida hover:ring-brand/30"
+                >
+                  <span className="block font-medium">Como persona</span>
+                  <span className="mt-0.5 block text-sm text-ink2">
+                    Vendes cosas tuyas. Verificas tu identidad con tu cédula.
+                  </span>
+                </Link>
+                <Link
+                  href="/vender?tipo=juridica"
+                  className="rounded-2xl bg-white p-4 shadow-xs ring-1 ring-line transition duration-200 ease-salida hover:ring-brand/30"
+                >
+                  <span className="block font-medium">Como empresa (persona jurídica)</span>
+                  <span className="mt-0.5 block text-sm text-ink2">
+                    Tienda, cambalache o negocio con NIT. Puedes cargar varios artículos
+                    de una vez.
+                  </span>
+                </Link>
+              </div>
+            )}
           </>
         )}
       </main>
@@ -200,4 +310,9 @@ function Atajo({
       </div>
     </div>
   );
+}
+
+/** «Cambalache S.A.S.» sin su punto final, para no escribir «S.A.S..» en una frase. */
+function sinPunto(texto: string): string {
+  return texto.replace(/\.+$/, "");
 }

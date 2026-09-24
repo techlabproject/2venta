@@ -1150,3 +1150,119 @@ Al pegar el SMS entero se toma el **último** bloque de seis dígitos, seguidos 
 partidos por guion, espacio o punto: el mensaje dice «2venta» y puede llevar fechas.
 Eso obliga a que el SMS tenga el código al final; está anotado en `src/lib/sms.ts`.
 El aviso muestra el número como se dice («+57 300 111 0003»).
+
+### D-107 — Proveedor del código SMS: agregador colombiano; WhatsApp después (correcciones 9 y 50, 2026-09-24)
+Decisión de Nicolás. Lanzamiento con SMS por un agregador colombiano ($6–$20 COP por
+mensaje, en pesos), elegido tras una prueba de entrega real con los operadores; en
+una segunda etapa, el código por WhatsApp con SMS de respaldo. Cotización, fuentes y
+preguntas para el proveedor en `docs/alcance/verificacion-celular.md`.
+Cambiar la contraseña usa el mismo código (corrección 50): «Cambiar tu contraseña»
+lleva a `/recuperar`. **Sin proveedor, en producción nadie puede registrarse ni
+recuperar la contraseña**: `sms.ts` se niega a imprimir códigos fuera de desarrollo.
+Es el primer bloqueo del lanzamiento.
+
+### D-108 — Términos y política de datos en un panel, con aceptación registrada (corrección 11, 2026-09-24)
+Decisiones de Nicolás. Los Términos y Condiciones y la Política de tratamiento de
+datos son **un borrador investigado, versión 1, marcado en revisión legal**
+(`src/features/legal/ContenidoLegal.tsx`): describe lo que la app hace de verdad y lo
+que exigen la Ley 1480 (arts. 47–53; retracto con reintegro en 15 días según la Ley
+2439 de 2024), la Ley 1581 y el Decreto 1377. Los datos de la empresa siguen «POR
+COMPLETAR» y las dudas para el abogado están en notas que solo se ven en `/legal`.
+**Se leen en un panel deslizable con «Aceptar» al final**, que se abre desde la
+casilla del registro y, en solo lectura, desde «Tu cuenta». `/legal` tiene el mismo
+texto (sin JavaScript y para el abogado).
+**Se guarda qué versión aceptó cada persona y cuándo** (`terms_version`,
+`terms_accepted_at`; la fecha la pone el servidor). Sin la versión vigente no hay
+cuenta (`TERMS_REQUIRED`) y después no se cambia (`TERMS_READONLY`). Cambiar el texto
+obliga a subir `VERSION_TERMINOS`.
+**Edad (art. 52):** se pide la fecha de nacimiento y no se crean cuentas de menores
+de 18 (`UNDERAGE`, `INVALID_BIRTHDATE`, `BIRTHDATE_READONLY`).
+**Biométricos (art. 6 de la Ley 1581):** antes de empezar la verificación de
+identidad se pide una autorización explícita y aparte; el servidor la exige y guarda
+`biometric_consent_at`.
+**Pendiente a propósito:** la dirección del vendedor del art. 53 va con la
+corrección 15.
+
+### D-109 — No hay nombre de usuario; la persona es su cuenta (corrección 12, 2026-09-24)
+Decisión de Nicolás. No se pide un @usuario: la identidad la dan el celular
+confirmado (único) y, en quien vende, la verificación de identidad; el nombre visible
+es el alias (D-04, D-67, D-43). Un @usuario no agregaba seguridad y sí fricción y
+moderación. El modelo y la llave de cada tabla están en
+`docs/alcance/identidad-y-llaves.md`: aleatorio o UUID en todo lo que sale en una
+dirección, consecutivo solo en filas internas (Luna lo comprobó ruta por ruta).
+
+### D-110 — El registro dice por qué no se creó la cuenta (corrección 13, 2026-09-24)
+Decisiones de Nicolás. Cada campo explica su error al salir de él (D-104 a D-108). Además:
+**un celular que ya es de otra cuenta confirmada se avisa al tocar Continuar**
+(`PHONE_TAKEN`, con enlaces a entrar y a recuperar) y no se crea nada; antes la
+persona se enteraba al confirmar el código, con una cuenta a medias creada. Confirma
+que el número existe, como ya lo hacía el correo; lo acota el límite de intentos. La
+protección al confirmar se queda para la carrera de dos registros simultáneos.
+Lo desconocido se dice con calidez y con el código del error, sin borrar lo escrito.
+Un nombre vacío ya no crea una cuenta sin nombre (`NAME_REQUIRED`, hallazgo de Luna).
+
+### D-111 — Se vende como persona natural o como empresa; ya no hay «tienda» aparte (corrección 15, 2026-09-24)
+Decisiones de Nicolás. El tipo se elige **al empezar a vender** (`/vender`), no al
+registrarse: el registro de comprador no cambia y «Registra tu tienda» desaparece.
+**Persona natural:** dirección de notificaciones y teléfono (art. 53 de la Ley 1480,
+pendiente desde la D-108) y la verificación de identidad de siempre.
+**Persona jurídica:** además, razón social, NIT, nombre y cédula del representante
+legal (es quien hace la verificación con su cédula y su rostro) y el **RUT en PDF**.
+Mientras no haya un proveedor que valide el NIT, **una persona del equipo lo confirma
+viendo el RUT** en `/admin`; hasta entonces no hay insignia de empresa ni carga en
+lote. El RUT se guarda **en la base, no en el bucket**: el bucket de medios es público
+y el RUT trae datos tributarios; solo un admin lo ve (`/admin/rut/[userId]`,
+`Cache-Control: private, no-store`), y el servidor comprueba que empiece por `%PDF`
+y no pase de 2 MB, sin creerle al navegador.
+**La carga en lote es solo para empresas con el NIT confirmado.**
+**Tiendas anteriores:** quedan archivadas (`archivada_at`, no se borran) y sus
+dueños siguen como personas naturales; quien quiera vender como empresa se registra
+de nuevo. El NIT es único solo entre las empresas vigentes. Quien ya vendía antes de
+esta corrección ve en `/vender` un aviso para completar dirección y teléfono.
+Orden al guardar: primero la empresa (así un NIT repetido no deja nada a medias),
+después los datos del vendedor, después la verificación. Los formularios de vendedor
+no se vacían tras un error (`enviarSinBorrar`).
+
+### D-112 — Quien vende como persona compra; una empresa solo vende (corrección 17, 2026-09-24)
+Decisiones de Nicolás. Se mantiene la D-03 (una cuenta, una reputación) para las
+personas naturales: venden y compran con la misma cuenta. **Una cuenta de persona
+jurídica vende, pero no compra**, desde que elige «Como empresa» aunque el NIT no
+esté confirmado: una compra de empresa pide factura, y eso no existe hasta la
+corrección 47. Lo impide el servidor en cada camino (carrito, pago, pago del
+carrito, abrir un chat, ofertar como compradora), no solo la ficha. Cuando la acción
+llega desde una pantalla abierta antes del cambio, se vuelve a la ficha, al carrito
+o al chat, que ya se dibujan con el aviso y sin botones (hallazgo de Luna). La
+conversación que ya tenía se conserva para escribir, sin ofertar ni pagar. Su menú
+no tiene «Carrito» y «Compras y ventas» se llama «Tus ventas». El aviso dice la
+salida: comprar desde una cuenta personal, con otro celular.
+**«Compras y ventas» oculta lo vacío:** quien solo compra no ve «Ventas» y quien
+vende sin haber comprado no ve «Compras»; si las dos están vacías, queda la de lo
+que la persona hace.
+
+### D-113 — «Volver» retrocede cuando el destino es la entrada anterior (corrección 18, 2026-09-24)
+El caso de Catalina («desde Ventas, al volver de un pedido cancelado te manda a
+Home») ya lo había resuelto el recorrido de la D-99; se dejó fijado con una prueba.
+Luna encontró un detalle al mezclarlo con el atrás del navegador: «Volver» sumaba
+una entrada al historial, y el atrás reabría la pantalla de la que se acababa de
+volver. Ahora, si la entrada anterior del historial es justo el destino, «Volver»
+retrocede. Se pregunta al navegador (Navigation API) y no al recorrido, porque el
+recorrido junta en una entrada los cambios de filtro que el historial guarda uno por
+uno; sin esa API se suma la entrada, como antes.
+
+### D-114 — El chat llega en vivo, y reportar bloquea en silencio (correcciones 19 a 22, 2026-09-24)
+Decisiones de Nicolás. El documento de alcance del chat es `docs/alcance/chat.md`.
+**En vivo (20):** con el chat abierto, lo nuevo aparece sin recargar. Se hace con
+eventos del servidor (SSE) y no con WebSockets: solo hace falta empujar del servidor
+al navegador, es una ruta normal de Next y no cambia cómo arranca la imagen. Postgres
+reparte el aviso entre servidores (`LISTEN/NOTIFY`, disparador en `messages` y
+`offers`, migración 0018); no se agrega nada en AWS. El aviso solo dice «cambió»: la
+pantalla se vuelve a pedir y los controles de acceso son los de siempre.
+**Fotos en el chat (21):** se quedan como están (D-92) y se evalúan más adelante.
+**Reportar (22):** el reporte es también un **bloqueo silencioso**: a quien reportó
+no le llegan desde ese momento los mensajes ni las ofertas de la otra persona en esa
+conversación (chat, bandeja, contador y avisos), la otra persona no nota nada y todo
+queda guardado para el equipo. Es la fila de `chat_reports`, sin tabla nueva. La cola
+de moderación se ordena por gravedad (estafa, amenazas y contenido sexual primero,
+«Urgente») y por cuántas personas distintas reportaron a la misma cuenta. **No hay
+suspensión automática**: se podría usar para atacar a alguien.
+**El chat vacío (19)** le habla a cada lado desde su punto de vista.

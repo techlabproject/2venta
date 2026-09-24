@@ -23,14 +23,17 @@ export async function startVerification(
   reference: string
 ): Promise<void> {
   // Reintentar tras un rechazo reemplaza el intento anterior y limpia el motivo.
+  // La autorización de biométricos se registra en cada intento: solo se llega aquí
+  // si se acaba de dar (corrección 11).
   await query(
-    `insert into kyc_verifications (user_id, provider, reference, status, reason)
-     values ($1, $2, $3, 'pendiente', null)
+    `insert into kyc_verifications (user_id, provider, reference, status, reason, biometric_consent_at)
+     values ($1, $2, $3, 'pendiente', null, now())
      on conflict (user_id) do update
        set provider = excluded.provider,
            reference = excluded.reference,
            status = 'pendiente',
            reason = null,
+           biometric_consent_at = now(),
            updated_at = now()`,
     [userId, provider, reference]
   );

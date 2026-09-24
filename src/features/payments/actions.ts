@@ -15,6 +15,7 @@ import { getConversation, getOffer } from "@/features/chat/queries";
 import { listCart } from "@/features/cart/queries";
 import { clearCart } from "@/features/cart/actions";
 import { normalizarCelular } from "@/lib/celular";
+import { esEmpresa } from "@/features/sellers/queries";
 
 export type BuyResult = { error: string };
 
@@ -28,6 +29,15 @@ export async function buyListing(
   // D-01: sin celular verificado no se compra. La comprobación va en el servidor.
   if (!user.phoneNumberVerified) {
     return { error: "Confirma tu celular antes de comprar." };
+  }
+  // Corrección 17: las empresas venden, no compran. Aquí y no solo en la ficha.
+  // Se vuelve a la ficha o al carrito, que ya se dibujan con el aviso: un error
+  // aquí dejaba el formulario de pago viejo en pantalla (Luna).
+  if (await esEmpresa(user.id)) {
+    const destino = String(form.get("desdeCarrito") ?? "") === "1"
+      ? "/carrito"
+      : `/producto/${encodeURIComponent(String(form.get("listingId") ?? ""))}`;
+    redirect(destino);
   }
 
   // Puede venir un artículo suelto o el carrito completo. En los dos casos es un

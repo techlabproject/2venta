@@ -6,6 +6,8 @@ import { AppHeader } from "@/components/AppHeader";
 import { formatCop } from "@/lib/money";
 import { commissionCop } from "@/features/payments/money";
 import { Volver } from "@/components/Volver";
+import { esEmpresa } from "@/features/sellers/queries";
+import { EMPRESA_NO_COMPRA } from "@/features/sellers/reglas";
 
 // D-20: un vendedor por pedido. Un pedido es un envío, un escrow y una disputa.
 export const dynamic = "force-dynamic";
@@ -14,7 +16,7 @@ export default async function Carrito() {
   // Una cuenta suspendida no llega a las pantallas que escriben.
   const user = await activeUser();
 
-  const items = await listCart(user.id);
+  const [items, empresa] = await Promise.all([listCart(user.id), esEmpresa(user.id)]);
   const subtotal = items.reduce((sum, i) => sum + i.price_cop, 0);
   const disponible = items.filter((i) => i.status === "activa");
 
@@ -35,7 +37,19 @@ export default async function Carrito() {
         </div>
         <h1 className="font-title text-2xl font-semibold">Tu carrito</h1>
 
-        {items.length === 0 ? (
+        {empresa ? (
+          // Corrección 17: lo que haya quedado de antes no se puede pagar.
+          <p
+            role="status"
+            data-testid="empresa-no-compra"
+            className="mt-4 rounded-2xl bg-white shadow-xs p-4 text-sm text-ink2 ring-1 ring-line"
+          >
+            {EMPRESA_NO_COMPRA}{" "}
+            <Link href="/vender" className="text-brand underline">
+              Ir a vender
+            </Link>
+          </p>
+        ) : items.length === 0 ? (
           <p className="mt-4 rounded-2xl bg-white shadow-xs p-4 text-sm text-ink2 ring-1 ring-line">
             Está vacío. Junta varias cosas del mismo vendedor y pagas un solo
             envío.{" "}

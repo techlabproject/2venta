@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
+import { aceptarTerminos } from "../../helpers";
 
 // Persona 2 — SPEC.md, "Estudiante": compra ropa y accesorios, es la más abierta
 // a probar la app y su barrera es la fricción de coordinar la entrega. Recorrido:
@@ -60,7 +61,8 @@ async function registerAndVerify(
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phone);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/verificar/, { timeout: 15_000 });
   const code = smsCodeFor(phone);
@@ -92,6 +94,9 @@ async function sellerWithTwoItems(browser: import("@playwright/test").Browser) {
   const page = await ctx.newPage();
   await registerAndVerify(page, "vendp2", "Mariana Vendedora", "vendedor");
   await page.goto("/vender");
+  await page.goto("/vender?tipo=natural");
+  await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+  await page.getByLabel(/Autorizo que el proveedor/).check();
   await page.getByRole("button", { name: "Empezar verificación" }).click();
   await expect(page).toHaveURL(/\/dev\/kyc\//, { timeout: 15_000 });
   await page.getByRole("button", { name: "Simular aprobación" }).click();
@@ -206,7 +211,8 @@ test.describe("Persona 2 — estudiante, ropa, poca fricción, entrega presencia
     await page.getByLabel("Correo").fill(email);
     await page.getByLabel("Celular").fill(phone);
     await page.getByLabel("Contraseña").fill("abc1234"); // siete caracteres
-    await page.getByRole("checkbox").check();
+    await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+    await aceptarTerminos(page);
     await page.getByRole("button", { name: "Continuar" }).click();
 
     const alerta = page.getByRole("main").getByRole("alert");

@@ -4,7 +4,10 @@ export type Store = { user_id: string; legal_name: string; nit: string };
 
 export async function getStore(userId: string): Promise<Store | null> {
   const rows = await query<Store>(
-    `select user_id, legal_name, nit from stores where user_id = $1`,
+    // Solo la persona jurídica vigente y con el NIT confirmado (corrección 15): las
+    // tiendas de antes quedaron archivadas y una empresa nueva espera la revisión.
+    `select user_id, legal_name, nit from stores
+      where user_id = $1 and archivada_at is null and nit_confirmado_at is not null`,
     [userId]
   );
   return rows[0] ?? null;

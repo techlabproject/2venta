@@ -15,6 +15,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { Pool } from "pg";
 import { signUpload } from "../src/lib/storage";
+import { VERSION_TERMINOS } from "../src/features/legal/version";
 import { appEnv } from "../src/lib/env";
 import { ARTICULOS } from "./demo/articulos";
 
@@ -44,7 +45,7 @@ async function ensureAccount(c: (typeof CUENTAS)[number]): Promise<string> {
   const res = await fetch(`${APP_URL}/api/auth/sign-up/email`, {
     method: "POST",
     headers: { "content-type": "application/json", origin: APP_URL },
-    body: JSON.stringify({ name: c.name, email: c.email, password: PASSWORD, phoneNumber: c.phone, alias: c.alias, zone: c.zone }),
+    body: JSON.stringify({ name: c.name, email: c.email, password: PASSWORD, phoneNumber: c.phone, alias: c.alias, zone: c.zone, termsVersion: VERSION_TERMINOS, birthDate: "1990-01-01" }),
   });
   if (!res.ok) throw new Error(`No se pudo crear ${c.email}: ${res.status} ${await res.text()}`);
   const created = await pool.query<{ id: string }>(`select id from "user" where email = $1`, [c.email]);

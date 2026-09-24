@@ -4,6 +4,8 @@ import { nextCookies } from "better-auth/next-js";
 import { pool } from "./db";
 import { isProduction } from "./env";
 import { CELULAR_GUARDADO } from "./celular";
+import { VERSION_TERMINOS } from "@/features/legal/version";
+import { edadCumplida, hoyEnBogota, problemaDeNacimiento } from "./edad";
 
 // La autenticación se delega en una biblioteca establecida a propósito: el manejo
 // de contraseñas, tokens y sesiones es exactamente lo que no se implementa a mano
@@ -81,6 +83,24 @@ export const auth = betterAuth({
       // Se expone en la sesión para que activeUser() pueda comprobarlo sin una
       // consulta extra en cada acción.
       suspendedAt: { type: "date", required: false, input: false, fieldName: "suspended_at" },
+      // Corrección 11: qué versión de los términos aceptó y cuándo. La versión la
+      // manda el formulario y se comprueba abajo; la fecha la pone el servidor.
+      termsVersion: { type: "string", required: false, input: true, fieldName: "terms_version" },
+      termsAcceptedAt: { type: "date", required: false, input: false, fieldName: "terms_accepted_at" },
+      // Corrección 11: AAAA-MM-DD; se comprueba en el hook y no se cambia después.
+      birthDate: { type: "string", required: false, input: true, fieldName: "birth_date" },
+    },
+  },
+
+  databaseHooks: {
+    user: {
+      create: {
+        // La hora de aceptación no se le cree al cliente: la pone el servidor en el
+        // mismo instante en que se crea la cuenta.
+        before: async (user) => ({
+          data: { ...user, termsAcceptedAt: user.termsVersion ? new Date() : null },
+        }),
+      },
     },
   },
 
@@ -121,9 +141,71 @@ export const auth = betterAuth({
             message: "Ese celular no es válido: son 10 dígitos que empiezan por 3.",
           });
         }
+        // Corrección 13 (decisión de Nicolás): si el celular ya es de otra cuenta
+        // confirmada, se dice al registrarse y no se crea nada. Antes se enteraba al
+        // confirmar el código, con una cuenta a medias creada. Confirma que el número
+        // existe, igual que ya lo hacía el correo; lo acota el límite de intentos.
+        if (ctx.path === "/sign-up/email" && typeof celular === "string") {
+          const { query } = await import("./db");
+          const usado = await query(
+            `select 1 from "user" where "phoneNumber" = $1 and "phoneNumberVerified"`,
+            [celular],
+          );
+          if (usado.length) {
+            throw new APIError("BAD_REQUEST", {
+              code: "PHONE_TAKEN",
+              message: "¡Uy! Ese celular ya tiene una cuenta. Inicia sesión o recupera tu contraseña.",
+            });
+          }
+        }
+      }
+
+      // La versión aceptada se escribe una vez, al crear la cuenta. Cambiarla por
+      // aquí reescribiría la prueba de consentimiento sin la fecha que la acompaña.
+      if (ctx.path === "/update-user" && ctx.body?.termsVersion !== undefined) {
+        throw new APIError("BAD_REQUEST", {
+          code: "TERMS_READONLY",
+          message: "La aceptación de los términos no se cambia desde aquí.",
+        });
+      }
+      // La fecha de nacimiento es la prueba de mayoría de edad: tampoco se reescribe.
+      if (ctx.path === "/update-user" && ctx.body?.birthDate !== undefined) {
+        throw new APIError("BAD_REQUEST", {
+          code: "BIRTHDATE_READONLY",
+          message: "La fecha de nacimiento no se cambia desde aquí.",
+        });
       }
 
       if (ctx.path !== "/sign-up/email") return;
+      // Un nombre de solo espacios creaba una cuenta sin nombre (Luna, corrección 13).
+      if (typeof ctx.body?.name !== "string" || !ctx.body.name.trim()) {
+        throw new APIError("BAD_REQUEST", {
+          code: "NAME_REQUIRED",
+          message: "Escribe tu nombre.",
+        });
+      }
+      // Sin aceptar la versión vigente de los términos no hay cuenta (corrección 11).
+      // La casilla de la pantalla no es control de nada.
+      if (ctx.body?.termsVersion !== VERSION_TERMINOS) {
+        throw new APIError("BAD_REQUEST", {
+          code: "TERMS_REQUIRED",
+          message: "Lee y acepta los términos y la política de datos para crear tu cuenta.",
+        });
+      }
+      // Art. 52 de la Ley 1480: no se crean cuentas de menores de 18 (corrección 11).
+      const nacimiento = typeof ctx.body?.birthDate === "string" ? ctx.body.birthDate : "";
+      const problemaEdad = problemaDeNacimiento(nacimiento);
+      if (problemaEdad) {
+        const edad = nacimiento ? edadCumplida(nacimiento, hoyEnBogota()) : null;
+        throw new APIError("BAD_REQUEST", {
+          code: !nacimiento
+            ? "BIRTHDATE_REQUIRED"
+            : edad === null || edad < 0 || edad > 120
+              ? "INVALID_BIRTHDATE"
+              : "UNDERAGE",
+          message: problemaEdad,
+        });
+      }
       const password = ctx.body?.password;
       if (typeof password === "string" && password.trim().length < 8) {
         throw new APIError("BAD_REQUEST", {

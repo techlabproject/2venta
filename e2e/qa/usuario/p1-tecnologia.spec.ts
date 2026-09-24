@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { freshImei } from "../../helpers";
+import { aceptarTerminos } from "../../helpers";
 
 // Persona 1 — SPEC.md, "Segmento medio": compra sobre todo tecnología, es
 // desconfiado y lo que más pide es pago protegido. Recorrido: llega sin cuenta,
@@ -66,7 +67,8 @@ async function registerAndVerify(
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phone);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/verificar/, { timeout: 15_000 });
   const code = smsCodeFor(phone);
@@ -83,6 +85,9 @@ async function sellerPublishesPhone(browser: import("@playwright/test").Browser)
   await registerAndVerify(page, "vendp1", "Andrés Vendedor", "vendedor");
 
   await page.goto("/vender");
+  await page.goto("/vender?tipo=natural");
+  await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+  await page.getByLabel(/Autorizo que el proveedor/).check();
   await page.getByRole("button", { name: "Empezar verificación" }).click();
   await expect(page).toHaveURL(/\/dev\/kyc\//, { timeout: 15_000 });
   await page.getByRole("button", { name: "Simular aprobación" }).click();
@@ -172,7 +177,8 @@ test.describe("Persona 1 — segmento medio, tecnología, desconfiado", () => {
       await page.getByLabel("Correo").fill(correo);
       await page.getByLabel("Celular").fill(phone);
       await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-      await page.getByRole("checkbox").check();
+      await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+      await aceptarTerminos(page);
       await page.getByRole("button", { name: "Continuar" }).click();
       await expect(page).toHaveURL(/\/verificar/, { timeout: 15_000 });
       await page.screenshot({ path: CAP("verificar-celular", "movil"), fullPage: true });

@@ -268,7 +268,8 @@ export function ReportChatForm({ conversationId }: { conversationId: string }) {
         data-testid="reporte-hecho"
         className="rounded-xl bg-brand/10 px-3 py-2 text-xs text-brand"
       >
-        Lo estamos revisando. No le avisamos a la otra persona que reportaste.
+        Lo estamos revisando. No le avisamos a la otra persona que reportaste, y
+        desde ahora no te llegan sus mensajes ni sus ofertas aquí.
       </p>
     );
   }
@@ -316,7 +317,8 @@ export function ReportChatForm({ conversationId }: { conversationId: string }) {
         </Button>
         <p className="text-[11px] text-muted">
           No le avisamos a la otra persona. La conversación queda guardada tal y
-          como está para que podamos revisarla.
+          como está para que podamos revisarla, y desde ese momento dejan de
+          llegarte sus mensajes aquí.
         </p>
       </form>
     </details>

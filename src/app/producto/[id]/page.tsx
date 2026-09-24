@@ -23,6 +23,8 @@ import { AddToCartButton } from "@/features/cart/Forms";
 import { isInCart } from "@/features/cart/queries";
 import { listPhotos } from "@/features/publish/photo-queries";
 import { currentUser } from "@/lib/session";
+import { esEmpresa } from "@/features/sellers/queries";
+import { EMPRESA_NO_COMPRA } from "@/features/sellers/reglas";
 import { Avatar } from "@/components/Avatar";
 import { getReputation } from "@/features/ratings/queries";
 import { Volver } from "@/components/Volver";
@@ -76,13 +78,19 @@ export default async function ListingPage({
   await recordView(listing.id, user?.id ?? null, listing.seller_id);
   const favorited = user ? await isFavorite(user.id, listing.id) : false;
   const inCart = user ? await isInCart(user.id, listing.id) : false;
+  // Corrección 17: una cuenta de empresa vende, no compra.
+  const empresa = user && !isSeller ? await esEmpresa(user.id) : false;
   const photos = await listPhotos(listing.id);
   // Sobre un artículo vendido el botón solo servía para ver un error; quien ya
   // había escrito sí lo conserva, porque su conversación sigue abierta.
+  // Una empresa no abre chats de compra, pero conserva el que ya tenía.
+  const conversacionPrevia = user
+    ? Boolean(await findConversation(listing.id, user.id))
+    : false;
   const puedeEscribir =
     !isSeller &&
-    (ESTADOS_PARA_ESCRIBIR.includes(listing.status) ||
-      (user ? Boolean(await findConversation(listing.id, user.id)) : false));
+    ((ESTADOS_PARA_ESCRIBIR.includes(listing.status) && !empresa) ||
+      conversacionPrevia);
 
   return (
     <>
@@ -267,6 +275,14 @@ export default async function ListingPage({
                   >
                     Esta es tu publicación. Así la ve un comprador.
                   </p>
+                ) : empresa && listing.status === "activa" ? (
+                  <p
+                    role="status"
+                    data-testid="empresa-no-compra"
+                    className="rounded-xl bg-ph px-4 py-3 text-sm text-ink2"
+                  >
+                    {EMPRESA_NO_COMPRA}
+                  </p>
                 ) : listing.status === "activa" ? (
                   <BuyButton listingId={listing.id} signedIn={Boolean(user)} />
                 ) : pedidoPropio ? (
@@ -301,7 +317,7 @@ export default async function ListingPage({
                         : "Este artículo no está disponible."}
                   </p>
                 )}
-                {user && !isSeller && listing.status === "activa" && (
+                {user && !isSeller && !empresa && listing.status === "activa" && (
                   <AddToCartButton listingId={listing.id} inCart={inCart} />
                 )}
                 {puedeEscribir && <ChatButton listingId={listing.id} />}

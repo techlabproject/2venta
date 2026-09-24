@@ -7,6 +7,7 @@ import { query } from "@/lib/db";
 import { mediaUrl } from "@/lib/media";
 import { SignOutButton } from "@/features/auth/SignOutButton";
 import { countUnreadConversations } from "@/features/chat/queries";
+import { esEmpresa } from "@/features/sellers/queries";
 
 // Cabecera de la app. La ubicación es fija por ahora: la versión 1 es solo
 // Bogotá (D-06) y la zona real del usuario llega cuando haya perfil editable.
@@ -41,15 +42,22 @@ const ITEM =
 export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
   const user = await currentUser();
 
-  const [rows, sinLeer] = user
+  const [rows, sinLeer, empresa] = user
     ? await Promise.all([
         query<{ avatar_path: string | null }>(
           `select avatar_path from "user" where id = $1`,
           [user.id],
         ),
         countUnreadConversations(user.id),
+        esEmpresa(user.id),
       ])
-    : [[], 0];
+    : [[], 0, false];
+  // Corrección 17: una cuenta de empresa no compra, así que no tiene carrito y su
+  // actividad son solo ventas.
+  const enlaces = empresa ? ENLACES.filter((e) => e.href !== "/carrito") : ENLACES;
+  const delMenu = empresa
+    ? DEL_MENU.map((e) => (e.href === "/actividad" ? { ...e, label: "Tus ventas" } : e))
+    : DEL_MENU;
   const avatar = rows[0]?.avatar_path ? mediaUrl(rows[0].avatar_path) : null;
   const alias = user?.alias ?? user?.name ?? "";
 
@@ -72,7 +80,7 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
                 aria-label="Principal"
                 className="ml-5 hidden items-center gap-1 md:flex"
               >
-                {ENLACES.map((e) => (
+                {enlaces.map((e) => (
                   <Link key={e.href} href={e.href} className={PILL}>
                     {e.label}
                   </Link>
@@ -115,14 +123,14 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
                       Estás como {alias}
                     </p>
                     <div className="md:hidden">
-                      {ENLACES.map((e) => (
+                      {enlaces.map((e) => (
                         <Link key={e.href} href={e.href} className={ITEM}>
                           {e.label}
                         </Link>
                       ))}
                       <hr className="my-2 border-line" />
                     </div>
-                    {DEL_MENU.map((e) => (
+                    {delMenu.map((e) => (
                       <Link key={e.href} href={e.href} className={ITEM}>
                         {e.label}
                       </Link>

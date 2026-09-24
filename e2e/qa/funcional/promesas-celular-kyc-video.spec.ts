@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { signUpVerified, uniqueAccount, approveKycFor, withDb, alertIn } from "../../helpers";
+import { aceptarTerminos } from "../../helpers";
 
 // Agente funcional — Parte 2 (las cinco promesas), promesas 1, 2 y 3.
 //
@@ -16,7 +17,8 @@ test.describe("Promesa: celular confirmado antes de comprar/escribir/publicar", 
     await page.getByLabel("Correo").fill(email);
     await page.getByLabel("Celular").fill(phoneDigits);
     await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-    await page.getByRole("checkbox").check();
+    await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+    await aceptarTerminos(page);
     await page.getByRole("button", { name: "Continuar" }).click();
     await expect(page).toHaveURL(/\/verificar/);
     // A propósito NO confirmamos el código: la cuenta queda con celular sin

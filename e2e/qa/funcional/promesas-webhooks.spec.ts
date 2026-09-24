@@ -30,6 +30,9 @@ test.describe("Webhook de KYC: no se puede marcar verificado sin que el proveedo
     // Arrancamos una verificación real por la pantalla para tener una referencia
     // válida en estado "pendiente".
     await page.goto("/vender");
+    await page.goto("/vender?tipo=natural");
+    await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+    await page.getByLabel(/Autorizo que el proveedor/).check();
     await page.getByRole("button", { name: "Empezar verificación" }).click();
     await expect(page).toHaveURL(/\/dev\/kyc\//, { timeout: 10_000 });
     const ref = page.url().split("/dev/kyc/")[1].split("?")[0];
@@ -87,6 +90,9 @@ test.describe("Webhook de KYC: no se puede marcar verificado sin que el proveedo
 
     await signUpVerified(page, "webhkyc2", "Webhook Kyc Repetido");
     await page.goto("/vender");
+    await page.goto("/vender?tipo=natural");
+    await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+    await page.getByLabel(/Autorizo que el proveedor/).check();
     await page.getByRole("button", { name: "Empezar verificación" }).click();
     await expect(page).toHaveURL(/\/dev\/kyc\//, { timeout: 10_000 });
     const ref = page.url().split("/dev/kyc/")[1].split("?")[0];

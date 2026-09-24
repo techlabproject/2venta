@@ -12,6 +12,9 @@ test("activar modo vendedor deja la verificación en curso y lo dice en pantalla
 }) => {
   await signUpVerified(page, "vendedor", "Andrés Molina");
   await page.goto("/vender");
+  await page.goto("/vender?tipo=natural");
+  await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+  await page.getByLabel(/Autorizo que el proveedor/).check();
   await page.getByRole("button", { name: "Empezar verificación" }).click();
 
   // El proveedor de prueba ocupa el lugar del real mientras R-02 no tenga respuesta.
@@ -23,6 +26,9 @@ test("activar modo vendedor deja la verificación en curso y lo dice en pantalla
 test("cuando el proveedor aprueba, el perfil muestra el distintivo", async ({ page }) => {
   await signUpVerified(page, "vendedor", "Andrés Molina");
   await page.goto("/vender");
+  await page.goto("/vender?tipo=natural");
+  await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+  await page.getByLabel(/Autorizo que el proveedor/).check();
   await page.getByRole("button", { name: "Empezar verificación" }).click();
   await page.getByRole("button", { name: "Simular aprobación" }).click();
 
@@ -34,6 +40,9 @@ test("cuando el proveedor aprueba, el perfil muestra el distintivo", async ({ pa
 test("un rechazo muestra el motivo y deja reintentar", async ({ page }) => {
   await signUpVerified(page, "vendedor", "Andrés Molina");
   await page.goto("/vender");
+  await page.goto("/vender?tipo=natural");
+  await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+  await page.getByLabel(/Autorizo que el proveedor/).check();
   await page.getByRole("button", { name: "Empezar verificación" }).click();
   await page.getByRole("button", { name: "Simular rechazo" }).click();
 
@@ -80,6 +89,9 @@ test("el perfil público muestra alias y zona, y nada de datos personales", asyn
 test("un webhook con firma inválida no cambia nada", async ({ page, request }) => {
   await signUpVerified(page, "vendedor", "Andrés Molina");
   await page.goto("/vender");
+  await page.goto("/vender?tipo=natural");
+  await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+  await page.getByLabel(/Autorizo que el proveedor/).check();
   await page.getByRole("button", { name: "Empezar verificación" }).click();
   // Sin esperar a que la navegación termine, la URL todavía es /vender y la
   // referencia sale mal.
@@ -106,6 +118,9 @@ test("un webhook sin firma tampoco pasa", async ({ request }) => {
 test("un webhook repetido no revierte ni duplica el estado", async ({ page, request }) => {
   await signUpVerified(page, "vendedor", "Andrés Molina");
   await page.goto("/vender");
+  await page.goto("/vender?tipo=natural");
+  await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+  await page.getByLabel(/Autorizo que el proveedor/).check();
   await page.getByRole("button", { name: "Empezar verificación" }).click();
   // Sin esperar a que la navegación termine, la URL todavía es /vender y la
   // referencia sale mal.
@@ -155,6 +170,9 @@ test("un vendedor verificado llega a publicar y a sus publicaciones desde /vende
 }) => {
   await signUpVerified(page, "vendedor", "Andrés Molina");
   await page.goto("/vender");
+  await page.goto("/vender?tipo=natural");
+  await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+  await page.getByLabel(/Autorizo que el proveedor/).check();
   await page.getByRole("button", { name: "Empezar verificación" }).click();
   await page.getByRole("button", { name: "Simular aprobación" }).click();
 

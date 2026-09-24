@@ -1,40 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { registerStore, uploadBulk, type StoreResult } from "./actions";
+import { uploadBulk, type StoreResult } from "./actions";
 import { Button, ErrorNote, Field } from "@/components/ui";
 import { COLUMNS, MAX_ROWS } from "./bulk";
-
-export function RegisterStoreForm() {
-  const [result, submit, pending] = useActionState<
-    StoreResult | null,
-    FormData
-  >(registerStore, null);
-
-  return (
-    <form action={submit} className="flex flex-col gap-4">
-      {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
-      <Field
-        id="legalName"
-        name="legalName"
-        label="Razón social"
-        required
-        placeholder="Tecnología Usaquén S.A.S."
-      />
-      <Field
-        id="nit"
-        name="nit"
-        label="NIT"
-        required
-        placeholder="899999063-3"
-        hint="Con o sin el dígito de verificación."
-      />
-      <Button type="submit" disabled={pending}>
-        {pending ? "Registrando…" : "Registrar la tienda"}
-      </Button>
-    </form>
-  );
-}
 
 export function BulkUploadForm() {
   const [result, submit, pending] = useActionState<

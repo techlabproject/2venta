@@ -55,7 +55,8 @@ export async function signUpVerified(page: Page, prefix: string, name: string) {
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phoneDigits);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/verificar/);
 
@@ -232,4 +233,15 @@ export async function preciosVisibles(page: Page): Promise<number[]> {
     const m = t.match(/\$\s?([\d.]+)/);
     return m ? Number(m[1].replaceAll(".", "")) : NaN;
   });
+}
+
+/**
+ * Acepta los términos en el registro (corrección 11): la casilla abre el panel y se
+ * acepta desde su final, como lo hace una persona.
+ */
+export async function aceptarTerminos(page: Page): Promise<void> {
+  await page.getByRole("checkbox", { name: /Leí y acepto/ }).click();
+  const panel = page.getByRole("dialog", { name: "Términos y política de datos" });
+  await panel.getByRole("button", { name: "Aceptar", exact: true }).click();
+  await expect(page.getByRole("checkbox", { name: /Leí y acepto/ })).toBeChecked();
 }

@@ -14,6 +14,7 @@ import { baseURL } from "../playwright.config";
 const ROUTES = [
   "/",
   "/buscar",
+  "/legal",
   "/api/buscar/conteo",
   "/bienvenida",
   "/registro",
@@ -59,6 +60,8 @@ const ROUTES = [
   "/api/auth/get-session",
   "/api/salud",
   "/api/tareas/liberar",
+  // Sin sesión responde 401 al momento; basta para compilarla (corrección 20).
+  "/api/chat/00000000-0000-4000-8000-000000000000/eventos",
 ];
 
 export default async function globalSetup() {

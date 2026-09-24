@@ -94,20 +94,65 @@ export async function getConversation(
   return rows[0] ?? null;
 }
 
-export function listMessages(conversationId: string): Promise<Message[]> {
+/**
+ * El bloqueo silencioso de la corrección 22, como condición de SQL.
+ *
+ * Quien reporta una conversación deja de ver lo que la otra persona mande DESPUÉS
+ * del reporte: `tabla.remitente` es de otra persona y llegó después de que `quien`
+ * la reportó. No se borra nada: el equipo lo lee completo al moderar, y la otra
+ * persona no nota nada (D-92: el reporte no se le avisa).
+ */
+const oculto = (tabla: string, remitente: string, quien: string) => `
+  exists (
+    select 1 from chat_reports rb
+     where rb.conversation_id = ${tabla}.conversation_id
+       and rb.reporter_id = ${quien}
+       and ${tabla}.${remitente} <> ${quien}
+       and ${tabla}.created_at > rb.created_at
+  )`;
+
+/**
+ * Los mensajes de una conversación. Con `quienMira`, sin lo que el bloqueo le
+ * oculta; sin él, todos (solo para moderar).
+ */
+export function listMessages(
+  conversationId: string,
+  quienMira?: string,
+): Promise<Message[]> {
   return query<Message>(
-    `select id::text, sender_id, body, redactions, image_path, created_at
-       from messages where conversation_id = $1 order by created_at`,
-    [conversationId],
+    `select m.id::text, m.sender_id, m.body, m.redactions, m.image_path, m.created_at
+       from messages m
+      where m.conversation_id = $1
+        ${quienMira ? `and not ${oculto("m", "sender_id", "$2")}` : ""}
+      order by m.created_at`,
+    quienMira ? [conversationId, quienMira] : [conversationId],
   );
 }
 
-export function listOffers(conversationId: string): Promise<Offer[]> {
+export function listOffers(
+  conversationId: string,
+  quienMira?: string,
+): Promise<Offer[]> {
   return query<Offer>(
-    `select id, offered_by, price_cop, status, expires_at, created_at
-       from offers where conversation_id = $1 order by created_at desc`,
-    [conversationId],
+    `select o.id, o.offered_by, o.price_cop, o.status, o.expires_at, o.created_at
+       from offers o
+      where o.conversation_id = $1
+        ${quienMira ? `and not ${oculto("o", "offered_by", "$2")}` : ""}
+      order by o.created_at desc`,
+    quienMira ? [conversationId, quienMira] : [conversationId],
   );
+}
+
+/** Cuándo reportó `userId` esta conversación, si la reportó (corrección 22). */
+export async function reporteDe(
+  conversationId: string,
+  userId: string,
+): Promise<Date | null> {
+  const rows = await query<{ created_at: Date }>(
+    `select created_at from chat_reports where conversation_id = $1 and reporter_id = $2`,
+    [conversationId, userId],
+  );
+  return rows[0]?.created_at ?? null;
 }
 
 export async function getOffer(
@@ -204,6 +249,7 @@ export function listConversations(
                where m.conversation_id = c.id
                  and m.sender_id <> $1
                  and m.created_at > coalesce(r.last_read_at, 'epoch'::timestamptz)
+                 and not ${oculto("m", "sender_id", "$1")}
             ) as unread
        from conversations c
        join listings l on l.id = c.listing_id
@@ -214,6 +260,7 @@ export function listConversations(
          select m.body, m.sender_id, m.created_at
            from messages m
           where m.conversation_id = c.id
+            and not ${oculto("m", "sender_id", "$1")}
           order by m.created_at desc
           limit 1
        ) ultimo on true
@@ -244,6 +291,7 @@ export async function countUnreadConversations(
            where m.conversation_id = c.id
              and m.sender_id <> $1
              and m.created_at > coalesce(r.last_read_at, 'epoch'::timestamptz)
+             and not ${oculto("m", "sender_id", "$1")}
         )`,
     [userId],
   );
@@ -283,6 +331,10 @@ export type ChatReport = {
   reported_alias: string;
   reported_id: string;
   listing_title: string;
+  /** 1: estafa, amenazas o contenido sexual; 2: datos o pagos por fuera; 3: otra cosa. */
+  gravedad: 1 | 2 | 3;
+  /** Cuántas personas distintas tienen un reporte abierto contra la reportada. */
+  reportes_contra: number;
 };
 
 export const REPORT_REASON_LABEL: Record<string, string> = {
@@ -299,23 +351,37 @@ export const REPORT_REASON_LABEL: Record<string, string> = {
  * «Reportado» es la otra parte de la conversación, sea comprador o vendedor: el
  * acoso va en las dos direcciones y suponer que siempre lo comete quien vende
  * dejaría la mitad de los casos sin nombre.
+ *
+ * Ordenada por gravedad (corrección 22): primero lo que puede costarle plata o
+ * seguridad a alguien, y dentro de eso, primero a quien más personas distintas han
+ * reportado. Nada se sanciona solo; el orden solo dice qué mirar primero.
  */
 export function listOpenChatReports(): Promise<ChatReport[]> {
   return query<ChatReport>(
-    `select r.id::text, r.conversation_id, r.reason, r.detail, r.created_at,
+    `with abiertos as (
+       select r.*,
+              case when c.buyer_id = r.reporter_id then c.seller_id else c.buyer_id end
+                as reportado_id,
+              c.listing_id
+         from chat_reports r
+         join conversations c on c.id = r.conversation_id
+        where r.resolved_at is null
+     )
+     select a.id::text, a.conversation_id, a.reason, a.detail, a.created_at,
             coalesce(quien.alias, quien.name) as reporter_alias,
             coalesce(otro.alias, otro.name)   as reported_alias,
             otro.id as reported_id,
-            l.title as listing_title
-       from chat_reports r
-       join conversations c on c.id = r.conversation_id
-       join listings l      on l.id = c.listing_id
-       join "user" quien    on quien.id = r.reporter_id
-       join "user" otro
-         on otro.id = case when c.buyer_id = r.reporter_id
-                           then c.seller_id else c.buyer_id end
-      where r.resolved_at is null
-      order by r.created_at`,
+            l.title as listing_title,
+            case when a.reason in ('estafa', 'insultos', 'contenido_sexual') then 1
+                 when a.reason = 'datos_personales' then 2
+                 else 3 end as gravedad,
+            (select count(distinct b.reporter_id)::int
+               from abiertos b where b.reportado_id = a.reportado_id) as reportes_contra
+       from abiertos a
+       join listings l   on l.id = a.listing_id
+       join "user" quien on quien.id = a.reporter_id
+       join "user" otro  on otro.id = a.reportado_id
+      order by gravedad, reportes_contra desc, a.created_at`,
   );
 }
 
@@ -338,6 +404,8 @@ export async function countOpenChatReports(): Promise<number> {
 export async function getReportedConversation(id: string): Promise<{
   conversation: Conversation;
   messages: Message[];
+  offers: Offer[];
+  reportes: { reporter_id: string; reason: string; created_at: Date }[];
 } | null> {
   const UUID =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -362,5 +430,17 @@ export async function getReportedConversation(id: string): Promise<{
   );
   if (!rows[0]) return null;
 
-  return { conversation: rows[0], messages: await listMessages(id) };
+  // Todo, sin el filtro del bloqueo: lo que se le ocultó a quien reportó es justo
+  // lo que hay que revisar. Con las ofertas y el momento de cada reporte, para ver
+  // qué pasó antes y qué después (Luna, correcciones 19–23).
+  const [messages, offers, reportes] = await Promise.all([
+    listMessages(id),
+    listOffers(id),
+    query<{ reporter_id: string; reason: string; created_at: Date }>(
+      `select reporter_id, reason, created_at from chat_reports
+        where conversation_id = $1 order by created_at`,
+      [id],
+    ),
+  ]);
+  return { conversation: rows[0], messages, offers, reportes };
 }

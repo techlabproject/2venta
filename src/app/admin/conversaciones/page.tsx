@@ -8,7 +8,8 @@ import {
 import { AppHeader } from "@/components/AppHeader";
 import { Volver } from "@/components/Volver";
 
-// La cola de conversaciones reportadas (S-37, D-92).
+// La cola de conversaciones reportadas (S-37, D-92). Ordenada por gravedad y por
+// cuántas personas reportaron a la misma cuenta (corrección 22).
 //
 // Sin esto, el botón de reportar sería un botón que no hace nada, que es peor que
 // no tenerlo: le promete a alguien que está pasando un mal rato que hay alguien al
@@ -59,7 +60,15 @@ export default async function Conversaciones() {
               key={r.id}
               className="rounded-2xl bg-white p-4 shadow-xs ring-1 ring-line"
             >
-              <p className="text-xs font-medium tracking-wide text-warn uppercase">
+              <p className="flex flex-wrap items-center gap-2 text-xs font-medium tracking-wide text-warn uppercase">
+                {r.gravedad === 1 && (
+                  <span
+                    data-testid="urgente"
+                    className="rounded-full bg-warn/15 px-2 py-0.5 text-[10px] text-warn ring-1 ring-warn/30"
+                  >
+                    Urgente
+                  </span>
+                )}
                 {REPORT_REASON_LABEL[r.reason] ?? r.reason}
               </p>
               <p className="mt-1 text-sm">
@@ -69,6 +78,11 @@ export default async function Conversaciones() {
               <p className="mt-0.5 text-xs text-muted">
                 Sobre «{r.listing_title}» · {fecha.format(r.created_at)}
               </p>
+              {r.reportes_contra > 1 && (
+                <p data-testid="reportes-contra" className="mt-1 text-xs font-medium text-warn">
+                  {r.reportes_contra} personas distintas reportaron a {r.reported_alias}
+                </p>
+              )}
 
               {r.detail && (
                 <p className="mt-2 rounded-xl bg-ph px-3 py-2 text-sm text-ink2">

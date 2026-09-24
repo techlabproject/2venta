@@ -7,6 +7,7 @@ import {
   listMessages,
   listOffers,
   markConversationRead,
+  reporteDe,
 } from "@/features/chat/queries";
 import {
   MessageForm,
@@ -18,6 +19,9 @@ import { AppHeader } from "@/components/AppHeader";
 import { formatCop } from "@/lib/money";
 import { mediaUrl } from "@/lib/media";
 import { Volver } from "@/components/Volver";
+import { esEmpresa } from "@/features/sellers/queries";
+import { ChatEnVivo } from "@/features/chat/ChatEnVivo";
+import { EMPRESA_NO_COMPRA } from "@/features/sellers/reglas";
 
 // Pantalla 1h del mockup: chat interno con los pagos fuera de la app bloqueados.
 export const dynamic = "force-dynamic";
@@ -40,9 +44,12 @@ export default async function Chat({
   }
 
   await expireStaleOffers(conversation.id);
-  const [messages, offers] = await Promise.all([
-    listMessages(conversation.id),
-    listOffers(conversation.id),
+  const [messages, offers, reportada] = await Promise.all([
+    // Con quien mira: si reportó la conversación, sin lo que la otra persona
+    // mandó después (bloqueo silencioso, corrección 22).
+    listMessages(conversation.id, user.id),
+    listOffers(conversation.id, user.id),
+    reporteDe(conversation.id, user.id),
     // Abrir la conversación es leerla (S-35). Va después de la comprobación de
     // acceso de arriba, pero la propia consulta vuelve a filtrar por participación:
     // el control de acceso no se delega a quien llama.
@@ -50,6 +57,9 @@ export default async function Chat({
   ]);
 
   const isBuyer = conversation.buyer_id === user.id;
+  // Corrección 17: la empresa conserva la conversación que tenía, pero no oferta
+  // ni paga en ella (Luna: el enlace seguía invitando a ofertar).
+  const empresaCompradora = isBuyer && (await esEmpresa(user.id));
   // Las mismas reglas de la ficha: lo vendido y lo reservado siguen siendo
   // públicos; lo retirado o en revisión solo lo ve quien lo publicó.
   const fichaVisible =
@@ -84,6 +94,7 @@ export default async function Chat({
   return (
     <>
       <AppHeader />
+      <ChatEnVivo conversationId={conversation.id} />
       {/* Altura completa y tres franjas: el artículo arriba, la conversación en el
           medio con su propio desplazamiento, y el compositor abajo. Es la forma de
           cualquier chat, y es lo que hacía falta para que el campo de escribir
@@ -119,10 +130,15 @@ export default async function Chat({
             offers={offers}
             userId={user.id}
             vacio={
-              <p className="rounded-2xl bg-white p-4 text-sm text-ink2 shadow-xs ring-1 ring-line">
-                Todavía no se han escrito. Pregúntale lo que necesites saber
-                antes de comprar: en qué estado está, por qué lo vende, si tiene
-                la caja.
+              // Cada lado ve el suyo (corrección 19): a quien vende le llegaba el
+              // consejo de qué preguntar antes de comprar.
+              <p
+                data-testid="chat-vacio"
+                className="rounded-2xl bg-white p-4 text-sm text-ink2 shadow-xs ring-1 ring-line"
+              >
+                {isBuyer
+                  ? "Todavía no se han escrito. Pregúntale lo que necesites saber antes de comprar: en qué estado está, por qué lo vende, si tiene la caja."
+                  : `¡${conversation.buyer_alias} le echó el ojo a tu artículo! Abrió el chat, pero todavía no ha escrito. Puedes saludar y contarle lo que le ayude a decidirse: cómo está de verdad, si trae caja o accesorios, cómo te queda la entrega.`}
               </p>
             }
           />
@@ -130,7 +146,17 @@ export default async function Chat({
 
         {/* Lo que hay que decidir ahora va justo encima del compositor, que es
             donde está mirando quien acaba de leer el último mensaje. */}
-        {accepted && isBuyer && (
+        {empresaCompradora && (
+          <p
+            role="status"
+            data-testid="empresa-no-compra"
+            className="shrink-0 rounded-2xl bg-white p-3 text-sm text-ink2 shadow-xs ring-1 ring-line"
+          >
+            {EMPRESA_NO_COMPRA}
+          </p>
+        )}
+
+        {accepted && isBuyer && !empresaCompradora && (
           <div className="shrink-0 rounded-2xl bg-brand/10 p-3">
             <p className="text-sm font-medium text-brand">
               Te aceptaron la oferta de {formatCop(accepted.price_cop)}
@@ -164,7 +190,7 @@ export default async function Chat({
                 permanente: antes competía con «Enviar» por el mismo sitio. */}
             {/* Sin artículo a la venta no hay nada que ofertar: el servidor ya
                 lo rechazaba, pero el enlace seguía invitando a hacerlo. */}
-            {!pending && !accepted && conversation.listing_status === "activa" ? (
+            {!pending && !accepted && !empresaCompradora && conversation.listing_status === "activa" ? (
               <Link
                 href={`/chat/${conversation.id}/oferta`}
                 className="text-xs text-ink2 underline transition hover:text-brand"
@@ -176,7 +202,19 @@ export default async function Chat({
             )}
             {/* Reportar tiene que estar siempre a mano y no tiene que gritar
                 (D-92): va en el mismo renglón que ofertar, en texto pequeño. */}
-            <ReportChatForm conversationId={conversation.id} />
+            {reportada ? (
+              <p
+                role="status"
+                data-testid="reporte-hecho"
+                className="text-right text-[11px] text-muted"
+              >
+                Reportaste esta conversación. No le avisamos a la otra persona, y ya
+                no te llegan sus mensajes ni sus ofertas; los guardamos para que el
+                equipo los revise.
+              </p>
+            ) : (
+              <ReportChatForm conversationId={conversation.id} />
+            )}
           </div>
           <p className="mt-2 text-[11px] text-muted">
             Cierra el trato aquí: si pagas por fuera pierdes el pago protegido.

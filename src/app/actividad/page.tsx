@@ -11,6 +11,8 @@ import { Vacio } from "@/components/Vacio";
 import { formatCop } from "@/lib/money";
 import { breakdown } from "@/features/payments/money";
 import { Volver } from "@/components/Volver";
+import { getVerification } from "@/features/kyc/queries";
+import { getVendedor } from "@/features/sellers/queries";
 
 // S-18. No es una función nueva: hasta ahora la única forma de volver a un pedido
 // era tener su dirección guardada. Se pagaba, se cerraba la pestaña, y no se
@@ -37,10 +39,19 @@ export default async function Actividad() {
   const user = await currentUser();
   if (!user) redirect("/ingresar");
 
-  const [purchases, sales] = await Promise.all([
+  const [purchases, sales, verification, vendedor] = await Promise.all([
     listPurchases(user.id),
     listSales(user.id),
+    getVerification(user.id),
+    getVendedor(user.id),
   ]);
+
+  // Corrección 17: una sección vacía que no es de la persona sobra. Quien solo
+  // compra no ve «Ventas» y quien vende sin haber comprado no ve «Compras». Si las
+  // dos están vacías queda la que corresponde a lo que hace: vender si ya empezó.
+  const vende = Boolean(vendedor) || verification?.status === "aprobado";
+  const mostrarCompras = purchases.length > 0 || (sales.length === 0 && !vende);
+  const mostrarVentas = sales.length > 0 || (purchases.length === 0 && vende);
 
   return (
     <>
@@ -51,41 +62,45 @@ export default async function Actividad() {
         </div>
         <h1 className="font-title text-2xl font-semibold">Tu actividad</h1>
 
-        <Section
-          title="Compras"
-          testId="compras"
-          vacio={
-            <Vacio
-              titulo="Aquí van tus compras"
-              accion={{ href: "/", label: "Ver qué hay" }}
-            >
-              Cuando le compres a alguien, el pedido queda aquí con su
-              seguimiento, hasta que confirmes que recibiste.
-            </Vacio>
-          }
-        >
-          {purchases.map((o) => (
-            <OrderRow key={o.id} order={o} role="compraste a" />
-          ))}
-        </Section>
+        {mostrarCompras && (
+          <Section
+            title="Compras"
+            testId="compras"
+            vacio={
+              <Vacio
+                titulo="Aquí van tus compras"
+                accion={{ href: "/", label: "Ver qué hay" }}
+              >
+                Cuando le compres a alguien, el pedido queda aquí con su
+                seguimiento, hasta que confirmes que recibiste.
+              </Vacio>
+            }
+          >
+            {purchases.map((o) => (
+              <OrderRow key={o.id} order={o} role="compraste a" />
+            ))}
+          </Section>
+        )}
 
-        <Section
-          title="Ventas"
-          testId="ventas"
-          vacio={
-            <Vacio
-              titulo="Aquí van tus ventas"
-              accion={{ href: "/publicar", label: "Publicar un artículo" }}
-            >
-              Lo primero que vende es el video: treinta segundos mostrando el
-              artículo de verdad valen más que diez fotos perfectas.
-            </Vacio>
-          }
-        >
-          {sales.map((o) => (
-            <OrderRow key={o.id} order={o} role="vendiste a" />
-          ))}
-        </Section>
+        {mostrarVentas && (
+          <Section
+            title="Ventas"
+            testId="ventas"
+            vacio={
+              <Vacio
+                titulo="Aquí van tus ventas"
+                accion={{ href: "/publicar", label: "Publicar un artículo" }}
+              >
+                Lo primero que vende es el video: treinta segundos mostrando el
+                artículo de verdad valen más que diez fotos perfectas.
+              </Vacio>
+            }
+          >
+            {sales.map((o) => (
+              <OrderRow key={o.id} order={o} role="vendiste a" />
+            ))}
+          </Section>
+        )}
 
         {/* Las conversaciones se fueron a `/chats` (D-90). Esta pantalla es la de
             pedidos; tener la misma lista en dos sitios es lo que hacía que ninguno

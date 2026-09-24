@@ -15,9 +15,11 @@ import {
   getConversation,
   getOffer,
   openConversation,
+  reporteDe,
 } from "./queries";
 import { parseCop } from "@/features/payments/money";
 import { formatCop } from "@/lib/money";
+import { esEmpresa } from "@/features/sellers/queries";
 
 export type ChatResult = { error: string };
 
@@ -50,6 +52,9 @@ export async function startConversation(
   if (!ESTADOS_PARA_ESCRIBIR.includes(listing.status)) {
     return { error: "Este artículo ya no está disponible." };
   }
+  // Corrección 17: el chat con un vendedor es para comprarle, y una empresa no
+  // compra. La que ya existía se conserva (arriba).
+  if (await esEmpresa(user.id)) redirect(`/producto/${listing.id}`);
 
   const id = await openConversation(listing.id, user.id, listing.seller_id);
   redirect(`/chat/${id}`);
@@ -136,13 +141,17 @@ export async function sendMessage(_prev: ChatResult | null, form: FormData) {
     ctx.conversation.buyer_id === ctx.user.id
       ? ctx.conversation.seller_id
       : ctx.conversation.buyer_id;
-  await notifyUser({
-    userId: otro,
-    kind: "mensaje",
-    title: `Mensaje nuevo sobre ${ctx.conversation.listing_title}`,
-    href: `/chat/${conversationId}`,
-    subjectId: `${conversationId}:${new Date().toISOString().slice(0, 16)}`,
-  });
+  // Si esa persona reportó la conversación, no se le avisa (bloqueo silencioso,
+  // corrección 22): el mensaje queda guardado para el equipo y nada más.
+  if (!(await reporteDe(conversationId, otro))) {
+    await notifyUser({
+      userId: otro,
+      kind: "mensaje",
+      title: `Mensaje nuevo sobre ${ctx.conversation.listing_title}`,
+      href: `/chat/${conversationId}`,
+      subjectId: `${conversationId}:${new Date().toISOString().slice(0, 16)}`,
+    });
+  }
 
   revalidatePath(`/chat/${conversationId}`);
   return { error: "" };
@@ -161,6 +170,11 @@ export async function makeOffer(_prev: ChatResult | null, form: FormData) {
   // que la publicación siga activa (ronda de verificación, 2026-09-20).
   if (ctx.conversation.listing_status !== "activa") {
     return { error: "Ese artículo ya no está disponible." };
+  }
+
+  // El vendedor sí contraoferta; lo que no hace una empresa es ofertar para comprar.
+  if (ctx.conversation.buyer_id === ctx.user.id && (await esEmpresa(ctx.user.id))) {
+    redirect(`/chat/${conversationId}`);
   }
 
   const price = parseCop(String(form.get("price") ?? ""));
@@ -186,13 +200,15 @@ export async function makeOffer(_prev: ChatResult | null, form: FormData) {
     ctx.conversation.buyer_id === ctx.user.id
       ? ctx.conversation.seller_id
       : ctx.conversation.buyer_id;
-  await notifyUser({
-    userId: destinatario,
-    kind: "oferta",
-    title: `Te ofrecieron ${formatCop(price)} por ${ctx.conversation.listing_title}`,
-    href: `/chat/${conversationId}`,
-    subjectId: `${conversationId}:${price}`,
-  });
+  if (!(await reporteDe(conversationId, destinatario))) {
+    await notifyUser({
+      userId: destinatario,
+      kind: "oferta",
+      title: `Te ofrecieron ${formatCop(price)} por ${ctx.conversation.listing_title}`,
+      href: `/chat/${conversationId}`,
+      subjectId: `${conversationId}:${price}`,
+    });
+  }
 
   revalidatePath(`/chat/${conversationId}`);
   // La oferta se hace desde su propio panel (D-91), así que al enviarla hay que

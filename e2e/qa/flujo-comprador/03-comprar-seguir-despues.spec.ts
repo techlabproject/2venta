@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
+import { aceptarTerminos } from "../../helpers";
 
 // flujo-comprador · ronda de diseño 2026-09-13
 // Pasos 3 a 8 del brief: evaluar, preguntar/negociar, comprar (envío + carrito),
@@ -43,7 +44,8 @@ async function signUp(page: Page, prefix: string, name: string, rol: "comprador"
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phone);
   await page.getByLabel("Contraseña").fill(PASSWORD);
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/verificar/, { timeout: 15_000 });
 

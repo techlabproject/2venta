@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
+import { aceptarTerminos } from "../../helpers";
 
 // Persona 3 — SPEC.md, "El prevenido": ingresos bajos, reacio a la comisión,
 // pidió pago contra entrega (en 2venta es la entrega presencial con código). Aquí
@@ -74,7 +75,8 @@ async function registerAndVerify(
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phone);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/verificar/, { timeout: 15_000 });
   const code = smsCodeFor(phone);
@@ -101,6 +103,11 @@ test.describe("Persona 3 — el prevenido, vendedor, reacio a la comisión", () 
       await page.goto("/vender");
       await page.screenshot({ path: CAP("verificar-identidad-sin-empezar", "movil"), fullPage: true });
 
+      await page.goto("/vender?tipo=natural");
+
+      await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+
+      await page.getByLabel(/Autorizo que el proveedor/).check();
       await page.getByRole("button", { name: "Empezar verificación" }).click();
       await expect(page).toHaveURL(/\/dev\/kyc\//, { timeout: 15_000 });
       await page.screenshot({ path: CAP("verificar-identidad-pendiente", "movil"), fullPage: true });
@@ -214,6 +221,9 @@ test.describe("Persona 3 — el prevenido, vendedor, reacio a la comisión", () 
     const page = await ctx.newPage();
     await registerAndVerify(page, "prevpuntos", "Don Alfonso Puntos", "vendedor");
     await page.goto("/vender");
+    await page.goto("/vender?tipo=natural");
+    await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+    await page.getByLabel(/Autorizo que el proveedor/).check();
     await page.getByRole("button", { name: "Empezar verificación" }).click();
     await expect(page).toHaveURL(/\/dev\/kyc\//, { timeout: 15_000 });
     await page.getByRole("button", { name: "Simular aprobación" }).click();
@@ -255,6 +265,9 @@ test.describe("Persona 3 — el prevenido, vendedor, reacio a la comisión", () 
     const page = await ctx.newPage();
     await registerAndVerify(page, "preva11y", "Don Alfonso Accesible", "vendedor");
     await page.goto("/vender");
+    await page.goto("/vender?tipo=natural");
+    await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+    await page.getByLabel(/Autorizo que el proveedor/).check();
     await page.getByRole("button", { name: "Empezar verificación" }).click();
     await expect(page).toHaveURL(/\/dev\/kyc\//, { timeout: 15_000 });
     await page.getByRole("button", { name: "Simular aprobación" }).click();

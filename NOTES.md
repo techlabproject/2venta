@@ -4,18 +4,11 @@
 
 ## En qué voy
 
-**Correcciones de Catalina (2026-09-22).** Catalina revisó `dev` a mano y dejó 47
-filas (`qa/correcciones/2026-09-22.md`). Se resuelven de una en una: Nicolás decide
-lo de producto, se arregla con prueba, y Luna (Codex, `gpt-5.6-luna` en `xhigh`) la
-prueba en un navegador hasta que pasa. Nicolás aprueba por fases antes de confirmar.
-**Filas 1 a 4 desplegadas** (D-99 a D-102, commit e9ec62d). **Filas 5 a 8 hechas y
-sin confirmar** (D-103 a D-106): mensaje vacío con salidas y tono cálido y juguetón;
-correo, celular (+57 fijo, fila 10 decidida: solo Colombia) y código validados al
-salir del campo, con el servidor validando el celular también.
-
-Suite contra la imagen: 363 de 364. La que falla, «un pedido abandonado caduca
-solo», pasa sola en 23 s y en la corrida completa se pasa de 60 s (tres veces ya);
-no la tocan estas filas y en el CI pasa. Pendiente mirarla aparte.
+**Correcciones de Catalina (2026-09-22).** 52 filas en `qa/correcciones/2026-09-22.md`.
+**Al retomar, leer primero `qa/correcciones/ESTADO.md`** (método, dónde vamos y el
+paso a paso de lo que queda de la fila en curso) y `qa/correcciones/pendientes.md`
+(problemas y pendientes acumulados, base del documento final). Filas 1–8
+desplegadas; 9, 10 y 50 decididas sin confirmar; 11 en curso sin confirmar.
 
 Cómo corre Luna: Chromium no arranca dentro del sandbox de Codex (se cae con
 SIGTRAP), así que el navegador se levanta afuera con `chromium.launchServer()` y Luna

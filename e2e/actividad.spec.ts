@@ -33,6 +33,8 @@ test("el comprador encuentra su compra y llega al pedido desde ahí", async ({
 
   await buyer.goto("/actividad");
   await expect(buyer.getByTestId("compras")).toContainText(titulo);
+  // Corrección 17: quien solo compra no ve una sección de ventas vacía.
+  await expect(buyer.getByRole("heading", { name: "Ventas" })).toHaveCount(0);
   await buyer.getByTestId("compras").getByRole("link").first().click();
   await expect(buyer).toHaveURL(new RegExp(orderId));
 
@@ -46,8 +48,10 @@ test("el vendedor encuentra su venta", async ({ browser }) => {
 
   await seller.page.goto("/actividad");
   await expect(seller.page.getByTestId("ventas")).toContainText(titulo);
-  // Y no aparece como compra suya.
-  await expect(seller.page.getByRole("main")).toContainText("Aquí van tus compras");
+  // Y no aparece como compra suya: quien vende y no ha comprado no ve la
+  // sección de compras vacía (corrección 17).
+  await expect(seller.page.getByRole("heading", { name: "Compras" })).toHaveCount(0);
+  await expect(seller.page.getByRole("main")).not.toContainText("Aquí van tus compras");
 
   await seller.context.close();
   await ctx.close();
@@ -120,6 +124,7 @@ test("no se ven pedidos ni conversaciones de otras personas", async ({ browser }
   await otro.goto("/actividad");
   await expect(otro.getByRole("main")).not.toContainText(titulo);
   await expect(otro.getByRole("main")).toContainText("Aquí van tus compras");
+  await expect(otro.getByRole("heading", { name: "Ventas" })).toHaveCount(0);
 
   await seller.context.close();
   await ctx.close();

@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
+import { aceptarTerminos } from "./helpers";
 
 // Prueba de humo contra un entorno desplegado (S-29). No corre en la suite
 // normal: solo cuando NUBE_URL apunta a un entorno con APP_ENV=desarrollo, y
@@ -49,7 +50,8 @@ async function signUp(page: Page, prefix: string, name: string, rol: string) {
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phone);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/verificar/);
 
@@ -68,6 +70,9 @@ test("el circuito completo funciona contra la nube", async ({ browser }) => {
   await signUp(seller, "vendedor", "Andrés Molina", "vendedor");
 
   await seller.goto(`${URL}/vender`);
+  await seller.goto("/vender?tipo=natural");
+  await seller.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+  await seller.getByLabel(/Autorizo que el proveedor/).check();
   await seller.getByRole("button", { name: "Empezar verificación" }).click();
   await expect(seller).toHaveURL(/\/dev\/kyc\//);
   await seller.getByRole("button", { name: "Simular aprobación" }).click();

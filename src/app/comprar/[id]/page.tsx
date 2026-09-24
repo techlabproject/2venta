@@ -8,6 +8,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { getConversation, getOffer } from "@/features/chat/queries";
 import { listCart } from "@/features/cart/queries";
 import { Volver } from "@/components/Volver";
+import { esEmpresa } from "@/features/sellers/queries";
 
 // Paso previo al pago: a dónde llega y cuánto cuesta llevarlo. El comprador ve el
 // total completo antes de que le cobren nada.
@@ -25,6 +26,8 @@ export default async function Comprar({
   if (!user.phoneNumberVerified) redirect("/verificar");
 
   const { id } = await params;
+  // Corrección 17: una empresa no compra; la ficha y el carrito le dicen por qué.
+  if (await esEmpresa(user.id)) redirect(id === "carrito" ? "/carrito" : `/producto/${encodeURIComponent(id)}`);
 
   // "carrito" no es un artículo: es el pedido completo de un solo vendedor (D-20).
   const cart = id === "carrito" ? await listCart(user.id) : [];

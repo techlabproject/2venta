@@ -11,6 +11,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { getVerification } from "@/features/kyc/queries";
 import { mediaUrl } from "@/lib/media";
 import { Volver } from "@/components/Volver";
+import { VerTerminos } from "@/features/legal/VerTerminos";
 
 // RF-05: ver las sesiones abiertas por dispositivo y cerrarlas.
 export const dynamic = "force-dynamic";
@@ -65,7 +66,12 @@ export default async function Cuenta() {
     avatar_path: string | null;
     zone: string | null;
     bio: string | null;
-  }>(`select avatar_path, zone, bio from "user" where id = $1`, [user.id]);
+    terms_version: string | null;
+    terms_accepted_at: Date | null;
+  }>(
+    `select avatar_path, zone, bio, terms_version, terms_accepted_at from "user" where id = $1`,
+    [user.id],
+  );
   const verificacion = await getVerification(user.id);
   const alias = user.alias ?? user.name;
   const foto = perfil[0]?.avatar_path ? mediaUrl(perfil[0].avatar_path) : null;
@@ -129,6 +135,27 @@ export default async function Cuenta() {
               >
                 Cambiar tu contraseña
               </ButtonLink>
+            </div>
+          </section>
+
+          {/* Corrección 11: qué aceptaste y cuándo, y el texto siempre a mano. */}
+          <section>
+            <h2 className="font-title text-lg font-semibold">
+              Términos y datos personales
+            </h2>
+            <p data-testid="terminos-aceptados" className="mt-1 text-sm text-muted">
+              {perfil[0]?.terms_accepted_at
+                ? `Aceptaste la versión ${perfil[0].terms_version} el ${fecha.format(perfil[0].terms_accepted_at)}.`
+                : "Tu cuenta es de antes de que existieran estos términos."}
+            </p>
+            <div className="mt-2">
+              <VerTerminos
+                aceptadoEl={
+                  perfil[0]?.terms_accepted_at
+                    ? fecha.format(perfil[0].terms_accepted_at)
+                    : undefined
+                }
+              />
             </div>
           </section>
 

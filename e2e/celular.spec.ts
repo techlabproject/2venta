@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { sellerWithListing, signUpVerified, uniqueAccount } from "./helpers";
+import { sellerWithListing, signUpVerified, uniqueAccount, aceptarTerminos } from "./helpers";
 
 // Corrección 7 (Catalina, 2026-09-22): el celular admitía letras y no avisaba si
 // faltaban dígitos. Ahora «+57» fijo, solo dígitos, máximo diez, agrupados solos,
@@ -46,7 +46,8 @@ test("un celular incompleto no deja registrarse", async ({ page }) => {
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill("300412");
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/registro/);
   await expect(page.getByLabel("Celular")).toBeFocused();

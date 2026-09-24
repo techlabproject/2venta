@@ -7,6 +7,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { countOpenChatReports } from "@/features/chat/queries";
 import { formatCop } from "@/lib/money";
 import { Volver } from "@/components/Volver";
+import { confirmarNit } from "@/features/sellers/admin";
 
 // Pantalla 1m del mockup, en su versión mínima: la cola de revisión y los
 // reportes. El panel completo (verificaciones, disputas, usuarios) llega después.
@@ -45,6 +46,17 @@ export default async function Admin() {
   );
 
   const chatsReportados = await countOpenChatReports();
+  // Corrección 15: empresas con el RUT por revisar.
+  const empresas = await query<{
+    user_id: string;
+    legal_name: string;
+    nit: string;
+    representante_nombre: string | null;
+  }>(
+    `select user_id, legal_name, nit, representante_nombre from stores
+      where archivada_at is null and nit_confirmado_at is null and rut_pdf is not null
+      order by created_at`,
+  );
 
   return (
     <>
@@ -129,6 +141,52 @@ export default async function Admin() {
             </li>
           ))}
         </ul>
+        <section data-testid="empresas-por-confirmar" className="mt-10">
+          <h2 className="font-title text-lg font-semibold">Empresas por confirmar</h2>
+          <p className="mt-1 text-sm text-muted">
+            Revisa que el RUT corresponda al NIT y a la razón social. Al confirmar se
+            activan la insignia de empresa y la carga en lote.
+          </p>
+          {empresas.length === 0 ? (
+            <p className="mt-3 text-sm text-muted">No hay empresas esperando.</p>
+          ) : (
+            <ul className="mt-3 flex flex-col gap-2">
+              {empresas.map((e) => (
+                <li
+                  key={e.user_id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white p-4 text-sm shadow-xs ring-1 ring-line"
+                >
+                  <span>
+                    <span className="block font-medium">{e.legal_name}</span>
+                    <span className="block text-muted">
+                      NIT {e.nit}
+                      {e.representante_nombre && ` · Representante: ${e.representante_nombre}`}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-3">
+                    <a
+                      href={`/admin/rut/${e.user_id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-brand underline"
+                    >
+                      Ver RUT
+                    </a>
+                    <form action={confirmarNit}>
+                      <input type="hidden" name="userId" value={e.user_id} />
+                      <button
+                        type="submit"
+                        className="rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-cream"
+                      >
+                        Confirmar NIT
+                      </button>
+                    </form>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </main>
     </>
   );

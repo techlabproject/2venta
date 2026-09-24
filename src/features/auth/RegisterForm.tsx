@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { sendCode } from "./actions";
@@ -8,6 +9,10 @@ import { Button, ErrorNote, Field } from "@/components/ui";
 import { CampoCorreo } from "@/components/CampoCorreo";
 import { CampoCelular } from "@/components/CampoCelular";
 import { normalizarCelular } from "@/lib/celular";
+import { PanelLegal } from "@/features/legal/PanelLegal";
+import { VERSION_TERMINOS } from "@/features/legal/version";
+import { CampoValidado } from "@/components/CampoValidado";
+import { hoyEnBogota, problemaDeNacimiento } from "@/lib/edad";
 import { conVolver } from "@/lib/destino";
 
 export function RegisterForm() {
@@ -20,11 +25,22 @@ export function RegisterForm() {
 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Corrección 11: se acepta desde el final del panel de términos, no marcando la
+  // casilla a ciegas.
+  const [aceptado, setAceptado] = useState(false);
+  const [terminos, setTerminos] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setBusy(true);
+
+    if (!aceptado) {
+      setError("Para crear tu cuenta, lee y acepta los términos y la política de datos.");
+      setTerminos(true);
+      setBusy(false);
+      return;
+    }
 
     const form = new FormData(e.currentTarget);
     const phone = normalizarCelular(String(form.get("phone")));
@@ -52,6 +68,8 @@ export function RegisterForm() {
         phoneNumber: phone,
         // D-04: el alias es lo público. Por defecto, el nombre y la inicial.
         alias: toAlias(name),
+        termsVersion: VERSION_TERMINOS,
+        birthDate: String(form.get("birthDate") ?? "").trim(),
       });
     } catch {
       setError("No pudimos conectarnos. Revisa tu conexión e intenta otra vez.");
@@ -82,14 +100,30 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-      {error && <ErrorNote>{error}</ErrorNote>}
+      {error && (
+        <ErrorNote>
+          {error}
+          {/* Corrección 13: el celular repetido lleva sus dos salidas a mano. */}
+          {/ya tiene una cuenta/.test(error) && (
+            <span className="mt-2 flex gap-4">
+              <Link href={conVolver("/ingresar", volver)} className="font-medium underline">
+                Iniciar sesión
+              </Link>
+              <Link href="/recuperar" className="font-medium underline">
+                Recuperar contraseña
+              </Link>
+            </span>
+          )}
+        </ErrorNote>
+      )}
 
-      <Field
+      <CampoValidado
         id="name"
         name="name"
         label="Nombre"
         autoComplete="name"
         required
+        validar={(v) => (v.trim() ? null : "Escribe tu nombre.")}
         placeholder="Catalina Ríos"
       />
       <CampoCorreo
@@ -108,6 +142,18 @@ export function RegisterForm() {
         required
         hint="Te mandamos un código para confirmarlo. Sin celular confirmado no puedes comprar ni escribirle a nadie."
       />
+      {/* Corrección 11 (art. 52 de la Ley 1480): la «medida posible» para no
+          dejar entrar a menores de edad. Decisión de Nicolás. */}
+      <CampoValidado
+        id="birthDate"
+        name="birthDate"
+        type="date"
+        label="Fecha de nacimiento"
+        required
+        max={hoyEnBogota()}
+        validar={problemaDeNacimiento}
+        hint="Para confirmar que eres mayor de edad. No se muestra a nadie."
+      />
       <Field
         id="password"
         name="password"
@@ -120,9 +166,37 @@ export function RegisterForm() {
       />
 
       <label className="flex items-start gap-2.5 text-sm text-ink2">
-        <input type="checkbox" name="terms" required className="mt-0.5" />
-        <span>Acepto los términos y la política de tratamiento de datos.</span>
+        <input
+          type="checkbox"
+          name="terms"
+          required
+          checked={aceptado}
+          // Marcarla abre los términos: se acepta desde su final. Desmarcarla sí es
+          // directo.
+          onChange={(e) => (e.target.checked ? setTerminos(true) : setAceptado(false))}
+          className="mt-0.5 size-4 accent-brand"
+        />
+        <span>
+          Leí y acepto los{" "}
+          <button
+            type="button"
+            onClick={() => setTerminos(true)}
+            className="font-medium text-brand underline"
+          >
+            Términos y la Política de datos
+          </button>{" "}
+          (versión {VERSION_TERMINOS}).
+        </span>
       </label>
+      <PanelLegal
+        abierto={terminos}
+        alCerrar={() => setTerminos(false)}
+        alAceptar={() => {
+          setAceptado(true);
+          setTerminos(false);
+          setError(null);
+        }}
+      />
 
       <Button type="submit" disabled={busy}>
         {busy ? "Creando tu cuenta…" : "Continuar"}
@@ -154,6 +228,18 @@ function translate(code: string | undefined, fallback?: string): string {
     // que ve quien llega con JavaScript a medias (corrección 6).
     case "INVALID_EMAIL":
       return "¡Uy! Ese correo no parece válido. Revisa que se vea como nombre@gmail.com.";
+    case "UNDERAGE":
+      return "Para usar 2venta debes tener 18 años o más.";
+    case "INVALID_BIRTHDATE":
+      return "Esa fecha no parece real. Revísala.";
+    case "BIRTHDATE_REQUIRED":
+      return "Escribe tu fecha de nacimiento.";
+    case "TERMS_REQUIRED":
+      return "Para crear tu cuenta, lee y acepta los términos y la política de datos.";
+    case "NAME_REQUIRED":
+      return "Escribe tu nombre.";
+    case "PHONE_TAKEN":
+      return "¡Uy! Ese celular ya tiene una cuenta. Inicia sesión o recupera tu contraseña.";
     case "INVALID_PHONE":
       return "Ese celular no es válido: son 10 dígitos que empiezan por 3.";
     case "USER_ALREADY_EXISTS":
@@ -166,6 +252,8 @@ function translate(code: string | undefined, fallback?: string): string {
     case "TOO_MANY_REQUESTS":
       return "Demasiados intentos. Espera un momento y vuelve a probar.";
     default:
-      return "No pudimos crear tu cuenta. Intenta de nuevo.";
+      // Corrección 13: lo que no sabemos explicar se dice con calidez y con un
+      // código para soporte; los datos escritos se quedan en el formulario.
+      return `¡Uy! Algo falló de nuestro lado y no se creó tu cuenta. Intenta de nuevo en un momento.${code ? ` (Código: ${code})` : ""}`;
   }
 }

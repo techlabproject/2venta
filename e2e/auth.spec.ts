@@ -2,7 +2,8 @@ import { test, expect, type Page } from "@playwright/test";
 import { Client } from "pg";
 import { config } from "dotenv";
 import { decryptCode } from "../src/features/auth/otp";
-import { cerrarSesion } from "./helpers";
+import { cerrarSesion, aceptarTerminos } from "./helpers";
+import { VERSION_TERMINOS } from "../src/features/legal/version";
 
 config({ path: ".env.local" });
 
@@ -60,7 +61,8 @@ async function fillRegistration(page: Page, email: string, phoneDigits: string) 
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phoneDigits);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/verificar/);
 }
@@ -148,7 +150,8 @@ test("un correo ya registrado no crea una segunda cuenta", async ({ page }) => {
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(otro.phoneDigits);
   await page.getByLabel("Contraseña").fill("otraClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
 
   await expect(alertIn(page)).toContainText("ya tiene una cuenta");
@@ -166,9 +169,12 @@ test("una contraseña corta se rechaza en el servidor, no solo en la pantalla", 
       password: "corta",
       name: "Clave Corta",
       phoneNumber: `+57${phoneDigits}`,
+      termsVersion: VERSION_TERMINOS,
+      birthDate: "1995-05-20",
     },
   });
   expect(res.status()).toBeGreaterThanOrEqual(400);
+  expect((await res.json()).code).toMatch(/PASSWORD/);
 });
 
 test("un celular que no es colombiano se rechaza antes de crear nada", async ({ page }) => {
@@ -177,7 +183,8 @@ test("un celular que no es colombiano se rechaza antes de crear nada", async ({ 
   await page.getByLabel("Correo").fill(uniqueAccount().email);
   await page.getByLabel("Celular").fill("123");
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   // Desde la corrección 7 el aviso va debajo del campo y dice qué está mal.
   await expect(page.getByLabel("Celular")).toHaveAttribute("aria-invalid", "true");
@@ -214,7 +221,8 @@ test("una contraseña corta dice en pantalla cuántos caracteres faltan", async 
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phoneDigits);
   await page.getByLabel("Contraseña").fill("siete77");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
 
   await expect(alertIn(page)).toContainText("ocho caracteres");
@@ -231,9 +239,12 @@ test("una contraseña de puros espacios se rechaza en el servidor", async ({ req
       password: "        ",
       name: "Espacios",
       phoneNumber: `+57${phoneDigits}`,
+      termsVersion: VERSION_TERMINOS,
+      birthDate: "1995-05-20",
     },
   });
   expect(res.status()).toBeGreaterThanOrEqual(400);
+  expect((await res.json()).code).toBe("PASSWORD_TOO_WEAK");
 });
 
 test("sin celular confirmado no se entra al circuito de vendedor", async ({ page }) => {
@@ -245,7 +256,8 @@ test("sin celular confirmado no se entra al circuito de vendedor", async ({ page
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phoneDigits);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/verificar/);
 
@@ -278,7 +290,8 @@ test("quien no tiene celular llega a la pantalla que se lo pide", async ({ page 
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phoneDigits);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/verificar/);
 
@@ -304,7 +317,8 @@ test("el código de verificación no queda en claro en la base", async ({ page }
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phoneDigits);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/verificar/);
 
@@ -328,7 +342,8 @@ test("un código ya usado no sirve otra vez", async ({ page }) => {
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phoneDigits);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/verificar/);
 
@@ -352,17 +367,25 @@ test("un celular ya confirmado en otra cuenta no confirma una segunda", async ({
   const { phoneDigits } = uniqueAccount();
   const phone = `+57${phoneDigits}`;
 
+  // Desde la corrección 13 un celular ya confirmado se rechaza al registrarse. Lo
+  // que esta prueba cuida es la carrera: las dos cuentas se registran con el mismo
+  // número antes de que alguna lo confirme, y la segunda confirmación no debe pasar.
   const a = await browser.newContext();
   const pageA = await a.newPage();
   await fillRegistration(pageA, uniqueAccount().email, phoneDigits);
-  await pageA.getByLabel("Código de seis dígitos").fill(await readOtp(phone));
-  await pageA.getByRole("button", { name: "Confirmar celular" }).click();
-  await expect(pageA.getByTestId("usuario")).toBeVisible();
 
   const b = await browser.newContext();
   const pageB = await b.newPage();
   const emailB = uniqueAccount().email;
   await fillRegistration(pageB, emailB, phoneDigits);
+
+  await pageA.getByLabel("Código de seis dígitos").fill(await readOtp(phone));
+  await pageA.getByRole("button", { name: "Confirmar celular" }).click();
+  await expect(pageA.getByTestId("usuario")).toBeVisible();
+
+  // Hay un código por celular y A ya lo usó: B pide uno nuevo, como haría cualquiera.
+  await pageB.getByRole("button", { name: "No me llegó, mandar otro" }).click();
+  await expect(pageB.getByRole("status")).toContainText("Te mandamos otro código");
   await pageB.getByLabel("Código de seis dígitos").fill(await readOtp(phone));
   await pageB.getByRole("button", { name: "Confirmar celular" }).click();
   await expect(alertIn(pageB)).toContainText("ya está confirmado en otra cuenta");

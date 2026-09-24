@@ -22,6 +22,27 @@ import { anterior } from "@/lib/rastro";
 // hay recorrido —se entró por un enlace externo, o sin JavaScript— y debe ser la
 // pantalla padre, no la portada. Cuando el texto nombra un destino («Volver a tu
 // cuenta») se pasa `fijo`: un botón que dice a dónde va tiene que ir ahí.
+/**
+ * ¿La entrada anterior del historial de esta pestaña es `destino`?
+ *
+ * Entonces «Volver» retrocede en vez de sumar una entrada: si la sumaba, el atrás
+ * del navegador devolvía a la pantalla de la que se acababa de volver (Luna, fila
+ * 18). Se pregunta al navegador (Navigation API) y no al recorrido, porque el
+ * recorrido junta en una sola entrada los cambios de filtro que el historial
+ * guarda uno por uno. Sin esa API se suma la entrada, como antes.
+ */
+function esLaEntradaAnterior(destino: string): boolean {
+  type Entrada = { url: string | null; index: number };
+  const nav = (globalThis as { navigation?: { currentEntry: Entrada | null; entries(): Entrada[] } })
+    .navigation;
+  const actual = nav?.currentEntry;
+  if (!nav || !actual || actual.index < 1) return false;
+  const previa = nav.entries()[actual.index - 1]?.url;
+  if (!previa) return false;
+  const url = new URL(previa);
+  return url.origin === location.origin && url.pathname + url.search === destino;
+}
+
 export function Volver({
   href,
   fijo = false,
@@ -38,10 +59,12 @@ export function Volver({
     if (fijo || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
       return;
     }
-    const destino = anterior(location.pathname + location.search);
+    const actual = location.pathname + location.search;
+    const destino = anterior(actual);
     if (!destino) return;
     e.preventDefault();
-    router.push(destino);
+    if (esLaEntradaAnterior(destino)) router.back();
+    else router.push(destino);
   }
 
   return (

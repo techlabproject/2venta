@@ -7,6 +7,9 @@ import { alertIn, signUpVerified, uniqueAccount, withDb } from "./helpers";
 
 async function approveKyc(page: Page) {
   await page.goto("/vender");
+  await page.goto("/vender?tipo=natural");
+  await page.getByLabel("Dirección de notificaciones").fill("Calle 72 # 10-34");
+  await page.getByLabel(/Autorizo que el proveedor/).check();
   await page.getByRole("button", { name: "Empezar verificación" }).click();
   await expect(page).toHaveURL(/\/dev\/kyc\//);
   await page.getByRole("button", { name: "Simular aprobación" }).click();

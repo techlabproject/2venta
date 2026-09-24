@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { cerrarSesion, sellerWithListing, signUpVerified, uniqueAccount, withDb } from "./helpers";
+import { cerrarSesion, sellerWithListing, signUpVerified, uniqueAccount, withDb, aceptarTerminos } from "./helpers";
 import { decryptCode } from "../src/features/auth/otp";
 
 // Corrección 1 (Catalina, 2026-09-22): sin cuenta, «Escribirle al vendedor»
@@ -78,7 +78,8 @@ test.describe("escribirle al vendedor sin cuenta", () => {
     await page.getByLabel("Correo").fill(email);
     await page.getByLabel("Celular").fill(phoneDigits);
     await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-    await page.getByRole("checkbox").check();
+    await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+    await aceptarTerminos(page);
     await page.getByRole("button", { name: "Continuar" }).click();
     await expect(page).toHaveURL(/\/verificar\?.*volver=/);
 
@@ -260,4 +261,80 @@ test("el vendedor sí llega a la ficha de su artículo retirado desde el chat", 
   await expect(tarjeta).toHaveAttribute("href", `/producto/${vendedor.listingId}`);
   await expect(vendedor.page.getByText("Ya no está publicado")).toHaveCount(0);
   await vendedor.context.close();
+});
+
+// Corrección 18 (Catalina): «desde Ventas y Conversaciones, como vendedor, al darle
+// clic a un producto cancelado y devolverte, te manda a Home». Lo arregló el
+// recorrido de la corrección 1 (D-99); esto fija el camino exacto que ella siguió.
+test("desde un pedido cancelado, Volver regresa a la actividad y no a la portada", async ({ browser, page }) => {
+  const titulo = `Lámpara de pie ${Date.now()}`;
+  const vendedor = await sellerWithListing(browser, titulo, 95_000, "ropa");
+
+  await signUpVerified(page, "cancela", "Carla Cancela");
+  await page.goto(`/comprar/${vendedor.listingId}`);
+  await page.getByLabel("Quién recibe").fill("Carla Torres");
+  await page.getByLabel("Celular de quien recibe").fill("300 412 88 05");
+  await page.getByLabel("Dirección").fill("Calle 72 #10-34");
+  await page.getByLabel("Zona").selectOption("Chapinero");
+  await page.getByRole("button", { name: "Ir a pagar" }).click();
+  await expect(page).toHaveURL(/\/dev\/pago\//);
+  const pedido = new URL(page.url()).pathname.split("/").pop()!;
+  await withDb((c) => c.query(`update orders set status = 'cancelado' where id = $1`, [pedido]));
+
+  // Quien vende: Ventas → el pedido cancelado → Volver.
+  await vendedor.page.goto("/");
+  await vendedor.page.goto("/actividad");
+  await vendedor.page.getByRole("link", { name: new RegExp(titulo) }).click();
+  await expect(vendedor.page).toHaveURL(new RegExp(`/pedido/${pedido}$`));
+  await expect(vendedor.page.getByRole("main")).toContainText("Cancelado");
+  await volver(vendedor.page).click();
+  await expect(vendedor.page).toHaveURL(/\/actividad$/);
+  // «Volver» retrocede, no suma una entrada: el atrás del navegador sigue hacia
+  // la portada en vez de reabrir el pedido (Luna, fila 18).
+  await vendedor.page.goBack();
+  await expect(vendedor.page).toHaveURL(/:\d+\/$/);
+
+  // Quien compra: Compras → el pedido cancelado → Volver.
+  await page.goto("/actividad");
+  await page.getByRole("link", { name: new RegExp(titulo) }).click();
+  await expect(page).toHaveURL(new RegExp(`/pedido/${pedido}$`));
+  await volver(page).click();
+  await expect(page).toHaveURL(/\/actividad$/);
+
+  // Y por Conversaciones: la lista → el chat → la ficha → Volver dos veces.
+  await page.goto(`/producto/${vendedor.listingId}`);
+  await page.getByRole("button", { name: "Escribirle al vendedor" }).click();
+  await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}$/);
+  const chat = new URL(page.url()).pathname;
+  await vendedor.page.goto("/chats");
+  await vendedor.page.getByRole("link", { name: new RegExp(titulo) }).first().click();
+  await expect(vendedor.page).toHaveURL(new RegExp(`${chat}$`));
+  await vendedor.page.getByRole("main").getByRole("link", { name: new RegExp(titulo) }).first().click();
+  await expect(vendedor.page).toHaveURL(new RegExp(`/producto/${vendedor.listingId}$`));
+  await volver(vendedor.page).click();
+  await expect(vendedor.page).toHaveURL(new RegExp(`${chat}$`));
+  await volver(vendedor.page).click();
+  await expect(vendedor.page).toHaveURL(/\/chats$/);
+
+  await vendedor.context.close();
+});
+
+test("después de cambiar filtros, Volver y el atrás del navegador no se enredan", async ({ browser, page }) => {
+  const titulo = `Florero azul ${Date.now()}`;
+  const { context, listingId } = await sellerWithListing(browser, titulo, 52_000, "ropa");
+  await context.close();
+
+  // Dos búsquedas seguidas: el historial guarda dos entradas; el recorrido, una.
+  await page.goto("/");
+  await page.goto(`/buscar?q=${encodeURIComponent("Florero")}`);
+  await page.goto(`/buscar?q=${encodeURIComponent(titulo)}`);
+  await page.getByRole("link", { name: new RegExp(titulo) }).first().click();
+  await expect(page).toHaveURL(new RegExp(`/producto/${listingId}$`));
+
+  await volver(page).click();
+  await expect(page).toHaveURL(/\/buscar\?q=Florero(\+|%20)azul(\+|%20)\d+$/);
+  // Desde la búsqueda, Volver va a la portada aunque en el historial quede la
+  // búsqueda anterior en medio.
+  await volver(page).click();
+  await expect(page).toHaveURL(/:\d+\/$/);
 });

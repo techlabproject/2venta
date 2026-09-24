@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { alertIn, cerrarSesion, signUpVerified, uniqueAccount, withDb } from "./helpers";
+import { alertIn, cerrarSesion, signUpVerified, uniqueAccount, withDb, aceptarTerminos } from "./helpers";
 import { decryptCode } from "../src/features/auth/otp";
 
 // La prueba de punta a punta de la rebanada S-20.
@@ -24,7 +24,8 @@ async function account(page: Page) {
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phoneDigits);
   await page.getByLabel("Contraseña").fill("claveOriginal1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/verificar/);
 

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { activeUser } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
 import { getStore, listDrafts } from "@/features/store/queries";
-import { BulkUploadForm, RegisterStoreForm } from "@/features/store/Forms";
+import { BulkUploadForm } from "@/features/store/Forms";
 import { AppHeader } from "@/components/AppHeader";
 import { formatCop } from "@/lib/money";
 import { Volver } from "@/components/Volver";
@@ -20,8 +20,11 @@ export default async function Tienda() {
   const verification = await getVerification(user.id);
   if (verification?.status !== "aprobado") redirect("/vender");
 
+  // Corrección 15: ya no se registra una tienda aquí. Esta pantalla es la carga
+  // en lote de la persona jurídica con el NIT confirmado; cualquier otro, a /vender.
   const store = await getStore(user.id);
-  const drafts = store ? await listDrafts(user.id) : [];
+  if (!store) redirect("/vender");
+  const drafts = await listDrafts(user.id);
 
   return (
     <>
@@ -31,10 +34,10 @@ export default async function Tienda() {
           <Volver href="/vender" />
         </div>
         <h1 className="font-title text-2xl font-semibold">
-          {store ? store.legal_name : "Registra tu tienda"}
+          {store.legal_name}
         </h1>
 
-        {store ? (
+        {(
           <>
             <p className="mt-1 text-sm text-muted">NIT {store.nit}</p>
 
@@ -96,14 +99,6 @@ export default async function Tienda() {
                 </ul>
               )}
             </section>
-          </>
-        ) : (
-          <>
-            <p className="mt-2 mb-6 text-sm text-ink2">
-              Con cuenta de tienda tus publicaciones llevan un distintivo
-              distinto y puedes cargar varios artículos de una vez.
-            </p>
-            <RegisterStoreForm />
           </>
         )}
       </main>

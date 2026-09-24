@@ -113,11 +113,12 @@ test("el comprador reporta la conversación y entra a la cola de moderación", a
     "No le avisamos a la otra persona",
   );
 
-  // Reportar dos veces no duplica el reporte.
+  // Al volver, el reporte se recuerda: ya no se ofrece reportar otra vez, y se
+  // dice que la otra persona dejó de llegarle (bloqueo silencioso, corrección 22).
+  // El índice único de la base sigue impidiendo un segundo reporte.
   await buyer.reload();
-  await buyer.getByTestId("reportar").click();
-  await buyer.getByLabel("Qué está pasando").selectOption("insultos");
-  await buyer.getByRole("button", { name: "Enviar el reporte" }).click();
+  await expect(buyer.getByTestId("reportar")).toHaveCount(0);
+  await expect(buyer.getByTestId("reporte-hecho")).toContainText("Reportaste esta conversación");
 
   const cuantos = await withDb(async (c) => {
     const { rows } = await c.query<{ n: string }>(

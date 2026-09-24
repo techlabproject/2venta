@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { uniqueAccount, withDb } from "./helpers";
+import { uniqueAccount, withDb, aceptarTerminos } from "./helpers";
 import { decryptCode } from "../src/features/auth/otp";
 
 // Corrección 8 (Catalina, 2026-09-22): el código de confirmación admitía letras.
@@ -13,7 +13,8 @@ async function hastaVerificar(page: Page) {
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phoneDigits);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page).toHaveURL(/\/verificar/);
   return phoneDigits;

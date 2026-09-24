@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { uniqueAccount, withDb } from "./helpers";
+import { uniqueAccount, withDb, aceptarTerminos } from "./helpers";
 
 // Corrección 6 (Catalina, 2026-09-22): el correo no se validaba. Con «cata@mail»
 // el registro respondía «No pudimos crear tu cuenta» sin decir por qué. Ahora se
@@ -29,7 +29,8 @@ test("un correo mal escrito no deja registrarse y no crea la cuenta", async ({ p
   await page.getByLabel("Correo").fill(malo);
   await page.getByLabel("Celular").fill(phoneDigits);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
 
   await expect(page).toHaveURL(/\/registro/);
@@ -92,7 +93,8 @@ test("si el servidor recibe un correo inválido, lo dice en vez del error genér
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Celular").fill(phoneDigits);
   await page.getByLabel("Contraseña").fill("unaClaveLarga1");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Fecha de nacimiento").fill("1995-05-20");
+  await aceptarTerminos(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page.getByRole("main").getByRole("alert")).toContainText("Ese correo no parece válido");
 });

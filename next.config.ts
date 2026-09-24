@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   // No anunciar el framework en cada respuesta.
   poweredByHeader: false,
+  // El límite por defecto de una acción de servidor es 1 MB: la carga en lote
+  // promete 2 MB y el RUT de una persona jurídica (corrección 15) también llega a 2.
+  experimental: { serverActions: { bodySizeLimit: "3mb" } },
   // Cabeceras de defensa en profundidad (hallazgo de QA, 2026-09-13). Sin CSP
   // todavía: Next inyecta scripts en línea y una CSP mal puesta rompe la app;
   // entra cuando se pueda probar con nonces.
