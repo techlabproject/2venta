@@ -60,11 +60,15 @@ jobs:
       # Las migraciones corren con la imagen nueva ANTES de actualizar los
       # servicios, como tarea aparte. Primero se registra la definición con la
       # imagen nueva (solo esa), luego se lanza y se espera a que termine bien.
+      # Con la versión del secreto: si la definición pide una clave nueva (como
+      # WHATSAPP_VERIFY_TOKEN, D-117) y el secreto todavía no la tiene, la tarea
+      # no arranca y termina «con código None».
       - name: Migraciones
         working-directory: infra/envs/dev
         run: |
           terraform apply -input=false -auto-approve -var image_tag="$TAG" \
-            -target=module.entorno.aws_ecs_task_definition.migrar
+            -target=module.entorno.aws_ecs_task_definition.migrar \
+            -target=module.entorno.aws_secretsmanager_secret_version.app
           CLUSTER=$(terraform output -raw cluster)
           TASKDEF=$(terraform output -raw task_migrar)
           SUBNETS=$(terraform output -json subredes_tareas | jq -r 'join(",")')
