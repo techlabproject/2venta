@@ -3,7 +3,7 @@
 import { notifyUser } from "@/features/alerts/queries";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { activeUser, currentUser } from "@/lib/session";
+import { activeUser, clienteActivo, currentUser } from "@/lib/session";
 import { conVolver } from "@/lib/destino";
 import { query } from "@/lib/db";
 import { getListing } from "@/features/catalog/queries";
@@ -19,7 +19,7 @@ import {
 } from "./queries";
 import { MIN_PRICE_COP, parseCop } from "@/features/payments/money";
 import { formatCop } from "@/lib/money";
-import { esEmpresa } from "@/features/sellers/queries";
+import { noCompra } from "@/features/sellers/queries";
 
 export type ChatResult = { error: string };
 
@@ -54,7 +54,7 @@ export async function startConversation(
   }
   // Corrección 17: el chat con un vendedor es para comprarle, y una empresa no
   // compra. La que ya existía se conserva (arriba).
-  if (await esEmpresa(user.id)) redirect(`/producto/${listing.id}`);
+  if (await noCompra(user)) redirect(`/producto/${listing.id}`);
 
   const id = await openConversation(listing.id, user.id, listing.seller_id);
   redirect(`/chat/${id}`);
@@ -173,7 +173,7 @@ export async function makeOffer(_prev: ChatResult | null, form: FormData) {
   }
 
   // El vendedor sí contraoferta; lo que no hace una empresa es ofertar para comprar.
-  if (ctx.conversation.buyer_id === ctx.user.id && (await esEmpresa(ctx.user.id))) {
+  if (ctx.conversation.buyer_id === ctx.user.id && (await noCompra(ctx.user))) {
     redirect(`/chat/${conversationId}`);
   }
 
@@ -260,7 +260,8 @@ export async function respondToOffer(_prev: ChatResult | null, form: FormData) {
 }
 
 export async function askQuestion(_prev: ChatResult | null, form: FormData) {
-  const user = await activeUser();
+  // Corrección 48: la cuenta del equipo no pregunta como compradora.
+  const user = await clienteActivo();
   if (!user.phoneNumberVerified) redirect("/verificar");
 
   const listingId = String(form.get("listingId") ?? "");

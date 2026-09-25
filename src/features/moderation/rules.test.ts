@@ -51,3 +51,26 @@ test("todo sale directo al catálogo, electrónica incluida", () => {
   // Corrección 40 (decisión de Nicolás): sin revisión humana previa.
   assert.equal(initialStatus(), "activa");
 });
+
+// Corrección 52 (D-128): el equipo agrega frases desde el panel, con su motivo. Se
+// comparan sin tildes ni mayúsculas y por palabra completa: «iqos» no rechaza
+// «iqoscopio», igual que «arma» no rechaza «armario».
+test("las frases del equipo se aplican por palabra completa, sin tildes ni mayúsculas", () => {
+  const frases = [{ frase: "vapeador desechable", motivo: "No se pueden publicar vapeadores." }];
+  assert.deepEqual(
+    moderateListing({ title: "Vapeador DESECHABLE nuevo", description: "Sin uso" }, frases),
+    { allowed: false, reason: "No se pueden publicar vapeadores." },
+  );
+  assert.deepEqual(
+    moderateListing({ title: "Vapeadór desechable", description: "" }, frases),
+    { allowed: false, reason: "No se pueden publicar vapeadores." },
+  );
+  assert.deepEqual(
+    moderateListing({ title: "Vapeadores desechables", description: "" }, frases),
+    { allowed: true },
+  );
+  // Sin frases, lo de siempre.
+  assert.deepEqual(moderateListing({ title: "Vapeador desechable", description: "" }), {
+    allowed: true,
+  });
+});

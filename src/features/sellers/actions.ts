@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { activeUser } from "@/lib/session";
+import { clienteActivo } from "@/lib/session";
 import { query } from "@/lib/db";
 import { kycProvider } from "@/features/kyc/provider";
 import { startVerification } from "@/features/kyc/queries";
@@ -23,7 +23,7 @@ export async function empezarComoVendedor(
   _prev: VendedorResult | null,
   form: FormData,
 ): Promise<VendedorResult> {
-  const user = await activeUser();
+  const user = await clienteActivo();
   // D-01: sin celular confirmado no hay nada más.
   if (!user.phoneNumberVerified) redirect("/verificar");
 
@@ -136,7 +136,7 @@ export async function completarDatosVendedor(
   _prev: VendedorResult | null,
   form: FormData,
 ): Promise<VendedorResult> {
-  const user = await activeUser();
+  const user = await clienteActivo();
   const direccion = String(form.get("direccion") ?? "").trim().slice(0, 200);
   const problema = problemaDeDireccion(direccion);
   if (problema) return { error: problema };

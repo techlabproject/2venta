@@ -55,13 +55,28 @@ const FORBIDDEN: Array<{ pattern: RegExp; reason: string }> = [
   },
 ];
 
-export function moderateListing(input: {
-  title: string;
-  description: string;
-}): ModerationVerdict {
+const normalizar = (t: string) =>
+  t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+/** Las reglas fijas, en palabras, para mostrarlas en el panel del equipo (D-128). */
+export const MOTIVOS_FIJOS: string[] = FORBIDDEN.map((r) => r.reason);
+
+export function moderateListing(
+  input: { title: string; description: string },
+  /**
+   * Corrección 52 (D-128): las frases que agregó el equipo desde el panel, con el
+   * motivo que ve quien publica. Por palabra completa y sin tildes ni mayúsculas.
+   */
+  frasesDelEquipo: { frase: string; motivo: string }[] = [],
+): ModerationVerdict {
   const text = `${input.title} ${input.description}`;
   for (const rule of FORBIDDEN) {
     if (rule.pattern.test(text)) return { allowed: false, reason: rule.reason };
+  }
+  const normal = ` ${normalizar(text).replace(/[^a-z0-9ñ]+/g, " ")} `;
+  for (const f of frasesDelEquipo) {
+    const buscada = normalizar(f.frase).replace(/[^a-z0-9ñ]+/g, " ").trim();
+    if (buscada && normal.includes(` ${buscada} `)) return { allowed: false, reason: f.motivo };
   }
   // D-22 también aplica a la ficha: es pública y permanente, y un teléfono en el
   // título es la forma más cómoda de salirse del pago protegido (hallazgo de

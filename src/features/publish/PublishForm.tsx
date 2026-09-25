@@ -1,5 +1,7 @@
 "use client";
 
+import type { OpcionesDeAtributos } from "@/features/configuracion/queries";
+
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { publishListing, type PublishResult } from "./actions";
@@ -25,9 +27,11 @@ import {
 export function PublishForm({
   categories,
   suggestions,
+  opciones,
 }: {
   categories: Category[];
   suggestions: SuggestionMap;
+  opciones?: OpcionesDeAtributos;
 }) {
   const router = useRouter();
   const [media, setMedia] = useState<{ video: Blob; poster: Blob } | null>(
@@ -156,7 +160,7 @@ export function PublishForm({
 
       {/* Corrección 38: talla en ropa, edad en artículos para niños. */}
       {CAMPO_DE_CATEGORIA[category] && (
-        <CampoDeCategoria campo={CAMPO_DE_CATEGORIA[category]!} />
+        <CampoDeCategoria campo={CAMPO_DE_CATEGORIA[category]!} opciones={opciones} />
       )}
 
       {/* Corrección 40: el IMEI es de los celulares; un Xbox o un portátil no

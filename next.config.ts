@@ -23,8 +23,10 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          // La cámara y el micrófono los usa la propia app para grabar el video.
-          { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=()" },
+          // La cámara y el micrófono los usa la propia app para grabar el video; la
+          // ubicación, «Usar mi ubicación» (D-122). Solo el propio sitio, nunca un
+          // tercero incrustado.
+          { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=(self)" },
         ],
       },
     ];

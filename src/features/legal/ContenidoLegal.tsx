@@ -232,7 +232,8 @@ export function ContenidoLegal() {
             el vendedor, una vez pagado el pedido, y la transportadora.
           </li>
           <li>
-            En persona: se acuerda una zona, el pago se hace antes en la aplicación y
+            En persona: se elige una zona y, si la hay, un lugar público de la lista
+            (centro comercial, biblioteca); el pago se hace antes en la aplicación y
             al recibir dictas un código de un solo uso. Nunca hay efectivo.
           </li>
         </ul>
@@ -400,6 +401,15 @@ export function ContenidoLegal() {
           <li>
             <strong>Perfil:</strong> zona, foto y calificaciones. Para mostrar a los
             demás la cercanía y la reputación.
+          </li>
+          <li>
+            <strong>Ubicación aproximada:</strong> de quien vende, el centro de su zona o,
+            si usa «Usar mi ubicación», un punto de su celular redondeado a cerca de 1 km;
+            nunca el punto exacto ni la dirección. Con él mostramos a cuántos kilómetros
+            está cada artículo, también redondeado. De quien compra, la zona o el punto
+            que elija (también a 1 km) queda solo en una cookie de su navegador, no en
+            nuestra base, y se borra con «Quitar». El permiso de ubicación del celular es
+            opcional: sin él se elige la zona de una lista.
           </li>
           <li>
             <strong>Vendedores:</strong> si vendes como persona o empresa, tu dirección

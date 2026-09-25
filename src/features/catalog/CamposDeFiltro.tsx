@@ -2,6 +2,7 @@ import { CONDITION_LABEL } from "./labels";
 import { CampoPrecio } from "./CampoPrecio";
 import type { Category } from "./queries";
 import type { SearchFilters as Filters } from "./search";
+import { RADIOS } from "@/features/ubicacion/zonas";
 
 export const campoClass =
   "rounded-xl border border-line bg-white px-3 py-2 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15";
@@ -20,11 +21,14 @@ export function CamposDeFiltro({
   filters,
   categories,
   zones,
+  conPunto = false,
   prefijo = "f",
 }: {
   filters: Filters;
   categories: Category[];
   zones: string[];
+  /** D-122: si se sabe dónde está quien busca (su cookie). Sin eso no hay distancia. */
+  conPunto?: boolean;
   prefijo?: string;
 }) {
   return (
@@ -73,13 +77,38 @@ export function CamposDeFiltro({
         </div>
       </fieldset>
 
+      {/* D-122: la distancia en kilómetros del mockup, desde el punto de quien busca.
+          Sin punto no se puede medir: el campo se ve apagado y dice por qué. */}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${prefijo}-radio`} className="text-sm font-medium">
+          Distancia
+        </label>
+        <select
+          id={`${prefijo}-radio`}
+          name="radio"
+          defaultValue={filters.radio ?? ""}
+          disabled={!conPunto}
+          aria-describedby={conPunto ? undefined : `${prefijo}-radio-ayuda`}
+          className={`${campoClass} disabled:bg-ph disabled:text-muted`}
+        >
+          <option value="">Toda Bogotá</option>
+          {RADIOS.map((km) => (
+            <option key={km} value={km}>
+              A menos de {km} km
+            </option>
+          ))}
+        </select>
+        {!conPunto && (
+          <p id={`${prefijo}-radio-ayuda`} className="text-xs text-muted">
+            Dinos dónde estás (arriba de los resultados) para filtrar por distancia.
+          </p>
+        )}
+      </div>
+
       <div className="flex flex-col gap-1.5">
         <label htmlFor={`${prefijo}-zona`} className="text-sm font-medium">
-          Zona
+          Zona del vendedor
         </label>
-        {/* El mockup filtra por distancia en kilómetros. No hay coordenadas de
-            nada todavía, así que se filtra por zona y la distancia entra
-            cuando exista el dato. */}
         <select
           id={`${prefijo}-zona`}
           name="zona"
@@ -119,6 +148,7 @@ export function CamposDeFiltro({
           <option value="recientes">Más recientes</option>
           <option value="precio_asc">Menor precio</option>
           <option value="precio_desc">Mayor precio</option>
+          {conPunto && <option value="cerca">Más cerca</option>}
         </select>
       </div>
     </>

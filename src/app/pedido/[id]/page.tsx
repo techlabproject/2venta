@@ -1,6 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { currentUser } from "@/lib/session";
 import { getOrder, getOrderItems } from "@/features/payments/orders";
+import { lugarPorId } from "@/features/pickup/lugares";
+import { ConsejosEncuentro } from "@/features/pickup/ConsejosEncuentro";
 import { query } from "@/lib/db";
 import { ConfirmReceiptButton } from "@/features/payments/ConfirmReceiptButton";
 import { AppHeader } from "@/components/AppHeader";
@@ -85,6 +87,7 @@ export default async function Pedido({
   const address = await getAddress(order.id);
   const money = breakdown(order.subtotal_cop, order.shipping_cop);
   const claim = await getClaim(order.id);
+  const lugar = await lugarPorId(order.meeting_place_id);
   // Las pruebas del reclamo, separadas por quién las aportó. La consulta no lleva
   // permiso dentro: arriba ya se comprobó que quien mira es una de las dos partes.
   const pruebas = claim ? await listClaimPhotos(claim.id) : [];
@@ -227,10 +230,18 @@ export default async function Pedido({
         )}
 
         {presencial && (
-          <p className="mt-4 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line">
-            Entrega en persona en {order.meeting_zone}. El punto y la hora los
-            acuerdan por el chat.
-          </p>
+          <div className="mt-4 flex flex-col gap-3">
+            {/* Corrección 46 (D-125): dónde, si se eligió un lugar de la lista. */}
+            <p
+              data-testid="encuentro"
+              className="rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
+            >
+              {lugar
+                ? `Se ven en ${lugar.nombre} (${lugar.zona}). La hora la acuerdan por el chat.`
+                : `Se ven en ${order.meeting_zone}. El lugar lo acuerdan por el chat: que sea público y concurrido.`}
+            </p>
+            <ConsejosEncuentro />
+          </div>
         )}
 
         {code && (

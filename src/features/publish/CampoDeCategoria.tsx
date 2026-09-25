@@ -1,4 +1,5 @@
 import { EDADES, TALLAS_LETRA, TALLAS_NUMERO } from "@/features/catalog/atributos";
+import type { OpcionesDeAtributos } from "@/features/configuracion/queries";
 
 const SELECT =
   "rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15";
@@ -10,10 +11,23 @@ const SELECT =
 export function CampoDeCategoria({
   campo,
   valor,
+  opciones,
 }: {
   campo: "talla" | "edad";
   valor?: string | null;
+  /** Corrección 52 (D-128): las listas que gestiona el equipo. Sin ellas, las de siempre. */
+  opciones?: OpcionesDeAtributos;
 }) {
+  const tallasLetra = opciones?.tallasLetra ?? TALLAS_LETRA;
+  const tallasNumero = opciones?.tallasNumero ?? TALLAS_NUMERO;
+  const edades = opciones?.edades ?? EDADES;
+  // Luna (fila 52): si el equipo desactivó el valor que ya tiene la publicación, se
+  // conserva y se dice. Sin esto el navegador elegía otro y al guardar cambiaba.
+  const retirado =
+    valor &&
+    !(campo === "talla" ? [...tallasLetra, ...tallasNumero] : [...edades]).includes(valor)
+      ? valor
+      : null;
   if (campo === "talla") {
     return (
       <div className="flex flex-col gap-1.5">
@@ -24,22 +38,27 @@ export function CampoDeCategoria({
           <option value="" disabled>
             Elige la talla
           </option>
+          {retirado && <option value={retirado}>{retirado} (ya no se ofrece)</option>}
           <optgroup label="Letras">
-            {TALLAS_LETRA.map((t) => (
+            {tallasLetra.map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>
             ))}
           </optgroup>
           <optgroup label="Números">
-            {TALLAS_NUMERO.map((t) => (
+            {tallasNumero.map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>
             ))}
           </optgroup>
         </select>
-        <p className="text-xs text-muted">La que dice la etiqueta. En calzado, el número.</p>
+        <p className="text-xs text-muted">
+          {retirado
+            ? `La talla ${retirado} ya no se ofrece a publicaciones nuevas; puedes dejarla o cambiarla.`
+            : "La que dice la etiqueta. En calzado, el número."}
+        </p>
       </div>
     );
   }
@@ -52,12 +71,18 @@ export function CampoDeCategoria({
         <option value="" disabled>
           Elige la edad
         </option>
-        {EDADES.map((e) => (
+        {retirado && <option value={retirado}>{retirado} (ya no se ofrece)</option>}
+        {edades.map((e) => (
           <option key={e} value={e}>
             {e}
           </option>
         ))}
       </select>
+      {retirado && (
+        <p className="text-xs text-muted">
+          «{retirado}» ya no se ofrece a publicaciones nuevas; puedes dejarla o cambiarla.
+        </p>
+      )}
     </div>
   );
 }

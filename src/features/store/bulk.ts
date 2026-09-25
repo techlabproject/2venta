@@ -53,7 +53,12 @@ export type ParseResult =
  * archivo entero por una fila mala obliga a la tienda a repetir el trabajo de las
  * otras noventa y nueve.
  */
-export function parseBulk(text: string, validCategories: string[]): ParseResult {
+export function parseBulk(
+  text: string,
+  validCategories: string[],
+  /** Corrección 52 (D-128): las frases prohibidas que agregó el equipo. */
+  frasesDelEquipo: { frase: string; motivo: string }[] = [],
+): ParseResult {
   const lines = text.trim().split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) {
     return { ok: false, error: "El archivo está vacío o solo tiene el encabezado." };
@@ -125,7 +130,7 @@ export function parseBulk(text: string, validCategories: string[]): ParseResult 
 
     // El mismo filtro que la publicación de a uno: cargar en lote no es una puerta
     // trasera para lo que está prohibido.
-    const verdict = moderateListing({ title, description });
+    const verdict = moderateListing({ title, description }, frasesDelEquipo);
     if (!verdict.allowed) {
       errors.push({ line: lineNumber, message: verdict.reason });
       return;

@@ -47,8 +47,8 @@ test("el comprador ve el envío y el total antes de pagar", async ({ browser }) 
   await signUpVerified(buyer, "comprador", "Laura Compradora");
 
   await buyer.goto(`/comprar/${seller.listingId}`);
-  await expect(buyer.getByTestId("envio")).toHaveText("$ 12.000");
-  await expect(buyer.getByTestId("total-checkout")).toHaveText("$ 212.000");
+  await expect(buyer.getByTestId("envio")).toHaveText("$ 10.000");
+  await expect(buyer.getByTestId("total-checkout")).toHaveText("$ 210.000");
 
   await seller.context.close();
   await ctx.close();
@@ -63,7 +63,7 @@ test("el comprador paga producto más envío, y la comisión sale solo del produ
   await signUpVerified(buyer, "comprador", "Laura Compradora");
 
   const orderId = await payFor(buyer, seller.listingId);
-  await expect(buyer.getByTestId("total")).toHaveText("$ 212.000");
+  await expect(buyer.getByTestId("total")).toHaveText("$ 210.000");
 
   // 5% de 200.000. El envío no paga comisión: 2venta no gana sobre la plata de la
   // transportadora.

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { activeUser } from "@/lib/session";
+import { clienteActivo } from "@/lib/session";
 import { query } from "@/lib/db";
 import { DraftVideoForm } from "@/features/publish/DraftVideoForm";
 import { AppHeader } from "@/components/AppHeader";
@@ -16,7 +16,7 @@ export default async function PublicarBorrador({
   params: Promise<{ id: string }>;
 }) {
   // Una cuenta suspendida no llega a las pantallas que escriben.
-  const user = await activeUser();
+  const user = await clienteActivo();
 
   const { id } = await params;
   const UUID =

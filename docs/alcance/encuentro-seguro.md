@@ -1,3 +1,7 @@
+> **Decidido 2026-09-25 (D-125):** opción A. Lista inicial de 32 lugares en 15 zonas,
+> toda «por confirmar» por el equipo antes de producción; en las zonas sin lugares se
+> acuerda uno público por el chat. Tarjeta de consejos en la compra y en el pedido.
+
 # «Nos vemos en persona»: puntos de encuentro seguros
 
 Corrección 46 de Catalina: «En "Nos vemos en persona" no hay ubicación ni calle. ¿Debería

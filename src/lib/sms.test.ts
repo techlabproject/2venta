@@ -64,7 +64,7 @@ test("en desarrollo lo escribe en el registro", async () => {
   }
 });
 
-test("si WhatsApp falla, el código sale por SMS; en desarrollo un fallo no bloquea", async () => {
+test("si WhatsApp falla, el código sale por SMS; si todos fallan, se dice, también en desarrollo", async () => {
   const antes = { ...process.env };
   const fetchAntes = globalThis.fetch;
   const originalError = console.error;
@@ -92,9 +92,13 @@ test("si WhatsApp falla, el código sale por SMS; en desarrollo un fallo no bloq
     await assert.rejects(() => sendVerificationCode("+573001234567", "123456"));
     assert.deepEqual(destinos, ["whatsapp", "twilio"]);
 
-    // En desarrollo no bloquea: el código está en el registro.
+    // En desarrollo tampoco se calla (Nicolás esperó un código que nunca salió): si
+    // un canal se intentó de verdad y todos fallaron, la persona lo sabe. A quien no
+    // está en `CODIGOS_REALES_SOLO_A` no se le intenta nada, así que no falla.
     process.env.APP_ENV = "desarrollo";
-    await sendVerificationCode("+573001234567", "123456");
+    await assert.rejects(() => sendVerificationCode("+573001234567", "123456"));
+    process.env.CODIGOS_REALES_SOLO_A = "+573009999999";
+    assert.equal(await sendVerificationCode("+573001234567", "123456"), "propio");
   } finally {
     globalThis.fetch = fetchAntes;
     console.error = originalError;

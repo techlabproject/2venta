@@ -20,7 +20,16 @@ const DESTINOS = [
   { href: "/cuenta", label: "Perfil", icono: Persona },
 ] as const;
 
-export function BottomNav({ sinLeer = 0 }: { sinLeer?: number }) {
+// Corrección 48 (D-127): la cuenta del equipo solo administra; en vez de «Publicar»
+// y «Chats», «Administración».
+const DESTINOS_EQUIPO = [
+  { href: "/", label: "Inicio", icono: Casa },
+  { href: "/buscar", label: "Buscar", icono: Lupa },
+  { href: "/admin", label: "Administración", icono: Escudo },
+  { href: "/cuenta", label: "Perfil", icono: Persona },
+] as const;
+
+export function BottomNav({ sinLeer = 0, equipo = false }: { sinLeer?: number; equipo?: boolean }) {
   const ruta = usePathname();
 
   // Dentro de una conversación no hay barra (D-91). Es lo que hace cualquier app
@@ -41,7 +50,7 @@ export function BottomNav({ sinLeer = 0 }: { sinLeer?: number }) {
       className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="mx-auto flex max-w-lg items-stretch justify-around px-2">
-        {DESTINOS.map(({ href, label, icono: Icono, ...resto }) => {
+        {(equipo ? DESTINOS_EQUIPO : DESTINOS).map(({ href, label, icono: Icono, ...resto }) => {
           const aqui = activo(href);
           const centro = "centro" in resto && resto.centro;
 
@@ -154,6 +163,15 @@ function Globo() {
         d="M20.5 11.5a7.5 7.5 0 01-10.9 6.7L4 19.5l1.4-4.3A7.5 7.5 0 1120.5 11.5z"
         {...TRAZO}
       />
+    </svg>
+  );
+}
+
+function Escudo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
+      <path d="M12 3.5 5 6.2v5.3c0 4.2 2.9 7.6 7 9 4.1-1.4 7-4.8 7-9V6.2z" {...TRAZO} />
+      <path d="m9 12 2.2 2.2L15.5 10" {...TRAZO} />
     </svg>
   );
 }

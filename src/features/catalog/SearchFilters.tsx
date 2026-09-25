@@ -25,6 +25,7 @@ export function FiltrosOcultos({ filters }: { filters: Filters }) {
         <input key={c} type="hidden" name="estado" value={c} />
       ))}
       {filters.zone && <input type="hidden" name="zona" value={filters.zone} />}
+      {filters.radio && <input type="hidden" name="radio" value={filters.radio} />}
       {filters.verifiedOnly && <input type="hidden" name="verificados" value="1" />}
       {filters.sort !== "recientes" && <input type="hidden" name="orden" value={filters.sort} />}
     </>
@@ -67,10 +68,12 @@ export function FiltrosLaterales({
   filters,
   categories,
   zones,
+  conPunto = false,
 }: {
   filters: Filters;
   categories: Category[];
   zones: string[];
+  conPunto?: boolean;
 }) {
   return (
     // Fija a la vista y con su propio desplazamiento: los campos ocupan más de lo
@@ -112,6 +115,7 @@ export function FiltrosLaterales({
             filters={filters}
             categories={categories}
             zones={zones}
+            conPunto={conPunto}
             prefijo="lateral"
           />
         </div>

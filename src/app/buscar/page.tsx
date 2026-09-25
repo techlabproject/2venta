@@ -7,6 +7,8 @@ import {
   FiltrosLaterales,
 } from "@/features/catalog/SearchFilters";
 import { ZONAS } from "@/features/ubicacion/zonas";
+import { puntoDelComprador } from "@/features/ubicacion/comprador";
+import { BarraDeUbicacion } from "@/features/ubicacion/BarraDeUbicacion";
 import { CamposDeFiltro } from "@/features/catalog/CamposDeFiltro";
 import { PanelDeFiltros } from "@/features/catalog/PanelDeFiltros";
 import { SinResultados } from "@/features/catalog/SinResultados";
@@ -19,10 +21,12 @@ import {
   hayFiltros,
   parseFilters,
   searchListings,
+  sinDistanciaSinPunto,
 } from "@/features/catalog/search";
 import { Volver } from "@/components/Volver";
 import { VerMas } from "@/components/VerMas";
-import { hrefDePagina, leerPagina } from "@/features/catalog/paginas";
+import { hrefDePagina, leerPagina, sinCamposVacios } from "@/features/catalog/paginas";
+import { redirect } from "next/navigation";
 
 // Pantalla 1e del mockup. Renderizada en servidor: los filtros viven en la
 // dirección, así que un resultado se puede compartir por chat y el buscador la
@@ -42,15 +46,24 @@ export default async function Buscar({
     }
   }
 
+  // Sin `min=&max=&zona=` en la dirección: un formulario GET manda todo (Luna).
+  const limpios = sinCamposVacios(params);
+  if (limpios.toString() !== params.toString()) {
+    redirect(limpios.size ? `/buscar?${limpios}` : "/buscar");
+  }
+
   const [user, categories] = await Promise.all([currentUser(), listCategories()]);
-  const filters = conCategoriasConocidas(parseFilters(params), categories);
+  // D-122: dónde está quien mira, de su cookie. Sin punto, el radio y «Más cerca»
+  // no aplican.
+  const punto = await puntoDelComprador();
+  const filters = sinDistanciaSinPunto(conCategoriasConocidas(parseFilters(params), categories), punto);
   // Correcciones 33 y 34: 24 por página y «Ver más»; la página no viaja con los
   // filtros (cambiarlos o guardar la búsqueda vuelve a la primera).
   const pagina = leerPagina(params.get("pagina"));
   params.delete("pagina");
   const [listings, total] = await Promise.all([
-    searchListings(filters, pagina),
-    countListings(filters),
+    searchListings(filters, pagina, punto),
+    countListings(filters, punto),
   ]);
   const nombresDeZona = ZONAS.map((z) => z.nombre);
 
@@ -82,11 +95,17 @@ export default async function Buscar({
             filters={filters}
             categories={categories}
             zones={nombresDeZona}
+            conPunto={Boolean(punto)}
           />
 
           <div>
             {/* Sin resultados el aviso va dentro del mensaje vacío, como salida. */}
-            {user && listings.length > 0 && <SaveSearchForm params={params.toString()} />}
+            {/* Corrección 48: la cuenta del equipo no pide avisos (Luna). */}
+            {user && user.role !== "admin" && listings.length > 0 && (
+              <SaveSearchForm params={params.toString()} />
+            )}
+
+            <BarraDeUbicacion punto={punto} volver={params.size ? `/buscar?${params}` : "/buscar"} />
 
             <div className="mt-2 flex items-center justify-between gap-3">
               <div>
@@ -109,6 +128,7 @@ export default async function Buscar({
                     filters={filters}
                     categories={categories}
                     zones={nombresDeZona}
+                    conPunto={Boolean(punto)}
                     prefijo="panel"
                   />
                 </PanelDeFiltros>
@@ -124,6 +144,7 @@ export default async function Buscar({
                 params={params.toString()}
                 aquí={`/buscar?${params}`}
                 conSesion={Boolean(user)}
+                equipo={user?.role === "admin"}
                 sugerencia={describirFiltros(filters, categories)}
               />
             ) : (

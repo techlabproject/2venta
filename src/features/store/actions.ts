@@ -1,11 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { activeUser } from "@/lib/session";
+import { clienteActivo } from "@/lib/session";
 import { query } from "@/lib/db";
 import { listCategories } from "@/features/catalog/queries";
 import { parseBulk, type RowError } from "./bulk";
 import { getStore } from "./queries";
+import { frasesProhibidas } from "@/features/configuracion/queries";
 
 export type StoreResult = { error: string; rowErrors?: RowError[]; created?: number };
 
@@ -20,7 +21,7 @@ export async function uploadBulk(
   _prev: StoreResult | null,
   form: FormData
 ): Promise<StoreResult> {
-  const user = await activeUser();
+  const user = await clienteActivo();
 
   const store = await getStore(user.id);
   if (!store) return { error: "La carga en lote es para empresas con el NIT confirmado." };
@@ -34,7 +35,7 @@ export async function uploadBulk(
   }
 
   const categories = (await listCategories()).map((c) => c.slug);
-  const parsed = parseBulk(await file.text(), categories);
+  const parsed = parseBulk(await file.text(), categories, await frasesProhibidas());
   if (!parsed.ok) return { error: parsed.error };
 
   for (const row of parsed.rows) {

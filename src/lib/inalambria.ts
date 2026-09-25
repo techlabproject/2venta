@@ -20,6 +20,7 @@ export function inalambriaConfigurado(): boolean {
 
 /** Manda el SMS y devuelve el id del consumo de Inalambria. */
 export async function enviarSmsPorInalambria(celular: string, texto: string): Promise<string> {
+  const inicio = Date.now();
   const res = await fetch(`${API}/messages/send`, {
     method: "POST",
     headers: {
@@ -29,7 +30,10 @@ export async function enviarSmsPorInalambria(celular: string, texto: string): Pr
     // `async: false`: la respuesta dice de una vez si lo aceptaron; con la cola de
     // ellos solo se sabría consultando el trabajo después.
     body: JSON.stringify({ content: texto, recipients: [celular], async: false }),
-    signal: AbortSignal.timeout(10_000),
+    // Con `async: false` responde cuando se lo entregó al operador: tarda unos 9 s
+    // (medido el 2026-09-25). Con 10 s de espera, un envío un poco más lento se daba
+    // por fallido y la persona recibía el código solo al pedir otro.
+    signal: AbortSignal.timeout(25_000),
   });
   const datos = (await res.json().catch(() => null)) as
     | { ok?: boolean; consumptionId?: string; error?: string }
@@ -43,5 +47,7 @@ export async function enviarSmsPorInalambria(celular: string, texto: string): Pr
       }`,
     );
   }
+  // Sin el número: solo cuánto tardó, para ver si la espera alcanza.
+  console.info(`[codigo] Inalambria lo aceptó en ${Date.now() - inicio} ms`);
   return datos.consumptionId;
 }

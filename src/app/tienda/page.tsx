@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { activeUser } from "@/lib/session";
+import { clienteActivo } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
 import { getStore, listDrafts } from "@/features/store/queries";
 import { BulkUploadForm } from "@/features/store/Forms";
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Tienda() {
   // Una cuenta suspendida no llega a las pantallas que escriben.
-  const user = await activeUser();
+  const user = await clienteActivo();
   if (!user.phoneNumberVerified) redirect("/verificar");
 
   const verification = await getVerification(user.id);

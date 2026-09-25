@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useCuentaRegresiva } from "./useCuentaRegresiva";
+import { ESPERA_PARA_REENVIAR_S } from "./vigencia";
 import { useRouter } from "next/navigation";
 import {
   requestRecovery,
@@ -14,11 +16,32 @@ import { CampoCelular } from "@/components/CampoCelular";
 export function RecoveryForm() {
   const router = useRouter();
   const [phone, setPhone] = useState("");
+  // Pedido de Nicolás: «No me llegó, mandar otro», con 30 s entre códigos. El
+  // servidor también lo exige, y calla si no manda (no revela si hay cuenta).
+  const [espera, reiniciarEspera] = useCuentaRegresiva(ESPERA_PARA_REENVIAR_S);
+  const [otroEnviado, setOtroEnviado] = useState(false);
+  const [reenviando, setReenviando] = useState(false);
+
+  async function mandarOtro() {
+    if (reenviando || espera > 0) return;
+    setReenviando(true);
+    const datos = new FormData();
+    datos.set("phone", phone);
+    try {
+      await requestRecovery(null, datos);
+      setOtroEnviado(true);
+    } finally {
+      setReenviando(false);
+      reiniciarEspera(ESPERA_PARA_REENVIAR_S);
+    }
+  }
 
   const [asked, ask, asking] = useActionState<RecoveryResult | null, FormData>(
     async (prev, form) => {
       setPhone(String(form.get("phone") ?? ""));
-      return requestRecovery(prev, form);
+      const res = await requestRecovery(prev, form);
+      if (res.sent) reiniciarEspera(ESPERA_PARA_REENVIAR_S);
+      return res;
     },
     null,
   );
@@ -64,7 +87,9 @@ export function RecoveryForm() {
         role="status"
         className="rounded-xl bg-brand/10 px-4 py-3 text-sm text-brand"
       >
-        Si ese celular tiene una cuenta, le mandamos un código.
+        {otroEnviado
+          ? "Si ese celular tiene una cuenta, le mandamos otro código."
+          : "Si ese celular tiene una cuenta, le mandamos un código."}
       </p>
       <input type="hidden" name="phone" value={phone} />
 
@@ -86,6 +111,19 @@ export function RecoveryForm() {
 
       <Button type="submit" disabled={resetting}>
         {resetting ? "Cambiando…" : "Cambiar contraseña"}
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={mandarOtro}
+        disabled={reenviando || espera > 0}
+        aria-busy={reenviando}
+      >
+        {reenviando
+          ? "Mandando…"
+          : espera > 0
+            ? `Mandar otro en ${espera} s`
+            : "No me llegó, mandar otro"}
       </Button>
       <p className="text-xs text-muted">
         Cambiarla cierra las demás sesiones abiertas en tu cuenta.

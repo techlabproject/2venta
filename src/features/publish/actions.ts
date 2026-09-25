@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { activeUser } from "@/lib/session";
+import { clienteActivo } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
 import { claim } from "./claim";
 import { MAX_PHOTOS } from "./photos";
@@ -10,7 +10,8 @@ import { MIN_PRICE_COP, parseCop } from "@/features/payments/money";
 import { isValidImei, normalizeImei } from "@/features/moderation/imei";
 import { initialStatus, moderateListing } from "@/features/moderation/rules";
 import { pareceCelular } from "@/features/moderation/pareceCelular";
-import { CAMPO_DE_CATEGORIA, EDADES, TALLAS } from "@/features/catalog/atributos";
+import { CAMPO_DE_CATEGORIA } from "@/features/catalog/atributos";
+import { atributoValido, categoriaActiva, frasesProhibidas } from "@/features/configuracion/queries";
 import { enqueueOrLog } from "@/lib/queue";
 
 export type PublishResult = { error: string } | { id: string };
@@ -19,7 +20,7 @@ export async function publishListing(
   _prev: PublishResult | null,
   form: FormData
 ): Promise<PublishResult> {
-  const user = await activeUser();
+  const user = await clienteActivo();
 
   // D-01: sin celular confirmado no se publica. La comprobación de la pantalla no
   // basta: alguien puede llamar esta acción directamente.
@@ -54,7 +55,10 @@ export async function publishListing(
 
   // D-16: la moderación automática filtra lo evidentemente prohibido antes de que
   // llegue a estar visible. Lo demás lo trae a revisión la cola de reportes.
-  const verdict = moderateListing({ title, description });
+  // Corrección 52 (D-128): una categoría que el equipo desactivó no recibe nada nuevo.
+  if (!(await categoriaActiva(category))) return { error: "Elige una categoría." };
+  // Más las frases que agregó el equipo desde el panel (D-128).
+  const verdict = moderateListing({ title, description }, await frasesProhibidas());
   if (!verdict.allowed) return { error: verdict.reason };
 
   // D-15, corrección 40: IMEI solo en celulares. Lo dice quien publica («¿Es un
@@ -81,12 +85,12 @@ export async function publishListing(
   }
 
   // Corrección 38: talla en ropa, edad en artículos para niños. De una lista
-  // cerrada: lo que no está en ella no se guarda.
+  // cerrada, que ahora gestiona el equipo (D-128): lo que no está activo no se guarda.
   const campo = CAMPO_DE_CATEGORIA[category];
   const talla = campo === "talla" ? String(form.get("talla") ?? "") : null;
   const edad = campo === "edad" ? String(form.get("edad") ?? "") : null;
-  if (talla !== null && !TALLAS.includes(talla)) return { error: "Elige la talla." };
-  if (edad !== null && !(EDADES as readonly string[]).includes(edad)) {
+  if (talla !== null && !(await atributoValido("talla", talla))) return { error: "Elige la talla." };
+  if (edad !== null && !(await atributoValido("edad", edad))) {
     return { error: "Elige para qué edad es." };
   }
 
@@ -161,7 +165,7 @@ export async function publishDraft(
   _prev: PublishResult | null,
   form: FormData
 ): Promise<PublishResult> {
-  const user = await activeUser();
+  const user = await clienteActivo();
   if (!user.phoneNumberVerified) {
     return { error: "Confirma tu celular antes de publicar." };
   }

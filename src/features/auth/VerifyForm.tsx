@@ -2,7 +2,8 @@
 
 import { CODIGO_VALIDO_MINUTOS, ESPERA_PARA_REENVIAR_S } from "./vigencia";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
+import { useCuentaRegresiva } from "./useCuentaRegresiva";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cambiarCelular, sendCode, verifyCode, type OtpResult } from "./actions";
 import { Button, ErrorNote } from "@/components/ui";
@@ -13,28 +14,6 @@ import { digitosDeCelular, formatearCelular } from "@/lib/celular";
 /** «+573001110003» → «+57 300 111 0003», como se dice en voz alta. */
 const mostrarCelular = (p: string) => `+57 ${formatearCelular(digitosDeCelular(p))}`;
 import { destinoInterno } from "@/lib/destino";
-
-/**
- * Cuenta hacia atrás los segundos que faltan para poder pedir otro código (30 entre
- * envíos, pedido de Nicolás). El servidor también lo exige; esto solo evita tocar un
- * botón que va a decir que no.
- */
-function useCuentaRegresiva(inicial: number): [number, (s: number) => void] {
-  const [hasta, setHasta] = useState(() => Date.now() + inicial * 1000);
-  const [ahora, setAhora] = useState(() => Date.now());
-  useEffect(() => {
-    if (hasta <= ahora) return;
-    const t = setInterval(() => setAhora(Date.now()), 250);
-    return () => clearInterval(t);
-  }, [hasta, ahora]);
-  return [
-    Math.max(0, Math.ceil((hasta - ahora) / 1000)),
-    (segundos) => {
-      setAhora(Date.now());
-      setHasta(Date.now() + segundos * 1000);
-    },
-  ];
-}
 
 export function VerifyForm({ phone, espera: esperaInicial }: { phone: string; espera: number }) {
   const router = useRouter();

@@ -29,3 +29,18 @@ export function hrefDePagina(ruta: string, params: URLSearchParams, pagina: numb
   const qs = p.toString();
   return qs ? `${ruta}?${qs}` : ruta;
 }
+
+/**
+ * La dirección sin campos vacíos ni el orden por defecto. Un formulario GET manda
+ * todos sus campos, y la dirección quedaba `?min=&max=&zona=&orden=recientes`
+ * (Luna, filas 18 y 43). Sin JavaScript también: la página redirige a esta.
+ */
+export function sinCamposVacios(params: URLSearchParams): URLSearchParams {
+  const limpios = new URLSearchParams();
+  for (const [clave, valor] of params) {
+    if (!valor.trim()) continue;
+    if (clave === "orden" && valor === "recientes") continue;
+    limpios.append(clave, valor);
+  }
+  return limpios;
+}

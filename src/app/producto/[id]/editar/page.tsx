@@ -5,6 +5,7 @@ import { query } from "@/lib/db";
 import { EditForm } from "@/features/publish/EditForms";
 import { AppHeader } from "@/components/AppHeader";
 import { Volver } from "@/components/Volver";
+import { opcionesDeAtributos } from "@/features/configuracion/queries";
 
 // RF-16. Editar una publicación propia.
 export const dynamic = "force-dynamic";
@@ -100,7 +101,7 @@ export default async function Editar({
             volver a ofrecerla, publícala de nuevo con un video actual.
           </p>
         ) : (
-          <EditForm listing={listing} />
+          <EditForm listing={listing} opciones={await opcionesDeAtributos()} />
         )}
       </main>
     </>

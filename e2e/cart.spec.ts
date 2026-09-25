@@ -62,8 +62,8 @@ test("tres artículos del mismo vendedor se pagan en un solo pedido", async ({
 
   await buyer.getByRole("link", { name: "Ir a pagar" }).click();
   await expect(buyer).toHaveURL(/\/comprar\/carrito/);
-  // Un solo envío: 90.000 + 12.000.
-  await expect(buyer.getByTestId("total-checkout")).toHaveText("$ 102.000");
+  // Un solo envío: 90.000 + 10.000 (corrección 47).
+  await expect(buyer.getByTestId("total-checkout")).toHaveText("$ 100.000");
 
   await buyer.getByLabel("Quién recibe").fill("Laura Torres");
   await buyer.getByLabel("Celular de quien recibe").fill("300 412 88 05");

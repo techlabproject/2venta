@@ -182,7 +182,7 @@ test("una oferta aceptada lleva a pagar el precio acordado", async ({
   await buyer.getByRole("link", { name: /Pagar \$ 1\.700\.000/ }).click();
   await expect(buyer).toHaveURL(/\/comprar\//);
   // El total sale del precio acordado, no del publicado.
-  await expect(buyer.getByTestId("total-checkout")).toHaveText("$ 1.712.000");
+  await expect(buyer.getByTestId("total-checkout")).toHaveText("$ 1.710.000");
 
   await seller.context.close();
   await ctx.close();
@@ -220,7 +220,7 @@ test("una oferta rechazada no deja pagar el precio ofrecido", async ({
 
   // Aun con el identificador en la mano, el precio rechazado no sirve.
   await buyer.goto(`/comprar/${seller.listingId}?oferta=${offerId}`);
-  await expect(buyer.getByTestId("total-checkout")).toHaveText("$ 1.012.000");
+  await expect(buyer.getByTestId("total-checkout")).toHaveText("$ 1.010.000");
 
   await seller.context.close();
   await ctx.close();

@@ -9,10 +9,13 @@ import { CampoDeCategoria } from "./CampoDeCategoria";
 import { CAMPO_DE_CATEGORIA } from "@/features/catalog/atributos";
 import { MIN_PRICE_COP } from "@/features/payments/money";
 import { formatearPrecio } from "@/lib/precio";
+import type { OpcionesDeAtributos } from "@/features/configuracion/queries";
 
 export function EditForm({
   listing,
+  opciones,
 }: {
+  opciones?: OpcionesDeAtributos;
   listing: {
     id: string;
     title: string;
@@ -58,6 +61,7 @@ export function EditForm({
         <CampoDeCategoria
           campo={CAMPO_DE_CATEGORIA[listing.category]!}
           valor={CAMPO_DE_CATEGORIA[listing.category] === "talla" ? listing.talla : listing.edad}
+          opciones={opciones}
         />
       )}
 

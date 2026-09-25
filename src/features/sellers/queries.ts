@@ -43,6 +43,19 @@ export async function getJuridica(userId: string): Promise<Juridica | null> {
  * elige, aunque el NIT todavía no esté confirmado: lo que se evita es la compra de
  * una empresa, no la insignia.
  */
+/**
+ * ¿Por qué esta cuenta no compra, si no compra? La del equipo solo administra
+ * (corrección 48) y la de empresa solo vende (corrección 17). Se comprueba en el
+ * servidor en cada paso de la compra, no solo escondiendo botones.
+ */
+export async function noCompra(u: {
+  id: string;
+  role?: string | null;
+}): Promise<"equipo" | "empresa" | null> {
+  if (u.role === "admin") return "equipo";
+  return (await esEmpresa(u.id)) ? "empresa" : null;
+}
+
 export async function esEmpresa(userId: string): Promise<boolean> {
   const rows = await query<{ tipo: string }>(
     `select tipo from vendedores where user_id = $1`,

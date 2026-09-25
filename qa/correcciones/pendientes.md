@@ -43,7 +43,7 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
   correo de atención, fecha de vigencia). Todo marcado «POR COMPLETAR» en
   `src/features/legal/ContenidoLegal.tsx`; las dudas legales están en las notas
   «Para revisión legal», visibles en `/legal`. (Fila 11.)
-- Proveedor real de verificación de identidad (hoy simulado). (Fila 49.)
+- Proveedor real de verificación de identidad (hoy simulado): Nicolás decidió no integrarlo todavía; la mejor opción documentada es Didit (500 gratis al mes). (Fila 49.)
 
 ## Legal y cumplimiento (del borrador de términos, fila 11)
 
@@ -70,6 +70,16 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
   escritos, pero **no hay flujo en la app para ejecutarlos** con el proveedor de pagos.
 
 ## Producto y experiencia
+
+- **Lugares de encuentro (fila 46)**: los 32 lugares iniciales están «por confirmar»
+  (nombre y zona escritos de memoria por el equipo técnico; revisar que existan y que
+  estén en esa localidad). 12 zonas no tienen ninguno (Ciudad Bolívar, Rafael Uribe
+  Uribe, San Cristóbal, Usme, Los Mártires, Barrios Unidos, Cajicá, Cota, Funza,
+  Mosquera, Madrid, La Calera). Se mantienen desde la base hasta que exista el panel
+  (fila 52).
+- **Envío fijo $10.000 (fila 47)**: se pierde plata en lo lejano (Soacha–Chía) y se
+  cobra de más en lo cercano. Cambiar por la cotización de una transportadora cuando la
+  haya; los puntos de la fila 43 ya permiten cobrar por distancia.
 
 - **Guardados (fila 41)**: el retirado se ve en «Ya no están» sin enlace (su ficha no es
   pública). Si suspenden al vendedor, sus artículos se retiran y pasa lo mismo.
@@ -138,6 +148,8 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
   (`e2e/reportes.spec.ts`) toma el último pedido de toda la base: si otra prueba crea
   un pedido en paralelo, falla. Sola pasa. Debería buscar el pedido que ella creó.
 
+- ~~La compra (`AddressForm`) volvía a «envío» tras un error del servidor~~ —
+  arreglado en la fila 46 (envío sin reinicio, como `enviarSinBorrar`).
 - **React 19 vacía un formulario después de cada envío por `action={...}`**: si la
   acción devuelve un error, lo escrito se pierde. Se corrigió en los formularios de
   vendedor (fila 15, `enviarSinBorrar` en `src/features/sellers/Forms.tsx`); hay otros
@@ -159,6 +171,9 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
   portada o en la búsqueda sin palabra. Con 24 por página (fila 33) pueden fallar si
   corren tarde en la suite; hoy pasan. Si fallan, se hace lo mismo que en `search.spec`:
   buscar por palabra.
+- «La barra no tapa el final de la página» (`e2e/barra-inferior.spec.ts`) falló una vez
+  en la suite completa contra la imagen (2026-09-25) y pasó 5 de 5 sola: intermitente,
+  vigilar.
 - **Credenciales de AWS del portátil vencidas** (2026-09-24): la prueba de humo contra
   la nube no pudo leer el código SMS de CloudWatch («security token … invalid»).
   Nicolás tiene que renovar el perfil `2venta`; después, correr la prueba de humo y

@@ -63,6 +63,8 @@ export default async function Metricas({
 }) {
   const user = await currentUser();
   if (!user) redirect("/ingresar");
+  // Corrección 48: la cuenta del equipo no vende.
+  if (user.role === "admin") redirect("/admin");
 
   const { retirada, pagina: paginaCruda } = await searchParams;
   // Corrección 34: 24 por página y «Ver más». Las cifras de arriba salen de una

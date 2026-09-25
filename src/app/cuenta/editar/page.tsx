@@ -6,6 +6,7 @@ import { Avatar } from "@/components/Avatar";
 import { mediaUrl } from "@/lib/media";
 import { AppHeader } from "@/components/AppHeader";
 import { Volver } from "@/components/Volver";
+import { aCuadricula, zonaReconocida } from "@/features/ubicacion/zonas";
 
 // RF-12. Editar el propio perfil.
 export const dynamic = "force-dynamic";
@@ -16,9 +17,11 @@ export default async function EditarPerfil() {
 
   const rows = await query<{
     zone: string | null;
+    ubicacion_lat: number | null;
+    ubicacion_lng: number | null;
     bio: string | null;
     avatar_path: string | null;
-  }>(`select zone, bio, avatar_path from "user" where id = $1`, [user.id]);
+  }>(`select zone, bio, avatar_path, ubicacion_lat, ubicacion_lng from "user" where id = $1`, [user.id]);
   const alias = user.alias ?? user.name;
   const foto = rows[0]?.avatar_path ? mediaUrl(rows[0].avatar_path) : null;
 
@@ -49,9 +52,22 @@ export default async function EditarPerfil() {
         <ProfileForm
           alias={user.alias ?? user.name}
           zone={rows[0]?.zone ?? null}
+          conPunto={conPuntoPropio(rows[0])}
           bio={rows[0]?.bio ?? null}
         />
       </main>
     </>
   );
+}
+
+/**
+ * ¿El punto guardado es el del celular y no el centro de la zona? Solo para decirle
+ * a la persona que lo tiene guardado (D-122).
+ */
+function conPuntoPropio(
+  r: { zone: string | null; ubicacion_lat: number | null; ubicacion_lng: number | null } | undefined,
+): boolean {
+  const z = zonaReconocida(r?.zone);
+  if (!r || !z || r.ubicacion_lat === null || r.ubicacion_lng === null) return false;
+  return r.ubicacion_lat !== aCuadricula(z.lat) || r.ubicacion_lng !== aCuadricula(z.lng);
 }

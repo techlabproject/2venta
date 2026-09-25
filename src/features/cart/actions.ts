@@ -6,7 +6,7 @@ import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { getListing } from "@/features/catalog/queries";
 import { listCart } from "./queries";
-import { esEmpresa } from "@/features/sellers/queries";
+import { noCompra } from "@/features/sellers/queries";
 
 export type CartResult = { error: string; otherSeller?: string };
 
@@ -33,7 +33,7 @@ export async function addToCart(
   // Corrección 17. Se vuelve a la ficha y no se devuelve un error: una pestaña
   // abierta antes de volverse empresa quedaba con el aviso y los botones viejos
   // al lado (Luna). Recargada, la ficha ya los quita y dice por qué.
-  if (await esEmpresa(user.id)) redirect(`/producto/${listing.id}`);
+  if (await noCompra(user)) redirect(`/producto/${listing.id}`);
 
   const current = await listCart(user.id);
   const other = current.find((i) => i.seller_id !== listing.seller_id);

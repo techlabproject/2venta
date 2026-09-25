@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { buyListing, type BuyResult } from "@/features/payments/actions";
 import { Button, ErrorNote, Field } from "@/components/ui";
 import { formatCop } from "@/lib/money";
 import { CampoCelular } from "@/components/CampoCelular";
+import type { LugarDeEncuentro } from "@/features/pickup/lugares";
+import { ConsejosEncuentro } from "@/features/pickup/ConsejosEncuentro";
 
 // Los datos de entrega se recuerdan en este navegador mientras se arma la compra.
 //
@@ -36,6 +38,7 @@ export function AddressForm({
   priceCop,
   shippingCop,
   zones,
+  lugares = [],
   offerId,
   fromCart = false,
 }: {
@@ -43,6 +46,8 @@ export function AddressForm({
   priceCop: number;
   shippingCop: number;
   zones: string[];
+  /** Corrección 46 (D-125): lugares públicos por zona para el encuentro en persona. */
+  lugares?: LugarDeEncuentro[];
   offerId?: string;
   fromCart?: boolean;
 }) {
@@ -53,6 +58,8 @@ export function AddressForm({
   // D-19: en persona no se paga envío, y el pago se libera con un código en el
   // momento del encuentro.
   const [presencial, setPresencial] = useState(false);
+  const [zonaEncuentro, setZonaEncuentro] = useState("");
+  const lugaresDeLaZona = lugares.filter((l) => l.zona === zonaEncuentro);
   const envio = presencial ? 0 : shippingCop;
 
   const form = useRef<HTMLFormElement>(null);
@@ -93,7 +100,15 @@ export function AddressForm({
   return (
     <form
       ref={form}
-      action={submit}
+      // Sin `action`: con él, React 19 reinicia el formulario después de un error
+      // del servidor y el método volvía a «envío» mientras la pantalla seguía
+      // mostrando «en persona» (visto en la corrección 46). Igual que en los
+      // formularios de vendedor (`enviarSinBorrar`).
+      onSubmit={(e) => {
+        e.preventDefault();
+        const datos = new FormData(e.currentTarget);
+        startTransition(() => submit(datos));
+      }}
       onChange={recordar}
       className="flex flex-col gap-4"
     >
@@ -152,7 +167,8 @@ export function AddressForm({
             id="meetingZone"
             name="meetingZone"
             required
-            defaultValue=""
+            value={zonaEncuentro}
+            onChange={(e) => setZonaEncuentro(e.target.value)}
             className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
           >
             <option value="" disabled>
@@ -164,9 +180,35 @@ export function AddressForm({
               </option>
             ))}
           </select>
-          <p className="text-xs text-muted">
-            El punto y la hora los acuerdan por el chat.
-          </p>
+          <p className="text-xs text-muted">La hora la acuerdan por el chat.</p>
+
+          {/* Corrección 46 (D-125): un lugar público de la zona, no «donde
+              acuerden». El primero va marcado; «otro» sigue siendo posible. La
+              llave rehace las opciones al cambiar de zona. */}
+          {zonaEncuentro && lugaresDeLaZona.length > 0 && (
+            <fieldset key={zonaEncuentro} className="mt-2 flex flex-col gap-1.5">
+              <legend className="mb-1 text-sm font-medium">¿Dónde exactamente?</legend>
+              {lugaresDeLaZona.map((l, i) => (
+                <label key={l.id} className="flex items-center gap-2 text-sm">
+                  <input type="radio" name="lugar" value={l.id} defaultChecked={i === 0} />
+                  {l.nombre}
+                </label>
+              ))}
+              <label className="flex items-center gap-2 text-sm">
+                <input type="radio" name="lugar" value="" />
+                Otro lugar público: lo acuerdan por el chat
+              </label>
+            </fieldset>
+          )}
+          {zonaEncuentro && lugaresDeLaZona.length === 0 && (
+            <p className="mt-2 text-sm text-ink2">
+              Todavía no tenemos lugares sugeridos en {zonaEncuentro}. Acuerden por el
+              chat un lugar público y concurrido.
+            </p>
+          )}
+          <div className="mt-3">
+            <ConsejosEncuentro />
+          </div>
         </div>
       ) : (
         <>

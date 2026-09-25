@@ -4,11 +4,12 @@ import { getListing } from "@/features/catalog/queries";
 import { ZONAS } from "@/features/ubicacion/zonas";
 import { shippingProvider } from "@/features/shipping/provider";
 import { AddressForm } from "@/features/shipping/AddressForm";
+import { listarLugares } from "@/features/pickup/lugares";
 import { AppHeader } from "@/components/AppHeader";
 import { getConversation, getOffer } from "@/features/chat/queries";
 import { listCart } from "@/features/cart/queries";
 import { Volver } from "@/components/Volver";
-import { esEmpresa } from "@/features/sellers/queries";
+import { noCompra } from "@/features/sellers/queries";
 
 // Paso previo al pago: a dónde llega y cuánto cuesta llevarlo. El comprador ve el
 // total completo antes de que le cobren nada.
@@ -27,7 +28,7 @@ export default async function Comprar({
 
   const { id } = await params;
   // Corrección 17: una empresa no compra; la ficha y el carrito le dicen por qué.
-  if (await esEmpresa(user.id)) redirect(id === "carrito" ? "/carrito" : `/producto/${encodeURIComponent(id)}`);
+  if (await noCompra(user)) redirect(id === "carrito" ? "/carrito" : `/producto/${encodeURIComponent(id)}`);
 
   // "carrito" no es un artículo: es el pedido completo de un solo vendedor (D-20).
   const cart = id === "carrito" ? await listCart(user.id) : [];
@@ -58,7 +59,10 @@ export default async function Comprar({
         ? offer.price_cop
         : listing.price_cop;
 
-  const quote = await shippingProvider.quote({ zone: listing.seller_zone, priceCop });
+  const [quote, lugares] = await Promise.all([
+    shippingProvider.quote({ zone: listing.seller_zone, priceCop }),
+    listarLugares(),
+  ]);
   // D-122: la misma lista cerrada de zonas que el perfil y los filtros.
   const zoneNames = ZONAS.map((z) => z.nombre);
 
@@ -85,6 +89,7 @@ export default async function Comprar({
           fromCart={id === "carrito"}
           shippingCop={quote.costCop}
           zones={zoneNames}
+          lugares={lugares}
         />
       </main>
     </>

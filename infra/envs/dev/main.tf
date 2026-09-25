@@ -74,7 +74,7 @@ module "entorno" {
   # vacío. Paso 2, después de ponerle INALAMBRIA_TOKEN a mano (infra/LEEME.md):
   # descomentar `inalambria_activo`.
   inalambria_secreto = true
-  inalambria_activo = true
+  inalambria_activo  = true
 }
 
 output "url" { value = module.entorno.url }

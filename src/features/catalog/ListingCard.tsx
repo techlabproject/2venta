@@ -4,6 +4,7 @@ import type { Listing } from "./queries";
 import { CONDITION_LABEL } from "./labels";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { Price } from "@/components/Price";
+import { textoDeDistancia } from "@/features/ubicacion/zonas";
 
 export function ListingCard({
   listing,
@@ -60,7 +61,11 @@ export function ListingCard({
         </p>
 
         <span className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-2 text-xs text-muted">
-          <span>{listing.seller_zone}</span>
+          <span data-testid="lugar">
+            {listing.seller_zone}
+            {/* D-122: redondeada; sale de puntos en cuadrícula de ~1 km. */}
+            {listing.distancia_km !== null && ` · ${textoDeDistancia(listing.distancia_km)}`}
+          </span>
           {listing.seller_verified && <VerifiedBadge />}
           {listing.seller_is_store && (
             <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand">

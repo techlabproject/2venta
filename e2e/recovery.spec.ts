@@ -268,3 +268,42 @@ test("«Cerrar todas las demás» deja fuera a los otros dispositivos y no a est
   await ctx.close();
   for (const { otroCtx } of otros) await otroCtx.close();
 });
+
+// Nicolás (2026-09-25): al recuperar la contraseña no había cómo pedir otro código.
+// Mismo botón que el registro, con los mismos 30 segundos entre envíos.
+test("en la recuperación se puede pedir otro código cada 30 segundos", async ({ browser }) => {
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await page.clock.install();
+  const { phoneDigits, phone } = await account(page);
+  await cerrarSesion(page);
+
+  await page.goto("/recuperar");
+  await page.getByLabel("Tu celular").fill(phoneDigits);
+  await page.getByRole("button", { name: "Mandar código" }).click();
+  await expect(page.getByRole("status")).toContainText("le mandamos un código");
+  const primero = await readRecoveryCode(phone);
+
+  const otro = page.getByRole("button", { name: /mandar otro/i });
+  await expect(otro).toBeDisabled();
+  await expect(otro).toContainText(/Mandar otro en \d+ s/);
+
+  await withDb((c) =>
+    c.query(
+      `update otp_sends set sent_at = sent_at - interval '31 seconds' where phone = $1 and motivo = 'recuperacion'`,
+      [phone],
+    ),
+  );
+  await page.clock.fastForward(31_000);
+  await otro.click();
+  await expect(page.getByRole("status")).toContainText("le mandamos otro código");
+  await expect(otro).toBeDisabled();
+  // Llegó uno nuevo, y es el que sirve.
+  await expect.poll(() => readRecoveryCode(phone)).not.toBe(primero);
+  await page.getByLabel("Código de seis dígitos").fill(await readRecoveryCode(phone));
+  await page.getByLabel("Nueva contraseña").fill("claveNuevaLarga2");
+  await page.getByRole("button", { name: "Cambiar contraseña" }).click();
+  await expect(page).toHaveURL(/\/ingresar/);
+
+  await ctx.close();
+});

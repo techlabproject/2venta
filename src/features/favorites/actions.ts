@@ -1,12 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { activeUser } from "@/lib/session";
+import { clienteActivo } from "@/lib/session";
 import { query } from "@/lib/db";
 
 /** Guarda o quita un favorito. El mismo botón hace las dos cosas. */
 export async function toggleFavorite(_prev: unknown, form: FormData) {
-  const user = await activeUser();
+  const user = await clienteActivo();
 
   const listingId = String(form.get("listingId") ?? "");
   const removed = await query<{ listing_id: string }>(

@@ -75,6 +75,10 @@ export default async function Admin() {
             <Link href="/admin/disputas" className="text-brand underline">
               Disputas
             </Link>
+            {/* Corrección 52 (D-128): categorías, lugares, tallas y palabras. */}
+            <Link href="/admin/configuracion" className="text-brand underline">
+              Configuración
+            </Link>
             <Link href="/admin/conversaciones" className="text-brand underline">
               Chats
               {/* El número solo si hay algo: un cero dibujado es ruido con

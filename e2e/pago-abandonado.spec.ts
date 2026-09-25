@@ -35,8 +35,9 @@ test("la pasarela cobra producto más envío, no solo el producto", async ({ bro
   // El defecto: la pasarela decía «Total a pagar $35.000» justo después de que el
   // checkout dijera $47.000, porque leía el subtotal en vez del total. El monto
   // que se le manda al proveedor siempre estuvo bien; lo que mentía era la
-  // pantalla donde uno revisa que las cuentas cuadren.
-  await expect(page.getByTestId("total-a-pagar")).toContainText("47.000");
+  // pantalla donde uno revisa que las cuentas cuadren. Con el envío de $10.000
+  // (corrección 47) son $45.000.
+  await expect(page.getByTestId("total-a-pagar")).toContainText("45.000");
 
   await ctx.close();
   await seller.context.close();

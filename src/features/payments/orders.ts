@@ -20,6 +20,8 @@ export type Order = {
   shipping_cop: number;
   delivery_method: "envio" | "presencial";
   meeting_zone: string | null;
+  /** Corrección 46: el lugar público elegido; null si lo acuerdan por el chat. */
+  meeting_place_id: string | null;
   carrier: string | null;
   tracking_number: string | null;
   commission_cop: number;

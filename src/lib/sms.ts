@@ -29,8 +29,9 @@ import { CODIGO_VALIDO_MINUTOS } from "@/features/auth/vigencia";
 //
 // En desarrollo (local y la nube `dev`) el código se escribe también en el registro:
 // las pruebas y la prueba de humo lo leen de ahí. Si hay un canal configurado se usa
-// de verdad, pero un envío fallido no bloquea: la cuenta de prueba de Twilio solo
-// llega a números verificados, y el código igual está en el registro.
+// de verdad, y si todos los que se intentaron fallan se dice, igual que en
+// producción: callarlo dejaba a la persona esperando un código que nunca salió. A
+// los números fuera de `CODIGOS_REALES_SOLO_A` no se les intenta nada.
 //
 // IMPORTANT: el código va AL FINAL del SMS (D-106): la caja del código toma el
 // último bloque de seis dígitos de lo que se pega. La plantilla de WhatsApp también
@@ -104,8 +105,7 @@ export async function sendVerificationCode(
       console.error(`[codigo] un canal falló: ${err instanceof Error ? err.message : err}`);
     }
   }
-  if (isProduction()) throw ultimo;
-  return "propio";
+  throw ultimo;
 }
 
 /**

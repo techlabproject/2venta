@@ -1,3 +1,7 @@
+> **Decidido 2026-09-25:** quedan documentadas las mejores opciones (abajo); **por ahora
+> no se integra** (decisión de Nicolás). La verificación sigue simulada, y es un
+> bloqueo antes de producción: sin proveedor real, cualquiera se «verifica».
+
 # Verificación de identidad del vendedor: proveedores
 
 Corrección 49 de Catalina: «Se simula la aceptación o el rechazo del vendedor. Cotizar y

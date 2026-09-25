@@ -57,3 +57,15 @@ export async function activeUser(): Promise<SessionUser> {
   if (user.suspendedAt) redirect("/suspendida");
   return user;
 }
+
+/**
+ * La persona de la sesión, activa, para lo que es de compradores y vendedores:
+ * publicar, empezar a vender, guardar, avisos. La cuenta del equipo (admin) solo
+ * administra (corrección 48, D-127): va a `/admin`. Lo que es de comprar pasa además
+ * por `noCompra`, que también cierra el paso a las empresas.
+ */
+export async function clienteActivo(): Promise<SessionUser> {
+  const user = await activeUser();
+  if (user.role === "admin") redirect("/admin");
+  return user;
+}

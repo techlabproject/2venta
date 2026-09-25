@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { ENVIO_FIJO_COP } from "./tarifa";
 
 // R-04: la respuesta propuesta es un agregador logístico, que expone una sola API
 // sobre Servientrega, Coordinadora, Interrapidísimo, Envía y TCC. Todavía no hay
@@ -21,10 +22,9 @@ export type ShippingProvider = {
 
 const SECRET = process.env.SHIPPING_WEBHOOK_SECRET ?? "";
 
-// Tarifa plana mientras no haya contrato. Un agregador real cotiza por peso y
-// destino; el número no importa todavía, lo que importa es que el flujo lo pida
-// antes de pagar y que el comprador vea el total completo.
-const FLAT_RATE_COP = 12_000;
+// Tarifa plana mientras no haya contrato (`tarifa.ts`, corrección 47). Lo que importa
+// es que el flujo la pida antes de pagar y que el comprador vea el total completo.
+const FLAT_RATE_COP = ENVIO_FIJO_COP;
 
 export const testProvider: ShippingProvider = {
   name: "prueba",

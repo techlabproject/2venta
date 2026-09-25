@@ -15,7 +15,9 @@ import { getConversation, getOffer } from "@/features/chat/queries";
 import { listCart } from "@/features/cart/queries";
 import { clearCart } from "@/features/cart/actions";
 import { normalizarCelular } from "@/lib/celular";
-import { esEmpresa } from "@/features/sellers/queries";
+import { noCompra } from "@/features/sellers/queries";
+import { zonaReconocida } from "@/features/ubicacion/zonas";
+import { lugarDeLaZona } from "@/features/pickup/lugares";
 
 export type BuyResult = { error: string };
 
@@ -33,7 +35,7 @@ export async function buyListing(
   // Corrección 17: las empresas venden, no compran. Aquí y no solo en la ficha.
   // Se vuelve a la ficha o al carrito, que ya se dibujan con el aviso: un error
   // aquí dejaba el formulario de pago viejo en pantalla (Luna).
-  if (await esEmpresa(user.id)) {
+  if (await noCompra(user)) {
     const destino = String(form.get("desdeCarrito") ?? "") === "1"
       ? "/carrito"
       : `/producto/${encodeURIComponent(String(form.get("listingId") ?? ""))}`;
@@ -50,6 +52,16 @@ export async function buyListing(
   const meetingZone = String(form.get("meetingZone") ?? "").trim();
   if (presencial && !meetingZone) {
     return { error: "Elige en qué zona se van a encontrar." };
+  }
+  // D-122 y D-125: la zona es de la lista cerrada, y el lugar (si se eligió uno) es de
+  // esa zona. Un formulario manipulado no inventa ni una cosa ni la otra.
+  if (presencial && !zonaReconocida(meetingZone)) {
+    return { error: "Elige una zona de la lista." };
+  }
+  const lugarId = String(form.get("lugar") ?? "").trim();
+  const lugar = presencial && lugarId ? await lugarDeLaZona(lugarId, meetingZone) : null;
+  if (presencial && lugarId && !lugar) {
+    return { error: "Elige un lugar de la lista para el encuentro." };
   }
 
   // S-06: sin dirección no hay envío y sin envío no hay total que cobrar.
@@ -69,6 +81,9 @@ export async function buyListing(
   }
   if (!presencial && (!address.recipient || !address.phone || !address.line1 || !address.zone)) {
     return { error: "Completa la dirección de entrega para poder pagar." };
+  }
+  if (!presencial && !zonaReconocida(address.zone)) {
+    return { error: "Elige la zona de entrega de la lista." };
   }
 
   const cart = fromCart ? await listCart(user.id) : [];
@@ -202,8 +217,9 @@ export async function buyListing(
 
   if (presencial) {
     await query(
-      `update orders set delivery_method = 'presencial', meeting_zone = $2 where id = $1`,
-      [order.id, meetingZone]
+      `update orders set delivery_method = 'presencial', meeting_zone = $2, meeting_place_id = $3
+        where id = $1`,
+      [order.id, meetingZone, lugar?.id ?? null]
     );
   } else {
     await saveAddress(order.id, address);

@@ -1,3 +1,6 @@
+> **Fila 48 decidida 2026-09-25 (D-127):** opción A, la cuenta del equipo solo
+> administra. La fila 52 (qué se gestiona desde el panel) sigue por decidir.
+
 # El administrador y el panel de administración
 
 Correcciones 48 y 52 de Catalina:

@@ -1,0 +1,9 @@
+Vuelta 2, y dos correcciones más en la misma vuelta. La demo se reinició (mismas cuentas).
+
+(1) Tus hallazgos: el perfil ahora rechaza un punto que no queda en la zona elegida (la zona tiene que ser una de las dos de centro más cercano al punto: «Ese punto no queda en Chapinero…»); y la portada y /buscar redirigen a la dirección sin campos vacíos ni orden=recientes. Vuelve a probarlos, con manipulación incluida.
+
+(2) Corrección 46 de Catalina («En “Nos vemos en persona” no hay ubicación ni calle. ¿Debería haber un punto especial? ¿Lugares por defecto seguros?»). Ahora: en la compra, al elegir «Nos vemos en persona» y la zona, aparecen «¿Dónde exactamente?» con lugares públicos de esa zona (centros comerciales, bibliotecas; el primero marcado) y «Otro lugar público: lo acuerdan por el chat»; en zonas sin lugares, «Todavía no tenemos lugares sugeridos en …». Tarjeta «Para el encuentro» con consejos, en la compra y en el pedido. El pedido (comprador y vendedor) dice «Se ven en … (zona)». El servidor rechaza un lugar de otra zona o una zona inventada. La lista inicial está en db/migrations/0028_lugares_de_encuentro.sql, toda «por confirmar»: dinos si ves algún lugar que no exista o que no quede en esa zona. Además, tras un error del servidor la compra ya no vuelve a «envío».
+
+(3) Corrección 47 («No hay temas de facturación ni impuestos» y, en su versión 2, «sumar al resumen de pago la tarifa de envío según la ciudad (Bogotá: rango de $10.000)»). Ahora el envío es $10.000 fijo (antes $12.000) en la compra, el carrito (ahorro por un solo envío) y el pedido; lo tributario queda para un contador (docs/alcance/impuestos-y-envio.md).
+
+Prueba las tres en 390 y 1280 como laura (comprando a camila o andres), con la ficha, el carrito, la compra, el pago simulado y el pedido de los dos lados. Mismo formato de informe y veredicto.

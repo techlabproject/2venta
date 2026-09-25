@@ -145,6 +145,15 @@ export function describirFiltros(f: SearchFilters, categorias: { slug: string; l
   return `${corte.slice(0, espacio > 40 ? espacio : 79).replace(/[\s,(]+$/, "")}…`;
 }
 
+/**
+ * Sin saber dónde está quien busca, el radio y «Más cerca» no significan nada: se
+ * quitan, para que el conteo de filtros y el panel no digan que están puestos.
+ */
+export function sinDistanciaSinPunto(f: SearchFilters, punto: Punto | null): SearchFilters {
+  if (punto) return f;
+  return { ...f, radio: null, sort: f.sort === "cerca" ? "recientes" : f.sort };
+}
+
 /** Cuántos filtros hay puestos, para la marca del botón «Filtros». */
 export function cuantosFiltros(f: SearchFilters): number {
   return (
@@ -190,7 +199,9 @@ function condiciones(
   let distancia: string | null = null;
   if (punto) {
     values.push(punto.lat, punto.lng);
-    distancia = `distancia_km(u.ubicacion_lat, u.ubicacion_lng, $${values.length - 1}, $${values.length})`;
+    // Con el tipo explícito: si la expresión no se usa (el conteo sin radio),
+    // Postgres no sabría de qué tipo son los parámetros y fallaría.
+    distancia = `distancia_km(u.ubicacion_lat, u.ubicacion_lng, $${values.length - 1}::float8, $${values.length}::float8)`;
   }
 
   if (f.q) {
@@ -256,7 +267,9 @@ export async function countListings(
   f: SearchFilters,
   punto: Punto | null = null,
 ): Promise<number> {
-  const { where, values } = condiciones(f, punto);
+  // El punto solo hace falta para el radio: el conteo no lleva la columna de
+  // distancia, y un parámetro que no se usa confunde a Postgres.
+  const { where, values } = condiciones(f, f.radio ? punto : null);
   const rows = await query<{ total: number }>(
     `select count(*)::int as total
        from listings l

@@ -110,6 +110,18 @@ export function zonaMasCercana(lat: number, lng: number): Zona {
   return mejor;
 }
 
+/**
+ * ¿El punto queda en esa zona? Sin límites oficiales, se acepta si la zona es una de
+ * las dos de centro más cercano: sirve en el borde entre dos localidades y no deja
+ * decir «Chapinero» con un punto de Usaquén (Luna, D-122).
+ */
+export function puntoEnZona(lat: number, lng: number, zona: string): boolean {
+  return [...ZONAS]
+    .sort((a, b) => distanciaKm({ lat, lng }, a) - distanciaKm({ lat, lng }, b))
+    .slice(0, 2)
+    .some((z) => z.nombre === zona);
+}
+
 /** «a menos de 1 km», «a unos 3 km». Redondeada a propósito (ver `aCuadricula`). */
 export function textoDeDistancia(km: number): string {
   if (km < 1) return "a menos de 1 km";

@@ -163,7 +163,7 @@ test("si el precio cambia entre ver el carrito y pagar, no se cobra", async ({
   await expect(buyer.getByRole("main")).toContainText("Está en tu carrito");
 
   await buyer.goto("/comprar/carrito");
-  await expect(buyer.getByTestId("total-checkout")).toHaveText("$ 112.000");
+  await expect(buyer.getByTestId("total-checkout")).toHaveText("$ 110.000");
 
   // El vendedor sube el precio mientras el comprador llena la dirección.
   await withDb((c) =>

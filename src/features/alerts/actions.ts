@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { activeUser } from "@/lib/session";
+import { activeUser, clienteActivo } from "@/lib/session";
 import { query } from "@/lib/db";
 
 export type AlertResult = { error: string };
@@ -10,9 +10,14 @@ export async function saveSearch(
   _prev: AlertResult | null,
   form: FormData
 ): Promise<AlertResult> {
-  const user = await activeUser();
+  const user = await clienteActivo();
 
-  const params = String(form.get("params") ?? "").slice(0, 500);
+  // D-122: la distancia depende de dónde está cada quien (su cookie), no se guarda
+  // con el aviso: el aviso vale para toda Bogotá.
+  const crudos = new URLSearchParams(String(form.get("params") ?? "").slice(0, 500));
+  crudos.delete("radio");
+  if (crudos.get("orden") === "cerca") crudos.delete("orden");
+  const params = crudos.toString();
   const label = String(form.get("label") ?? "").trim().slice(0, 80);
   if (!label) return { error: "Ponle un nombre a la búsqueda." };
 

@@ -8,7 +8,7 @@ import {
   findConversation,
   openConversation,
 } from "@/features/chat/queries";
-import { esEmpresa } from "@/features/sellers/queries";
+import { noCompra } from "@/features/sellers/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +50,7 @@ export default async function AbrirConversacion({
   if (existente) redirect(`/chat/${existente}`);
   if (!ESTADOS_PARA_ESCRIBIR.includes(listing.status)) redirect(ficha);
   // Corrección 17: una empresa no abre chats de compra; la ficha le dice por qué.
-  if (await esEmpresa(user.id)) redirect(ficha);
+  if (await noCompra(user)) redirect(ficha);
 
   const id = await openConversation(listing.id, user.id, listing.seller_id);
   redirect(`/chat/${id}`);

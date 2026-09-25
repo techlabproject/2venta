@@ -1,3 +1,7 @@
+> **Decidido 2026-09-25 (D-126):** envío fijo de **$10.000** mientras no haya
+> transportadora; lo tributario, al contador (bloqueo antes de producción); cotizar
+> mensajerías, todavía no.
+
 # Facturación, impuestos y costo del envío
 
 Corrección 47 de Catalina: «No hay temas de facturación ni impuestos. ¿Debería incluir

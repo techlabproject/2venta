@@ -74,8 +74,19 @@ Lista de problemas y pendientes para el documento final: `pendientes.md`.
 - **Pedido de Nicolás (2026-09-25):** sin nombres de personas en los textos de ejemplo:
   registro («Nombre y apellido», «nombre@gmail.com»), quién recibe el envío y el error de
   correo sin nada antes de la @. Hecho, sin confirmar.
-- **Fila 42: hecha, sin confirmar** (D-121; «Cerrar todas las demás»; Luna PASA).
-- **Filas 43, 44, 45 y 51: en curso** (D-122). Decisiones de Nicolás: ubicación como
+- **Fila 42: hecha** (D-121; «Cerrar todas las demás»; Luna PASA).
+- **Registro con celular confirmado (D-123)**, 30 s entre códigos, términos a pantalla
+  completa: Luna vuelta 1 no pasa (API con sesión sin confirmar, avisos), vuelta 2 PASA
+  (`registro-d123/`).
+- **SMS por Inalambria Express (D-124)**: $20.475 de saldo (~525 SMS); SMS real
+  recibido por Nicolás. Twilio queda de respaldo en prueba.
+- **Desplegado 2026-09-25** (commit 735f1e6, suite contra la imagen 430/430, CI
+  verde): filas 33–42, D-123, D-124 y la parte de la zona de las filas 43/51. Después,
+  443e54d conecta Inalambria en `dev` (secreto `2venta-dev/inalambria` cargado).
+- **Filas 43, 44, 45 y 51: en curso** (D-122). Desplegado: zona de lista cerrada en
+  perfil, filtros y compra, con su punto aproximado. **Falta:** barra «¿Dónde estás?»
+  (cookie del comprador), «Usar mi ubicación» en el perfil, distancia en la tarjeta,
+  filtro de radio y orden «Más cerca» (el buscador ya los acepta), texto legal, Luna. Decisiones de Nicolás: ubicación como
   Marketplace — distancia aproximada y radio; ubicación del vendedor **en el perfil**
   («Usar mi ubicación» o la localidad), guardada en cuadrícula de ~1 km; tarjeta
   «Chapinero · a unos 3 km»; radio **opcional** (2/5/10/20 km) y orden «Más cerca»;

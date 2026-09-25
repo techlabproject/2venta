@@ -1,3 +1,8 @@
+> **Decidido 2026-09-25 (D-122):** Nicolás eligió ubicación **como Marketplace**:
+> distancia aproximada en cada artículo y radio opcional (2/5/10/20 km), solo Bogotá y
+> sus municipios vecinos. La zona pasa a lista cerrada (paso 1 de abajo, hecho). Otras
+> ciudades (paso 2) siguen para cuando se decida salir de Bogotá.
+
 # Ubicación: zonas, ciudad y alcance geográfico
 
 Correcciones 43, 44, 45 y 51 de Catalina, que son una sola decisión:

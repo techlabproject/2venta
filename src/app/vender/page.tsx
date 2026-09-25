@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { activeUser } from "@/lib/session";
+import { clienteActivo } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
 import { beginVerification } from "@/features/kyc/actions";
 import { AppHeader } from "@/components/AppHeader";
@@ -25,7 +25,7 @@ export default async function Vender({
   const faltaAutorizacion = sp.autorizacion === "falta";
   const tipoElegido = sp.tipo === "natural" || sp.tipo === "juridica" ? sp.tipo : null;
   // Una cuenta suspendida no llega a las pantallas que escriben.
-  const user = await activeUser();
+  const user = await clienteActivo();
   // D-01: sin celular confirmado no se entra al circuito de vendedor.
   if (!user.phoneNumberVerified) redirect("/verificar");
 

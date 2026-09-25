@@ -6,7 +6,7 @@ import { OfferPanelForm } from "@/features/chat/ChatForms";
 import { formatCop } from "@/lib/money";
 import { mediaUrl } from "@/lib/media";
 import { Volver } from "@/components/Volver";
-import { esEmpresa } from "@/features/sellers/queries";
+import { noCompra } from "@/features/sellers/queries";
 
 // El panel de oferta (S-36, D-91).
 //
@@ -45,7 +45,7 @@ export default async function Oferta({
   );
   if (viva) redirect(`/chat/${conversation.id}`);
   // Corrección 17: una empresa no oferta para comprar (el vendedor sí puede).
-  if (conversation.buyer_id === user.id && (await esEmpresa(user.id))) {
+  if (conversation.buyer_id === user.id && (await noCompra(user))) {
     redirect(`/chat/${conversation.id}`);
   }
 

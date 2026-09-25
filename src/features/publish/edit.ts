@@ -7,7 +7,8 @@ import { query } from "@/lib/db";
 import { parseCop, MIN_PRICE_COP } from "@/features/payments/money";
 import { moderateListing } from "@/features/moderation/rules";
 import { CONDITION_LABEL } from "@/features/catalog/labels";
-import { CAMPO_DE_CATEGORIA, EDADES, TALLAS } from "@/features/catalog/atributos";
+import { CAMPO_DE_CATEGORIA } from "@/features/catalog/atributos";
+import { atributoValido, frasesProhibidas } from "@/features/configuracion/queries";
 
 export type EditResult = { error: string };
 
@@ -54,18 +55,24 @@ export async function editListing(
   if (!(condition in CONDITION_LABEL)) return { error: "Elige el estado del artículo." };
 
   // Corrección 38: la talla o la edad, de la lista cerrada de su categoría.
-  const categoria = await query<{ category: string }>(`select category from listings where id = $1`, [id]);
+  const categoria = await query<{ category: string; talla: string | null; edad: string | null }>(
+    `select category, talla, edad from listings where id = $1`,
+    [id],
+  );
   const campo = CAMPO_DE_CATEGORIA[categoria[0]?.category ?? ""];
   const talla = campo === "talla" ? String(form.get("talla") ?? "") : null;
   const edad = campo === "edad" ? String(form.get("edad") ?? "") : null;
-  if (talla !== null && !TALLAS.includes(talla)) return { error: "Elige la talla." };
-  if (edad !== null && !(EDADES as readonly string[]).includes(edad)) {
+  // La que ya tenía se puede conservar aunque el equipo la haya desactivado (D-128).
+  if (talla !== null && talla !== categoria[0]?.talla && !(await atributoValido("talla", talla))) {
+    return { error: "Elige la talla." };
+  }
+  if (edad !== null && edad !== categoria[0]?.edad && !(await atributoValido("edad", edad))) {
     return { error: "Elige para qué edad es." };
   }
 
   // Editar no es la puerta trasera: si no se volviera a filtrar, bastaría publicar
   // algo inocente y cambiarlo después.
-  const verdict = moderateListing({ title, description });
+  const verdict = moderateListing({ title, description }, await frasesProhibidas());
   if (!verdict.allowed) return { error: verdict.reason };
 
   await query(
@@ -122,7 +129,7 @@ export async function setListingStatus(
       [id, user.id]
     );
     if (actual[0]?.status === "retirada") {
-      const verdict = moderateListing(actual[0]);
+      const verdict = moderateListing(actual[0], await frasesProhibidas());
       if (!verdict.allowed) return { error: verdict.reason };
     }
   }

@@ -19,9 +19,9 @@ import { AppHeader } from "@/components/AppHeader";
 import { formatCop } from "@/lib/money";
 import { mediaUrl } from "@/lib/media";
 import { Volver } from "@/components/Volver";
-import { esEmpresa } from "@/features/sellers/queries";
+import { noCompra } from "@/features/sellers/queries";
 import { ChatEnVivo } from "@/features/chat/ChatEnVivo";
-import { EMPRESA_NO_COMPRA } from "@/features/sellers/reglas";
+import { mensajeSinCompras } from "@/features/sellers/reglas";
 
 // Pantalla 1h del mockup: chat interno con los pagos fuera de la app bloqueados.
 export const dynamic = "force-dynamic";
@@ -59,7 +59,8 @@ export default async function Chat({
   const isBuyer = conversation.buyer_id === user.id;
   // Corrección 17: la empresa conserva la conversación que tenía, pero no oferta
   // ni paga en ella (Luna: el enlace seguía invitando a ofertar).
-  const empresaCompradora = isBuyer && (await esEmpresa(user.id));
+  const sinCompras = isBuyer ? await noCompra(user) : null;
+  const empresaCompradora = Boolean(sinCompras);
   // Las mismas reglas de la ficha: lo vendido y lo reservado siguen siendo
   // públicos; lo retirado o en revisión solo lo ve quien lo publicó.
   const fichaVisible =
@@ -149,10 +150,10 @@ export default async function Chat({
         {empresaCompradora && (
           <p
             role="status"
-            data-testid="empresa-no-compra"
+            data-testid={sinCompras === "equipo" ? "equipo-no-compra" : "empresa-no-compra"}
             className="shrink-0 rounded-2xl bg-white p-3 text-sm text-ink2 shadow-xs ring-1 ring-line"
           >
-            {EMPRESA_NO_COMPRA}
+            {sinCompras && mensajeSinCompras(sinCompras)}
           </p>
         )}
 

@@ -48,6 +48,7 @@ const ROUTES = [
   "/publicar/00000000-0000-4000-8000-000000000000",
   "/admin",
   "/admin/disputas",
+  "/admin/configuracion",
   "/admin/conversaciones",
   "/producto/00000000-0000-4000-8000-000000000000",
   "/producto/00000000-0000-4000-8000-000000000000/editar",

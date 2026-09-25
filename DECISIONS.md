@@ -1424,3 +1424,94 @@ propio), Twilio Verify. Mismo texto que Twilio, con el código al final (D-106).
 saber al instante si lo aceptó; no hay aviso de entrega. Un error suyo se anota sin
 cifras largas (podría repetir el número). Token en `INALAMBRIA_TOKEN`; en la nube, en
 el secreto `<entorno>/inalambria`, conectado en dos pasos (`infra/LEEME.md`).
+
+**Actualización (2026-09-25), el primer código que no llegaba:** Nicolás veía llegar el
+código solo al segundo intento. Con `async: false` Inalambria responde cuando se lo
+entregó al operador (unos 9 s medidos), y la espera era de 10 s: un envío algo más lento
+se daba por fallido. Ahora espera 25 s y anota cuánto tardó cada envío (sin el número).
+En desarrollo, si un canal se intentó y todos fallaron, **se dice** (antes se callaba y
+la persona esperaba un código que nunca salió). Y la recuperación de contraseña tiene
+«No me llegó, mandar otro», con los mismos 30 s entre envíos.
+
+### D-122 — Ubicación como Marketplace: distancia aproximada y radio (correcciones 43, 44, 45 y 51, 2026-09-25)
+Catalina pidió zona en desplegable (43), plantear el alcance por ciudades (44, 45) y
+solo ciudades principales (51). Nicolás eligió que funcione como Marketplace: a
+cuántos km está cada artículo y un radio. **Solo Bogotá por ahora** (la D-06 sigue);
+«Bogotá» incluye los municipios vecinos (Soacha, Chía, Cajicá, Cota, Funza, Mosquera,
+Madrid, La Calera); Sumapaz no, por rural.
+- **Zona de lista cerrada** (`src/features/ubicacion/zonas.ts`: 19 localidades + 8
+  municipios, con su centro aproximado) en el perfil, los filtros y la compra. La
+  migración 0025 llevó lo escrito a mano a la zona de la lista (sin tildes ni
+  mayúsculas) y dejó sin zona lo que no reconoció. `zone` ya no se escribe por
+  `/api/auth/update-user`.
+- **Vendedor:** su punto está en el perfil (`ubicacion_lat`, `ubicacion_lng`): el
+  centro de su zona o, con «Usar mi ubicación», el del celular. **Siempre en una
+  cuadrícula de 0,01° (~1,1 km)**: con el punto exacto, comparando distancias desde
+  varios sitios se daría con su casa; con la cuadrícula, lo más que se averigua es el
+  cuadro. Guardar sin cambiar la zona conserva el punto; cambiarla usa el centro.
+- **Comprador:** su punto (zona elegida o celular, también en la cuadrícula) vive
+  **solo en una cookie `httpOnly`** de su navegador: ni en la base ni en la dirección.
+  La barra «¿Dónde estás?» sobre los resultados funciona sin JavaScript (lista y
+  «Listo», D-25); «Usar mi ubicación» aparece con JavaScript. Fuera del área se dice
+  y no se guarda. `Permissions-Policy` pasa a `geolocation=(self)`.
+- **Tarjeta:** «Chapinero · a unos 3 km» (redondeada; «a menos de 1 km»). Distancia
+  en SQL (`distancia_km`, migración 0025) con el punto como parámetro.
+- **Radio opcional** (2, 5, 10 o 20 km; por defecto toda Bogotá) y orden «Más cerca».
+  Sin punto, el campo se ve apagado y dice por qué. Un vendedor sin ubicación queda
+  fuera de un radio. El radio no se guarda con un aviso (depende de cada quien).
+- Política de datos: nuevo punto «Ubicación aproximada».
+Otras ciudades (44, 45, 51): cuando se decida salir de Bogotá; propuesta en
+`docs/alcance/ubicacion.md`.
+
+### D-125 — Encuentro en persona en un lugar público de la lista (corrección 46, 2026-09-25)
+Catalina: «No hay ubicación ni calle. ¿Lugares por defecto seguros?». Nicolás eligió
+una **lista de lugares públicos y concurridos por zona** (centros comerciales,
+bibliotecas públicas), propuesta por el equipo técnico y **toda «por confirmar»**
+(`lugares_encuentro.confirmado = false`, migración 0028): 32 lugares en 15 de las 27
+zonas; en las demás se pide acordar un lugar público por el chat, en vez de sugerir uno
+que podría no existir. Al comprar, elegida la zona, el primer lugar va marcado y se
+puede elegir otro o «Otro lugar público: lo acuerdan por el chat». El servidor exige que
+la zona sea de la lista y el lugar de esa zona. El pedido dice «Se ven en … (zona)», y
+compra y pedido llevan una tarjeta de consejos (de día, lugar concurrido, revisar antes
+de dictar el código, sin efectivo). La lista se mantendrá desde el panel de la fila 52.
+De paso, la compra dejó de reiniciarse después de un error del servidor.
+
+### D-126 — Envío fijo de $10.000 y lo tributario al contador (corrección 47, 2026-09-25)
+Nicolás eligió lo que pidió Catalina: **$10.000 fijos** en toda el área mientras no haya
+transportadora (antes $12.000), en un solo sitio (`src/features/shipping/tarifa.ts`).
+IVA de la comisión, facturación electrónica, retenciones y el tratamiento del envío
+**quedan para un contador**: no se construye nada tributario hasta su respuesta
+(preguntas en `docs/alcance/impuestos-y-envio.md`); es un bloqueo antes de producción.
+Cotizar mensajerías: todavía no.
+
+### D-127 — La cuenta del equipo solo administra (corrección 48, 2026-09-25)
+Catalina: «Siendo admin, el botón "Vender" le permitiría registrarse para vender».
+Nicolás eligió que la cuenta con rol `admin` **no compre, no venda, no guarde ni pida
+avisos**: evita moderar publicaciones, reclamos o disputas propias. Quien del equipo
+quiera vender usa su cuenta personal (con otro celular, D-01).
+- Cabecera: «Explorar» y «Administración»; sin «Vender» ni carrito. Barra inferior:
+  «Administración» en vez de «Publicar» y «Chats».
+- `/vender`, `/publicar`, `/tienda` y «Tus publicaciones» llevan a `/admin`, y las
+  acciones de publicar, empezar a vender, verificar identidad, carga en lote, guardar
+  y avisos también (`clienteActivo()` en `src/lib/session.ts`).
+- Comprar, carrito, chat y ofertas usan una sola regla, `noCompra()` (equipo o
+  empresa), con su propio mensaje en la ficha, el carrito y el chat.
+
+### D-128 — Panel de configuración del equipo (corrección 52, 2026-09-25)
+Catalina pidió un panel privado para gestionar etiquetas y detalles. Nicolás eligió
+las cuatro listas, con historial. En `/admin/configuracion` (404 para quien no es del
+equipo; cada acción lo vuelve a comprobar en el servidor):
+- **Categorías:** nombre visible, orden y activa. El `slug` no cambia (enlaces
+  compartidos). Una inactiva no recibe publicaciones nuevas. Siempre queda al menos una.
+- **Lugares de encuentro** (D-125): confirmar, corregir, activar o desactivar y
+  agregar. Los que agrega el equipo nacen confirmados.
+- **Tallas y edades** (antes constantes de `atributos.ts`; tabla `atributos`,
+  migración 0029, con los mismos valores): agregar y activar o desactivar. No se
+  renombran, porque cada publicación guarda el texto.
+- **Palabras prohibidas:** frases con el motivo que ve quien publica, sin tildes ni
+  mayúsculas y por palabra completa. Se suman a las reglas fijas del código, que se
+  muestran para leer y no se tocan. Aplican al publicar, editar, republicar y en la
+  carga en lote.
+- **Historial** (`cambios_config`): quién, cuándo, qué había antes y qué quedó.
+Formularios de servidor (funcionan sin JavaScript); un error vuelve con un código en
+la dirección, nunca con datos de nadie. Fuera por ahora: los textos de la portada.

@@ -28,8 +28,8 @@ test("en persona no se cobra envío y el total es solo el producto", async ({
   await signUpVerified(buyer, "comprador", "Laura Compradora");
 
   await buyer.goto(`/comprar/${seller.listingId}`);
-  // Con envío son 500.000 más 12.000.
-  await expect(buyer.getByTestId("total-checkout")).toHaveText("$ 512.000");
+  // Con envío son 500.000 más 10.000 (corrección 47).
+  await expect(buyer.getByTestId("total-checkout")).toHaveText("$ 510.000");
 
   await buyer.getByRole("radio", { name: /Nos vemos en persona/ }).check();
   await expect(buyer.getByTestId("envio")).toHaveText("Sin costo");
@@ -292,6 +292,97 @@ test("un pedido con envío no acepta el flujo de código", async ({ browser }) =
   const orderId = new URL(buyer.url()).pathname.split("/").pop()!;
   await seller.page.goto(`/pedido/${orderId}`);
   await expect(seller.page.getByLabel("Código del comprador")).toHaveCount(0);
+
+  await seller.context.close();
+  await ctx.close();
+});
+
+// Corrección 46 (D-125): el encuentro en un lugar público de la zona, de una lista,
+// en vez de «donde acuerden por el chat». Protege a los dos y nadie da su dirección.
+test("al elegir la zona se ofrecen sus lugares seguros y el pedido dice dónde se ven", async ({
+  browser,
+}) => {
+  const seller = await sellerWithListing(browser, `Lámpara ${Date.now()}`, 150_000);
+  const ctx = await browser.newContext();
+  const buyer = await ctx.newPage();
+  await signUpVerified(buyer, "comprador", "Laura Compradora");
+
+  await buyer.goto(`/comprar/${seller.listingId}`);
+  await buyer.getByRole("radio", { name: /Nos vemos en persona/ }).check();
+  await buyer.getByLabel("¿En qué zona se ven?").selectOption("Chapinero");
+  const lugares = buyer.getByRole("group", { name: "¿Dónde exactamente?" });
+  await expect(lugares.getByRole("radio", { name: "Centro Comercial Andino" })).toBeChecked();
+  await lugares.getByRole("radio", { name: "Centro Comercial Avenida Chile" }).check();
+  await expect(buyer.getByTestId("consejos-encuentro")).toContainText("de día");
+  await buyer.getByRole("button", { name: "Ir a pagar" }).click();
+  await buyer.getByRole("button", { name: "Simular pago aprobado" }).click();
+  await expect(buyer).toHaveURL(/\/pedido\//);
+  const orderId = new URL(buyer.url()).pathname.split("/").pop()!;
+
+  for (const page of [buyer, seller.page]) {
+    await page.goto(`/pedido/${orderId}`);
+    await expect(page.getByTestId("encuentro")).toContainText(
+      "Se ven en Centro Comercial Avenida Chile (Chapinero)",
+    );
+    await expect(page.getByTestId("consejos-encuentro")).toBeVisible();
+  }
+
+  await seller.context.close();
+  await ctx.close();
+});
+
+test("en una zona sin lugares sugeridos se pide acordar uno público", async ({ browser }) => {
+  const seller = await sellerWithListing(browser, `Silla ${Date.now()}`, 90_000);
+  const ctx = await browser.newContext();
+  const buyer = await ctx.newPage();
+  await signUpVerified(buyer, "comprador", "Laura Compradora");
+
+  await buyer.goto(`/comprar/${seller.listingId}`);
+  await buyer.getByRole("radio", { name: /Nos vemos en persona/ }).check();
+  await buyer.getByLabel("¿En qué zona se ven?").selectOption("Cota");
+  await expect(buyer.getByRole("main")).toContainText("Todavía no tenemos lugares sugeridos en Cota");
+  await buyer.getByRole("button", { name: "Ir a pagar" }).click();
+  await buyer.getByRole("button", { name: "Simular pago aprobado" }).click();
+  await expect(buyer.getByTestId("encuentro")).toContainText(
+    "Se ven en Cota. El lugar lo acuerdan por el chat: que sea público y concurrido.",
+  );
+
+  await seller.context.close();
+  await ctx.close();
+});
+
+test("un lugar de otra zona o una zona inventada se rechazan", async ({ browser }) => {
+  const seller = await sellerWithListing(browser, `Mesa ${Date.now()}`, 90_000);
+  const ctx = await browser.newContext();
+  const buyer = await ctx.newPage();
+  await signUpVerified(buyer, "comprador", "Laura Compradora");
+  const deChia = await withDb(async (c) => {
+    const { rows } = await c.query<{ id: string }>(
+      `select id from lugares_encuentro where zona = 'Chía' limit 1`,
+    );
+    return rows[0].id;
+  });
+
+  await buyer.goto(`/comprar/${seller.listingId}`);
+  await buyer.getByRole("radio", { name: /Nos vemos en persona/ }).check();
+  await buyer.getByLabel("¿En qué zona se ven?").selectOption("Chapinero");
+  await buyer
+    .getByRole("radio", { name: "Centro Comercial Andino" })
+    .evaluate((el, id) => ((el as HTMLInputElement).value = id), deChia);
+  await buyer.getByRole("button", { name: "Ir a pagar" }).click();
+  await expect(alertIn(buyer)).toContainText("Elige un lugar de la lista");
+
+  // Tras el error, el formulario conserva «en persona» y la zona: antes React 19 lo
+  // reiniciaba y al reintentar pedía la dirección.
+  await expect(buyer.getByRole("radio", { name: /Nos vemos en persona/ })).toBeChecked();
+  await buyer.getByLabel("¿En qué zona se ven?").evaluate((el) => {
+    const o = document.createElement("option");
+    o.value = "Inventada";
+    el.appendChild(o);
+    (el as HTMLSelectElement).value = "Inventada";
+  });
+  await buyer.getByRole("button", { name: "Ir a pagar" }).click();
+  await expect(alertIn(buyer)).toContainText("Elige una zona de la lista");
 
   await seller.context.close();
   await ctx.close();

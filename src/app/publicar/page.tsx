@@ -1,18 +1,19 @@
 import { redirect } from "next/navigation";
-import { activeUser } from "@/lib/session";
+import { clienteActivo } from "@/lib/session";
 import { getVerification } from "@/features/kyc/queries";
 import { listCategories } from "@/features/catalog/queries";
 import { suggestAll } from "@/features/pricing/suggest";
 import { PublishForm } from "@/features/publish/PublishForm";
 import { AppHeader } from "@/components/AppHeader";
 import { Volver } from "@/components/Volver";
+import { opcionesDeAtributos } from "@/features/configuracion/queries";
 
 // Pantalla 1k del mockup.
 export const dynamic = "force-dynamic";
 
 export default async function Publicar() {
   // Una cuenta suspendida no llega a las pantallas que escriben.
-  const user = await activeUser();
+  const user = await clienteActivo();
   if (!user.phoneNumberVerified) redirect("/verificar");
 
   // D-02: el vendedor verifica antes de publicar. Esta comprobación es de
@@ -34,7 +35,11 @@ export default async function Publicar() {
         <h1 className="mt-4 mb-6 font-title text-2xl font-semibold">
           Publicar artículo
         </h1>
-        <PublishForm categories={categories} suggestions={suggestions} />
+        <PublishForm
+          categories={categories}
+          suggestions={suggestions}
+          opciones={await opcionesDeAtributos()}
+        />
       </main>
     </>
   );

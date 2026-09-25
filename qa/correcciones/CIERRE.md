@@ -9,12 +9,20 @@ lista viva de pendientes, en [pendientes.md](pendientes.md). Última actualizaci
 
 | Estado | Filas |
 |---|---|
-| Hechas y desplegadas en `dev` | 1–20, 22–32 y 50 (32 filas) |
-| Hechas, esperan aprobación para desplegar | 33–41 (9 filas) |
-| Propuesta escrita, falta la decisión de Nicolás | 42–49, 51 y 52 (10 filas) |
+| Hechas y desplegadas en `dev` | 1–20, 22–43, 45–48, 50 y 52 (48 filas) |
+| Decididas, sin construir por ahora | 44 y 51 (solo Bogotá y vecinos), 49 (identidad: documentada, sin integrar) |
 | En evaluación | 21 (fotos en el chat: se quedan por ahora) |
 
-Cada fila hecha tiene prueba automática y el informe de Luna en `fila-NN/`.
+Cada fila hecha tiene prueba automática y el informe de Luna en `fila-NN/`. Suite completa
+contra la imagen de producción el 2026-09-25: 455 de 455 (una intermitente, anotada).
+
+**Filas 42–52 (2026-09-25):** sesiones con «Cerrar todas las demás» (42); ubicación como
+Marketplace, con distancia, radio y «Más cerca», solo Bogotá y municipios vecinos (43–45,
+51); lugares públicos para el encuentro en persona (46); envío fijo de $10.000 e impuestos
+al contador (47); la cuenta del equipo solo administra (48); identidad documentada sin
+integrar (49); panel de configuración con historial (52). Además: la cuenta existe solo al
+confirmar el celular, «¿No es tu número?», 30 s entre códigos, términos a pantalla
+completa, SMS por Inalambria Express.
 
 ## Qué cambió
 

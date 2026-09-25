@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listCategories } from "@/features/catalog/queries";
-import { hrefDePagina, leerPagina } from "@/features/catalog/paginas";
+import { hrefDePagina, leerPagina, sinCamposVacios } from "@/features/catalog/paginas";
+import { redirect } from "next/navigation";
 import { VerMas } from "@/components/VerMas";
 import { ListingCard } from "@/features/catalog/ListingCard";
 import { AppHeader } from "@/components/AppHeader";
@@ -13,8 +14,11 @@ import {
   hayFiltros,
   parseFilters,
   searchListings,
+  sinDistanciaSinPunto,
 } from "@/features/catalog/search";
 import { ZONAS } from "@/features/ubicacion/zonas";
+import { puntoDelComprador } from "@/features/ubicacion/comprador";
+import { BarraDeUbicacion } from "@/features/ubicacion/BarraDeUbicacion";
 import { CamposDeFiltro } from "@/features/catalog/CamposDeFiltro";
 import { PanelDeFiltros } from "@/features/catalog/PanelDeFiltros";
 import { SinResultados } from "@/features/catalog/SinResultados";
@@ -38,10 +42,18 @@ export default async function Home({
       params.append(clave, v);
     }
   }
+  // Sin `min=&max=&zona=` en la dirección: un formulario GET manda todo (Luna).
+  const limpios = sinCamposVacios(params);
+  if (limpios.toString() !== params.toString()) {
+    redirect(limpios.size ? `/?${limpios}` : "/");
+  }
   // La búsqueda por texto sigue siendo cosa de `/buscar`.
   params.delete("q");
   const [categories, user] = await Promise.all([listCategories(), currentUser()]);
-  const filtros = conCategoriasConocidas(parseFilters(params), categories);
+  // D-122: dónde está quien mira, de su cookie. Sin punto, el radio y «Más cerca»
+  // no aplican.
+  const punto = await puntoDelComprador();
+  const filtros = sinDistanciaSinPunto(conCategoriasConocidas(parseFilters(params), categories), punto);
   const filtrando = hayFiltros(filtros);
   // Correcciones 33 y 34: 24 por página. Antes la portada sin filtros cargaba
   // todas las publicaciones activas de una vez. Con y sin filtros es la misma
@@ -51,8 +63,8 @@ export default async function Home({
   // búsqueda vuelve a la primera página.
   params.delete("pagina");
   const [listings, total] = await Promise.all([
-    searchListings(filtros, pagina),
-    countListings(filtros),
+    searchListings(filtros, pagina, punto),
+    countListings(filtros, punto),
   ]);
 
   return (
@@ -122,6 +134,7 @@ export default async function Home({
                 filters={filtros}
                 categories={categories}
                 zones={ZONAS.map((z) => z.nombre)}
+                conPunto={Boolean(punto)}
                 prefijo="portada"
               />
             </PanelDeFiltros>
@@ -165,6 +178,8 @@ export default async function Home({
           </>
         )}
 
+        <BarraDeUbicacion punto={punto} volver={params.size ? `/?${params}` : "/"} />
+
         {filtrando && listings.length === 0 && (
           <SinResultados
             q=""
@@ -174,6 +189,7 @@ export default async function Home({
             params={params.toString()}
             aquí={`/?${params}`}
             conSesion={Boolean(user)}
+            equipo={user?.role === "admin"}
             sugerencia={describirFiltros(filtros, categories)}
           />
         )}

@@ -22,6 +22,7 @@ export function SinResultados({
   params,
   aquí,
   conSesion,
+  equipo = false,
   sugerencia,
 }: {
   q: string;
@@ -34,6 +35,8 @@ export function SinResultados({
   /** La dirección actual, para volver después de entrar. */
   aquí: string;
   conSesion: boolean;
+  /** Corrección 48: la cuenta del equipo no pide avisos (Luna). */
+  equipo?: boolean;
   /** Nombre propuesto para el aviso: lo buscado y los filtros, en palabras. */
   sugerencia: string;
 }) {
@@ -74,7 +77,7 @@ export function SinResultados({
         )}
       </div>
 
-      {conSesion && (
+      {conSesion && !equipo && (
         <SaveSearchForm
           params={params}
           sugerencia={sugerencia || undefined}

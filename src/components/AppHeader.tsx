@@ -52,12 +52,20 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
         esEmpresa(user.id),
       ])
     : [[], 0, false];
+  // Corrección 48 (D-127): la cuenta del equipo solo administra: ni vende ni compra.
+  const equipo = user?.role === "admin";
   // Corrección 17: una cuenta de empresa no compra, así que no tiene carrito y su
   // actividad son solo ventas.
-  const enlaces = empresa ? ENLACES.filter((e) => e.href !== "/carrito") : ENLACES;
-  const delMenu = empresa
-    ? DEL_MENU.map((e) => (e.href === "/actividad" ? { ...e, label: "Tus ventas" } : e))
-    : DEL_MENU;
+  const enlaces = equipo
+    ? [ENLACES[0], { href: "/admin", label: "Administración" }]
+    : empresa
+      ? ENLACES.filter((e) => e.href !== "/carrito")
+      : ENLACES;
+  const delMenu = equipo
+    ? DEL_MENU.filter((e) => e.href === "/cuenta" || e.href === "/cuenta/editar")
+    : empresa
+      ? DEL_MENU.map((e) => (e.href === "/actividad" ? { ...e, label: "Tus ventas" } : e))
+      : DEL_MENU;
   const avatar = rows[0]?.avatar_path ? mediaUrl(rows[0].avatar_path) : null;
   const alias = user?.alias ?? user?.name ?? "";
 
@@ -94,12 +102,14 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
                     no sabía cuál era el importante. El coral sigue estando —es la
                     invitación a publicar— y el relleno sólido queda reservado para
                     la única acción de la pantalla (D-84). */}
-                <Link
-                  href="/vender"
-                  className="hidden rounded-full border border-accent-on-brand/60 px-4 py-1.5 text-sm font-semibold text-accent-on-brand transition duration-200 ease-salida hover:border-accent-on-brand hover:bg-accent-on-brand/10 active:scale-[0.97] md:inline-flex"
-                >
-                  Vender
-                </Link>
+                {!equipo && (
+                  <Link
+                    href="/vender"
+                    className="hidden rounded-full border border-accent-on-brand/60 px-4 py-1.5 text-sm font-semibold text-accent-on-brand transition duration-200 ease-salida hover:border-accent-on-brand hover:bg-accent-on-brand/10 active:scale-[0.97] md:inline-flex"
+                  >
+                    Vender
+                  </Link>
+                )}
 
                 <details className="group relative">
                   <summary
@@ -158,7 +168,7 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
           )}
         </div>
       </header>
-      {user && <BottomNav sinLeer={sinLeer} />}
+      {user && <BottomNav sinLeer={sinLeer} equipo={equipo} />}
     </>
   );
 }

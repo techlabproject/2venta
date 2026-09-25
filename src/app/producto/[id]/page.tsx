@@ -23,8 +23,8 @@ import { AddToCartButton } from "@/features/cart/Forms";
 import { isInCart } from "@/features/cart/queries";
 import { listPhotos } from "@/features/publish/photo-queries";
 import { currentUser } from "@/lib/session";
-import { esEmpresa } from "@/features/sellers/queries";
-import { EMPRESA_NO_COMPRA } from "@/features/sellers/reglas";
+import { noCompra } from "@/features/sellers/queries";
+import { mensajeSinCompras } from "@/features/sellers/reglas";
 import { etiquetaDeEdad, etiquetaDeTalla } from "@/features/catalog/atributos";
 import { Avatar } from "@/components/Avatar";
 import { getReputation } from "@/features/ratings/queries";
@@ -79,8 +79,10 @@ export default async function ListingPage({
   await recordView(listing.id, user?.id ?? null, listing.seller_id);
   const favorited = user ? await isFavorite(user.id, listing.id) : false;
   const inCart = user ? await isInCart(user.id, listing.id) : false;
-  // Corrección 17: una cuenta de empresa vende, no compra.
-  const empresa = user && !isSeller ? await esEmpresa(user.id) : false;
+  // Corrección 17: una cuenta de empresa vende, no compra; corrección 48: la del
+  // equipo solo administra.
+  const sinCompras = user && !isSeller ? await noCompra(user) : null;
+  const empresa = Boolean(sinCompras);
   const photos = await listPhotos(listing.id);
   // Sobre un artículo vendido el botón solo servía para ver un error; quien ya
   // había escrito sí lo conserva, porque su conversación sigue abierta.
@@ -281,10 +283,10 @@ export default async function ListingPage({
                 ) : empresa && listing.status === "activa" ? (
                   <p
                     role="status"
-                    data-testid="empresa-no-compra"
+                    data-testid={sinCompras === "equipo" ? "equipo-no-compra" : "empresa-no-compra"}
                     className="rounded-xl bg-ph px-4 py-3 text-sm text-ink2"
                   >
-                    {EMPRESA_NO_COMPRA}
+                    {sinCompras && mensajeSinCompras(sinCompras)}
                   </p>
                 ) : listing.status === "activa" ? (
                   <BuyButton listingId={listing.id} signedIn={Boolean(user)} />
@@ -324,7 +326,7 @@ export default async function ListingPage({
                   <AddToCartButton listingId={listing.id} inCart={inCart} />
                 )}
                 {puedeEscribir && <ChatButton listingId={listing.id} />}
-                {user && !isSeller && (
+                {user && !isSeller && sinCompras !== "equipo" && (
                   <div className="mt-3">
                     <FavoriteButton listingId={listing.id} saved={favorited} />
                   </div>
@@ -365,7 +367,8 @@ export default async function ListingPage({
               </li>
             ))}
           </ul>
-          {user && !isSeller && <AskForm listingId={listing.id} />}
+          {/* Corrección 48: la cuenta del equipo no pregunta como compradora (Luna). */}
+          {user && !isSeller && sinCompras !== "equipo" && <AskForm listingId={listing.id} />}
         </section>
 
         {/* RF-32 y D-16: la moderación automática filtra lo evidente; esto es lo

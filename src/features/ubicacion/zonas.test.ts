@@ -5,6 +5,7 @@ import {
   dentroDelArea,
   distanciaKm,
   textoDeDistancia,
+  puntoEnZona,
   ZONAS,
   zonaMasCercana,
   zonaReconocida,
@@ -52,4 +53,14 @@ test("la distancia se dice redondeada", () => {
   assert.equal(textoDeDistancia(0.4), "a menos de 1 km");
   assert.equal(textoDeDistancia(3.4), "a unos 3 km");
   assert.equal(textoDeDistancia(12.6), "a unos 13 km");
+});
+
+test("un punto corresponde a una zona si es una de las dos de centro más cercano", () => {
+  // El caso de Luna: un punto de Usaquén no puede decir «Chapinero».
+  assert.equal(puntoEnZona(4.71, -74.03, "Chapinero"), false);
+  assert.equal(puntoEnZona(4.71, -74.03, "Usaquén"), true);
+  // En el borde entre Chapinero y Teusaquillo sirven las dos.
+  assert.equal(puntoEnZona(4.643, -74.074, "Chapinero"), true);
+  assert.equal(puntoEnZona(4.643, -74.074, "Teusaquillo"), true);
+  assert.equal(puntoEnZona(4.643, -74.074, "Soacha"), false);
 });

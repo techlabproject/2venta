@@ -45,7 +45,7 @@ test("un comprador paga, el dinero queda retenido y el artículo sale del catál
 
   await expect(buyer).toHaveURL(/\/pedido\//);
   await expect(buyer.getByTestId("estado")).toHaveText("Pago recibido y guardado");
-  await expect(buyer.getByTestId("total")).toHaveText("$ 812.000"); // 800.000 + 12.000 de envío
+  await expect(buyer.getByTestId("total")).toHaveText("$ 810.000"); // 800.000 + 10.000 de envío (corrección 47)
   await expect(buyer.getByRole("main")).toContainText("Tenemos guardados");
 
   // El artículo ya no aparece como disponible.

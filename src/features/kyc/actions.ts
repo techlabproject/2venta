@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { activeUser } from "@/lib/session";
+import { clienteActivo } from "@/lib/session";
 import { kycProvider } from "./provider";
 import { startVerification } from "./queries";
 
@@ -9,7 +9,7 @@ import { startVerification } from "./queries";
 // nunca de un campo del formulario. Si viniera del formulario, cualquiera podría
 // iniciar la verificación de otra persona.
 export async function beginVerification(form: FormData) {
-  const user = await activeUser();
+  const user = await clienteActivo();
 
   // Art. 6 de la Ley 1581: la selfie es un dato biométrico y necesita una
   // autorización explícita y aparte. El `required` de la casilla es comodidad; esto

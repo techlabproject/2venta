@@ -6,7 +6,13 @@ import { query } from "@/lib/db";
 import { CONTACT_REJECTED, hasContact, redact } from "@/features/chat/redact";
 import { claim } from "@/features/publish/claim";
 import { AVATAR_MAX_BYTES } from "@/lib/storage";
-import { aCuadricula, zonaReconocida } from "@/features/ubicacion/zonas";
+import {
+  aCuadricula,
+  dentroDelArea,
+  FUERA_DEL_AREA,
+  puntoEnZona,
+  zonaReconocida,
+} from "@/features/ubicacion/zonas";
 
 export type ProfileResult = { error: string };
 
@@ -44,6 +50,36 @@ export async function updateProfile(
   const zonaEscrita = String(form.get("zone") ?? "").trim();
   const zona = zonaEscrita ? zonaReconocida(zonaEscrita) : null;
   if (zonaEscrita && !zona) return { error: "Elige tu zona de la lista." };
+
+  // El punto: el del celular si lo mandó («Usar mi ubicación», ya redondeado; se
+  // redondea otra vez por si acaso); si no, el que ya tenía, mientras siga en la
+  // misma zona; si cambió de zona, el centro de la nueva.
+  let punto: { lat: number; lng: number } | null = null;
+  const latTexto = String(form.get("lat") ?? "");
+  const lngTexto = String(form.get("lng") ?? "");
+  if (zona && latTexto && lngTexto) {
+    const lat = Number(latTexto);
+    const lng = Number(lngTexto);
+    if (!dentroDelArea(lat, lng)) return { error: FUERA_DEL_AREA };
+    // La zona es lo que se muestra y el punto de donde sale la distancia: tienen que
+    // decir lo mismo (Luna).
+    if (!puntoEnZona(lat, lng, zona.nombre)) {
+      return {
+        error: `Ese punto no queda en ${zona.nombre}. Vuelve a tocar «Usar mi ubicación» o elige la zona sin él.`,
+      };
+    }
+    punto = { lat: aCuadricula(lat), lng: aCuadricula(lng) };
+  } else if (zona) {
+    const actual = await query<{ zone: string | null; lat: number | null; lng: number | null }>(
+      `select zone, ubicacion_lat as lat, ubicacion_lng as lng from "user" where id = $1`,
+      [user.id],
+    );
+    const antes = actual[0];
+    punto =
+      antes?.zone === zona.nombre && antes.lat !== null && antes.lng !== null
+        ? { lat: antes.lat, lng: antes.lng }
+        : { lat: aCuadricula(zona.lat), lng: aCuadricula(zona.lng) };
+  }
   // La descripción es pública, así que pasa por el mismo filtro que el chat.
   const rawBio = String(form.get("bio") ?? "").trim().slice(0, 300);
   const bio = rawBio ? redact(rawBio).text : null;
@@ -65,8 +101,8 @@ export async function updateProfile(
       alias,
       zona?.nombre ?? null,
       bio,
-      zona ? aCuadricula(zona.lat) : null,
-      zona ? aCuadricula(zona.lng) : null,
+      punto?.lat ?? null,
+      punto?.lng ?? null,
     ],
   );
 
