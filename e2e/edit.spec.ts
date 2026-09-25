@@ -73,11 +73,15 @@ test("ya no se puede marcar como vendida a mano", async ({ browser }) => {
   await expect(seller.page.getByRole("button", { name: "Vendida" })).toHaveCount(0);
 
   // Esquivando la pantalla: se reutiliza el formulario de reservar con otro estado.
+  // Después de que la página cargue del todo: si React termina de montarse después
+  // del cambio, devuelve el campo a «reservada» y la prueba no prueba nada.
   await seller.page.goto(`/producto/${seller.listingId}`);
+  await seller.page.waitForLoadState("networkidle");
   await seller.page.evaluate(() => {
     const campo = document.querySelector<HTMLInputElement>('input[name="status"][value="reservada"]')!;
     campo.value = "vendida";
   });
+  await expect(seller.page.locator('input[name="status"][value="vendida"]')).toHaveCount(1);
   await seller.page.getByRole("button", { name: "Marcar como reservada" }).click();
   await expect(alertIn(seller.page)).toContainText("Ese estado no existe");
   const estado = await withDb(async (c) => {
