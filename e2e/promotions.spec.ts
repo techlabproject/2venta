@@ -226,9 +226,9 @@ test("retirar la publicación termina el destacado, sin devolución", async ({ b
 
   await seller.page.goto(`/producto/${seller.listingId}`);
   await seller.page.getByRole("button", { name: "Retirar la publicación" }).click();
-  // Mientras la acción corre el botón dice "Guardando…"; se espera al estado final,
-  // que para una retirada es que desaparezca el bloque entero del vendedor.
-  await expect(seller.page.getByRole("button", { name: "Marcar como vendida" })).toHaveCount(0);
+  // Retirar pide confirmación y lleva a «Tus publicaciones» (correcciones 26 y 30).
+  await seller.page.getByRole("button", { name: "Sí, retirarla" }).click();
+  await expect(seller.page).toHaveURL(/\/vender\/metricas\?retirada=/);
   await expect.poll(async () =>
     withDb(async (c) => {
       const { rows } = await c.query<{ status: string }>(

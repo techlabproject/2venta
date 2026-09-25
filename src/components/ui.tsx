@@ -78,7 +78,9 @@ export function Field({
   hint,
   error,
   prefijo,
+  sufijo,
   grande = false,
+  monto = false,
   id,
   ...props
 }: ComponentProps<"input"> & {
@@ -88,8 +90,12 @@ export function Field({
   error?: string | null;
   /** Algo fijo a la izquierda dentro de la caja, como «+57». */
   prefijo?: ReactNode;
+  /** Algo fijo a la derecha dentro de la caja, como «COP». */
+  sufijo?: ReactNode;
   /** Letra grande y espaciada, para un código que se copia de un SMS. */
   grande?: boolean;
+  /** Cifra grande y centrada, para el monto de una oferta. */
+  monto?: boolean;
   id: string;
 }) {
   const describe = [error ? `${id}-error` : null, hint ? `${id}-hint` : null]
@@ -110,7 +116,7 @@ export function Field({
         id={id}
         // El foco engorda el borde con una sombra en vez de con un ancho mayor:
         // cambiar el ancho mueve el campo un pixel y salta toda la columna.
-        className={`w-full rounded-xl border bg-white pr-4 outline-none ${grande ? "py-3.5 text-center font-title text-2xl tracking-[0.4em] tabular-nums placeholder:tracking-[0.4em]" : "py-3 text-sm"} transition duration-200 ease-salida placeholder:text-muted focus:ring-3 ${prefijo ? "pl-13" : "pl-4"} ${
+        className={`w-full rounded-xl border bg-white outline-none ${grande ? "py-3.5 text-center font-title text-2xl tracking-[0.4em] tabular-nums placeholder:tracking-[0.4em]" : monto ? "py-3.5 text-center font-title text-2xl tabular-nums" : "py-3 text-sm"} transition duration-200 ease-salida placeholder:text-muted focus:ring-3 ${prefijo ? (typeof prefijo === "string" && prefijo.length === 1 ? "pl-8" : "pl-13") : "pl-4"} ${sufijo ? "pr-16" : "pr-4"} ${
           error
             ? "border-danger focus:border-danger focus:ring-danger/15"
             : "border-line hover:border-brand/30 focus:border-brand focus:ring-brand/15"
@@ -121,6 +127,11 @@ export function Field({
         aria-invalid={error ? true : undefined}
         {...props}
       />
+      {sufijo && (
+        <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs font-medium tracking-wide text-muted">
+          {sufijo}
+        </span>
+      )}
       </span>
       {/* Siempre en el DOM y con `aria-live`: si apareciera de golpe, algunos
           lectores de pantalla no lo anuncian. */}

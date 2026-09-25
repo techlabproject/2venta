@@ -100,7 +100,9 @@ export async function suspendUser(
 
   // Las publicaciones dejan de verse. Los pedidos y conversaciones no se tocan.
   await query(
-    `update listings set status = 'retirada'
+    // `retirada_desde`: si la cuenta vuelve, lo que estaba en revisión vuelve a
+    // revisión al republicarlo (corrección 31).
+    `update listings set status = 'retirada', retirada_desde = status
       where seller_id = $1 and status in ('activa','en_revision','reservada')`,
     [userId]
   );

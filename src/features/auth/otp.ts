@@ -1,11 +1,12 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
+import { CODIGO_VALIDO_MINUTOS } from "./vigencia";
 
 // Código de verificación por celular.
 //
 // Cierra la D-27. La biblioteca de autenticación lo guardaba en texto plano en su
 // tabla de verificación y su complemento no ofrecía opción de cifrarlo, así que
 // quien tuviera lectura de la base podía tomar el control de cualquier cuenta
-// durante los cinco minutos que el código vive.
+// durante los minutos que el código vive.
 //
 // Lo que se deja de delegar es un código de seis dígitos con vencimiento, que es
 // lógica de aplicación. Las contraseñas, las sesiones y los tokens los sigue
@@ -17,7 +18,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes, randomInt, t
 
 export const CODE_LENGTH = 6;
 export const MAX_ATTEMPTS = 5;
-export const EXPIRY_MINUTES = 5;
+export const EXPIRY_MINUTES = CODIGO_VALIDO_MINUTOS;
 
 function key(): Buffer {
   const value = process.env.PHONE_CODE_SECRET ?? process.env.PICKUP_CODE_SECRET;

@@ -187,7 +187,9 @@ test("no se puede publicar por debajo del precio mínimo", async ({ browser }) =
   await page.getByLabel("Descripción").fill("Muy barato.");
   await page.getByRole("button", { name: "Publicar" }).click();
 
-  await expect(alertIn(page)).toContainText("precio mínimo");
+  // Lo detiene el campo antes de enviar (corrección 24).
+  await expect(page.getByText("El mínimo es $10.000.")).toBeVisible();
+  await expect(page).toHaveURL(/\/publicar/);
   await context.close();
 });
 

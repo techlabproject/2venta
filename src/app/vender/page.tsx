@@ -8,6 +8,7 @@ import { Button, ButtonLink } from "@/components/ui";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { listSellerMetrics } from "@/features/metrics/queries";
 import { Volver } from "@/components/Volver";
+import { rangoDeVisitas } from "@/features/metrics/rangos";
 import { getJuridica, getVendedor } from "@/features/sellers/queries";
 import { CompletarDatosForm, FormularioVendedor } from "@/features/sellers/Forms";
 
@@ -78,8 +79,9 @@ export default async function Vender({
                   </div>
                   <div>
                     <dt className="text-xs text-cream/70">Visitas en total</dt>
-                    <dd className="font-title text-2xl font-semibold tabular-nums">
-                      {vistas}
+                    {/* En rango, como en «Tus publicaciones» (corrección 32). */}
+                    <dd className="mt-1 font-title text-base font-semibold">
+                      {rangoDeVisitas(vistas)}
                     </dd>
                   </div>
                 </dl>

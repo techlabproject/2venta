@@ -40,3 +40,34 @@ despliega. El flujo de GitHub Actions la pasa; a mano se pasa la que se quiera.
   actualizar los servicios. Nunca al arrancar el contenedor.
 - En `dev` las tareas tienen IP pública para no pagar NAT. Sus grupos de seguridad
   no admiten nada de entrada salvo el ALB hacia la web.
+
+## WhatsApp para los códigos de verificación (D-117)
+
+El token de Meta y el secreto de la app **no pasan por Terraform ni por el
+repositorio**. Terraform crea el secreto vacío y una persona lo llena.
+
+1. Con `whatsapp_secreto = true` (ya está en `envs/dev/main.tf`), el despliegue crea
+   el secreto `2venta-dev/whatsapp`, vacío.
+2. Llenarlo con el token permanente del usuario de sistema y el secreto de la app:
+
+   ```bash
+   AWS_PROFILE=2venta aws secretsmanager put-secret-value \
+     --secret-id 2venta-dev/whatsapp \
+     --secret-string file://whatsapp.json
+   ```
+
+   con `whatsapp.json` (fuera del repositorio, y se borra después) así:
+   `{"WHATSAPP_TOKEN":"…","WHATSAPP_APP_SECRET":"…"}`.
+3. Descomentar `whatsapp_phone_number_id` en `envs/dev/main.tf` y hacer push: las
+   tareas arrancan con `WHATSAPP_TOKEN`, `WHATSAPP_APP_SECRET` y
+   `WHATSAPP_PHONE_NUMBER_ID`. Si el secreto sigue vacío en este paso, las tareas
+   **no arrancan**: por eso va después del 2.
+4. En Meta (WhatsApp → Configuración → Webhook):
+   - URL: `https://d13g2bd9j8wj8k.cloudfront.net/api/whatsapp/webhook`
+   - Token de verificación: la clave `WHATSAPP_VERIFY_TOKEN` del secreto `2venta-dev/app`
+     (la genera Terraform):
+     `AWS_PROFILE=2venta aws secretsmanager get-secret-value --secret-id 2venta-dev/app --query SecretString --output text | jq -r .WHATSAPP_VERIFY_TOKEN`
+   - Suscribirse al campo `messages` (trae los estados de entrega).
+
+En `dev` el código se sigue escribiendo también en el registro (la prueba de humo lo
+lee de ahí); en `prod` solo sale por WhatsApp.

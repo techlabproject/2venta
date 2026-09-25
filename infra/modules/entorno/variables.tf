@@ -83,10 +83,19 @@ variable "correos_alertas" {
   type        = list(string)
 }
 
-variable "sms_provider_token" {
-  description = "Solo en producción. Vacío en desarrollo."
+# WhatsApp Cloud para los códigos (D-117). En dos pasos, para no dejar tareas que
+# no arrancan: primero `whatsapp_secreto = true` crea el secreto `<entorno>/whatsapp`
+# vacío y alguien le pone WHATSAPP_TOKEN y WHATSAPP_APP_SECRET a mano (nunca pasan
+# por Terraform ni por el repositorio); después `whatsapp_phone_number_id` lo conecta.
+variable "whatsapp_secreto" {
+  description = "Crea el secreto <entorno>/whatsapp, vacío, para llenarlo a mano."
+  type        = bool
+  default     = false
+}
+
+variable "whatsapp_phone_number_id" {
+  description = "Id del número de WhatsApp Business. Vacío = los códigos no salen por WhatsApp."
   type        = string
-  sensitive   = true
   default     = ""
 }
 

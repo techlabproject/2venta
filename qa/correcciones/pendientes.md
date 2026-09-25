@@ -6,7 +6,15 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
 
 ## Bloqueos para salir a producción
 
-- **Sin proveedor de SMS nadie puede registrarse ni recuperar la contraseña en
+- **WhatsApp Cloud conectado en el código (D-117), falta encenderlo**: rotar el token
+  y el secreto de la app (Nicolás los pegó en el chat el 2026-09-24), llenar el
+  secreto `2venta-dev/whatsapp`, poner el id del número en `infra/envs/dev/main.tf`,
+  registrar el webhook en Meta (infra/LEEME.md), aprobar la plantilla
+  `codigo_verificacion` con vigencia de **10 minutos** y resolver la verificación del
+  negocio en Meta. **Quien no tiene WhatsApp no puede registrarse**: falta un canal
+  de respaldo (SMS del agregador de la fila 9) o aceptarlo. `envios_codigo` guarda
+  celulares: falta fijar cuánto tiempo se conservan.
+- (Antes) **Sin proveedor de SMS nadie puede registrarse ni recuperar la contraseña en
   producción** (`src/lib/sms.ts` se niega a operar). Decisión: agregador colombiano;
   contratar tras prueba de entrega. Ver `docs/alcance/verificacion-celular.md`. Al
   conectarlo, el código va AL FINAL del mensaje (D-106). Falta un tope global diario
@@ -80,6 +88,11 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
 
 ## Técnico
 
+- Escribir en el celular de `/registro` apenas carga la página (antes de que termine de
+  cargar el JavaScript) puede perder lo escrito: dos pruebas lo mostraron y ahora
+  esperan a la carga completa. En un celular lento le puede pasar a una persona.
+  Investigar (fila 24).
+
 - **Chat en vivo por CloudFront sin probar**: funciona en desarrollo y contra la
   imagen de producción; falta confirmarlo en `dev` tras desplegar (CloudFront y el
   balanceador con conexiones largas; latido cada 20 s). Prueba de humo pendiente.
@@ -110,5 +123,9 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
   imagen, 401). Si Chainguard cambia sus condiciones, habrá que moverla otra vez.
 - Referencias visuales (`npm run test:visual`) desactualizadas desde la fila 1:
   borrar los `.png` y regenerar antes de confiar en ellas.
-- Supr (borrar hacia adelante) delante de un espacio del celular no hace nada; Luna
-  lo aceptó, pero es asimétrico con Retroceso.
+- ~~Supr delante de un espacio del celular no hacía nada~~ — arreglado en la fila 24
+  (también en el precio).
+- **Credenciales de AWS del portátil vencidas** (2026-09-24): la prueba de humo contra
+  la nube no pudo leer el código SMS de CloudWatch («security token … invalid»).
+  Nicolás tiene que renovar el perfil `2venta`; después, correr la prueba de humo y
+  confirmar el chat en vivo a través de CloudFront.

@@ -54,6 +54,11 @@ module "entorno" {
   video_transcodificar = false
 
   correos_alertas = ["catalinag0226@outlook.com", "nicolasdrr25@gmail.com"]
+
+  # WhatsApp (D-117), paso 1: crea el secreto `2venta-dev/whatsapp` vacío. Paso 2,
+  # cuando Nicolás lo haya llenado: descomentar la línea del número.
+  whatsapp_secreto = true
+  # whatsapp_phone_number_id = "1043566368850714"
 }
 
 output "url" { value = module.entorno.url }

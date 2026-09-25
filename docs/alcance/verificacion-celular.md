@@ -1,3 +1,5 @@
+> **Actualización 2026-09-24 (D-117):** Nicolás eligió **WhatsApp Cloud (Meta)** como canal de los códigos. Lo de abajo sobre el agregador de SMS queda como referencia para un canal de respaldo. Ver `infra/LEEME.md`.
+
 # Verificación del celular: alcance y cotización
 
 Correcciones 9 y 50 de Catalina (2026-09-22/24). Precios de lista consultados el

@@ -11,6 +11,8 @@ import type { Category } from "@/features/catalog/queries";
 import type { SuggestionMap } from "@/features/pricing/suggest";
 import { MAX_PHOTOS } from "./photos";
 import { formatCop } from "@/lib/money";
+import { CampoPrecio } from "@/components/CampoPrecio";
+import { formatearPrecio } from "@/lib/precio";
 import {
   commissionCop,
   MIN_PRICE_COP,
@@ -161,14 +163,14 @@ export function PublishForm({
         />
       )}
 
-      <Field
+      <CampoPrecio
         id="price"
         name="price"
         label="Precio"
-        inputMode="numeric"
         required
-        placeholder="260000"
-        hint="En pesos, sin puntos ni comas. Mínimo $10.000."
+        minimo={MIN_PRICE_COP}
+        placeholder="260.000"
+        hint={`Mínimo $${formatearPrecio(String(MIN_PRICE_COP))}.`}
         onChange={(e) => setPrice(parseCop(e.target.value))}
       />
       {price !== null && price >= MIN_PRICE_COP && (

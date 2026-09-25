@@ -10,6 +10,9 @@ import {
 } from "./actions";
 import { uploadBlob, UploadError } from "@/features/publish/useUpload";
 import { Button, ErrorNote } from "@/components/ui";
+import { CampoPrecio } from "@/components/CampoPrecio";
+import { formatearPrecio } from "@/lib/precio";
+import { MIN_PRICE_COP } from "@/features/payments/money";
 
 const inputClass =
   "flex-1 rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15";
@@ -183,22 +186,19 @@ export function OfferPanelForm({
     <form action={submit} className="mt-5 flex flex-col gap-3">
       {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
       <input type="hidden" name="conversationId" value={conversationId} />
-      <label htmlFor="precio-oferta" className="text-sm font-medium">
-        Cuánto ofreces
-      </label>
-      <input
+      {/* El mismo campo de precio que publicar y editar (corrección 24). Con el
+          mismo mínimo: una oferta aceptada por debajo no se podía pagar. */}
+      <CampoPrecio
         id="precio-oferta"
         name="price"
-        inputMode="numeric"
+        label="Cuánto ofreces"
+        monto
         autoFocus
-        placeholder={String(askingPrice)}
-        aria-describedby="pista-oferta"
-        className={`${inputClass} text-center font-title text-2xl tabular-nums`}
         required
+        minimo={MIN_PRICE_COP}
+        placeholder={formatearPrecio(String(askingPrice))}
+        hint={`Pide $${formatearPrecio(String(askingPrice))}.`}
       />
-      <p id="pista-oferta" className="text-xs text-muted">
-        En pesos y sin centavos. Pide {askingPrice.toLocaleString("es-CO")}.
-      </p>
       <Button type="submit" disabled={pending}>
         Enviar la oferta
       </Button>

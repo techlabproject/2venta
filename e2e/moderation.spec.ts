@@ -318,7 +318,32 @@ test("un precio negativo se rechaza en vez de volverse positivo", async ({ brows
   await verifiedSeller(page);
 
   const titulo = `Precio negativo ${Date.now()}`;
-  await fillPublishForm(page, { title: titulo, price: -10_000, category: "ropa" });
+  await page.goto("/publicar");
+  await page.getByRole("button", { name: "Abrir cámara" }).click();
+  await page.getByRole("button", { name: /^Grabar/ }).click();
+  await page.getByRole("button", { name: "Terminar" }).click();
+  await expect(page.getByRole("status")).toContainText("Video listo");
+  await page.getByLabel("Título").fill(titulo);
+  await page.getByLabel("Categoría").selectOption("ropa");
+  await page.getByLabel("Descripción").fill("En buen estado.");
+
+  // Desde la corrección 24 el campo no deja escribir el signo, y lo dice a la
+  // vista: lo que queda es lo que se publicaría, no una corrección escondida.
+  await page.getByLabel("Precio").fill("-10000");
+  await expect(page.getByLabel("Precio")).toHaveValue("10.000");
+
+  // Y el servidor sigue sin volver positivo un negativo que llegue esquivando el
+  // campo.
+  await page.evaluate(() => {
+    const campo = document.getElementById("price") as HTMLInputElement;
+    campo.removeAttribute("name");
+    const falso = document.createElement("input");
+    falso.type = "hidden";
+    falso.name = "price";
+    falso.value = "-10000";
+    campo.form!.appendChild(falso);
+  });
+  await page.getByRole("button", { name: "Publicar" }).click();
   await expect(alertIn(page)).toContainText("mayor que cero");
 
   const filas = await withDb(async (c) => {

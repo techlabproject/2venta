@@ -17,7 +17,7 @@ import {
   openConversation,
   reporteDe,
 } from "./queries";
-import { parseCop } from "@/features/payments/money";
+import { MIN_PRICE_COP, parseCop } from "@/features/payments/money";
 import { formatCop } from "@/lib/money";
 import { esEmpresa } from "@/features/sellers/queries";
 
@@ -180,6 +180,11 @@ export async function makeOffer(_prev: ChatResult | null, form: FormData) {
   const price = parseCop(String(form.get("price") ?? ""));
   if (price === null) {
     return { error: "Escribe cuánto ofreces, en pesos y sin centavos." };
+  }
+  // El pago exige el mismo mínimo: una oferta aceptada por debajo quedaba sin forma
+  // de pagarse (corrección 24).
+  if (price < MIN_PRICE_COP) {
+    return { error: `La oferta mínima es de $${MIN_PRICE_COP.toLocaleString("es-CO")}.` };
   }
 
   // Una oferta que no vence se queda ahí para siempre y el vendedor nunca sabe si

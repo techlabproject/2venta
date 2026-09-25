@@ -466,7 +466,7 @@ registro y no lo es. `--workers=3` lo quita.
 | Pieza | Estado | Lo desbloquea |
 |---|---|---|
 | Pagos (Mercado Pago) | proveedor de prueba | R-02: respuesta comercial |
-| SMS | en desarrollo sale por el registro; en producción se niega | elegir agregador (R-02) y `SMS_PROVIDER_TOKEN` |
+| Códigos (WhatsApp, D-117) | en desarrollo sale por el registro (y por WhatsApp si está configurado); en producción solo WhatsApp | llenar el secreto `<entorno>/whatsapp` y aprobar la plantilla (infra/LEEME.md) |
 | Identidad (KYC) | proveedor de prueba | contrato con proveedor |
 | Transportadora | tarifa plana de prueba | R-04 |
 | Correo (SES) | las alertas se guardan, no se envían | un dominio propio: sin él, el remitente no pasa DMARC |

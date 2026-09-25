@@ -1266,3 +1266,47 @@ de moderación se ordena por gravedad (estafa, amenazas y contenido sexual prime
 «Urgente») y por cuántas personas distintas reportaron a la misma cuenta. **No hay
 suspensión automática**: se podría usar para atacar a alguien.
 **El chat vacío (19)** le habla a cada lado desde su punto de vista.
+
+### D-115 — Un solo campo de precio, con el mismo mínimo en la oferta (correcciones 24 y 25, 2026-09-24)
+Publicar, editar y el panel de oferta usan `CampoPrecio`: «$» delante y «COP»
+detrás, solo dígitos, puntos de miles puestos mientras se escribe y revisión al salir
+del campo (el patrón de la D-104). El servidor no le cree: sigue leyendo con
+`parseCop`. **La oferta tiene el mismo mínimo que el pago ($10.000)**: una oferta
+aceptada por debajo quedaba sin forma de pagarse. Con el campo vacío manda el
+`required` del navegador; no se apagó la validación nativa en publicar porque un
+error del servidor vaciaría el formulario, video incluido (riesgo de React 19 en
+`pendientes.md`). Supr delante de un separador borra el dígito siguiente, como
+Retroceso detrás (también en el celular). Al editar, el aviso nombra el IMEI solo si
+el artículo tiene uno; IMEI y categoría siguen sin poder cambiarse (el servidor los
+ignora).
+
+### D-116 — Sin «vendida» a mano; lo retirado se recupera; visitas en rango (correcciones 26 a 32, 2026-09-24)
+Decisiones de Nicolás. **Un artículo queda vendido solo completando la compra en
+2venta** (29, postura de Catalina): se quitó «Marcar como vendida»; lo vendido por
+fuera se retira, y lo que ya estaba marcado a mano se queda. **Retirar pide
+confirmación** (26, 28, 30) en un diálogo que dice que no se borra, y lleva a «Tus
+publicaciones». **Lo retirado se recupera** (31) desde el grupo «Retiradas» o la
+ficha propia: vuelve a pasar la moderación automática, lo que estaba en revisión
+vuelve a revisión (`retirada_desde`, migración 0019; también al suspender una
+cuenta) y nada con un pedido vivo vuelve al catálogo, que era un riesgo que ya
+existía con «Reservada → Republicar». **«Compras y ventas» muestra las 3
+conversaciones más recientes** con la misma fila que `/chats` (27). **Las visitas se
+muestran en rango** («Menos de 10» … «Más de 500», 32); la cifra exacta sigue en la
+base, y el detalle queda para un panel futuro, posiblemente de pago.
+
+### D-117 — Los códigos de verificación salen por WhatsApp Cloud (2026-09-24)
+Decisión de Nicolás; reemplaza al agregador de SMS de la D-107 como canal. App de
+Meta «2venta Verificacion», plantilla `codigo_verificacion` (categoría
+Authentication, idioma `es`, botón «Copiar código»). **El código vale 10 minutos**
+en el registro y en la recuperación, lo mismo que dice la plantilla
+(`src/features/auth/vigencia.ts`; antes eran 5 y 10).
+`src/lib/sms.ts` sigue siendo la única salida: en producción solo WhatsApp, y se
+niega a operar sin `WHATSAPP_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID`; en desarrollo el
+código va también al registro. Cada envío queda en `envios_codigo` (sin el código)
+y el webhook `/api/whatsapp/webhook` le pone el estado que avisa Meta (enviado,
+entregado, leído, fallido), sin retroceder y tolerando repetidos; la firma
+`X-Hub-Signature-256` se valida con el secreto de la app en tiempo constante. El
+token y el secreto de la app viven en el secreto `<entorno>/whatsapp`, que se llena a
+mano (infra/LEEME.md), nunca en Terraform ni en el repositorio. Si WhatsApp falla, la
+persona ve «No pudimos mandarte el código por WhatsApp…». **Quien no tiene WhatsApp
+no puede registrarse** hasta que haya un canal de respaldo (pendientes.md).

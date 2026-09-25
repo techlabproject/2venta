@@ -48,6 +48,8 @@ jobs:
           PAYMENTS_WEBHOOK_SECRET=$(gen)
           SHIPPING_WEBHOOK_SECRET=$(gen)
           CRON_SECRET=$(gen)
+          WHATSAPP_APP_SECRET=$(gen)
+          WHATSAPP_VERIFY_TOKEN=$(gen)
           AWS_REGION=us-east-1
           AWS_ACCESS_KEY_ID=local
           AWS_SECRET_ACCESS_KEY=localminio

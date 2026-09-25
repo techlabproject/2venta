@@ -14,6 +14,9 @@ resource "random_password" "secreto" {
     "PAYMENTS_WEBHOOK_SECRET",
     "SHIPPING_WEBHOOK_SECRET",
     "CRON_SECRET",
+    # La clave con la que Meta verifica la dirección del webhook de WhatsApp: es
+    # nuestra, no de Meta, así que se genera aquí como las demás (D-117).
+    "WHATSAPP_VERIFY_TOKEN",
   ])
   length  = 48
   special = false
@@ -29,21 +32,38 @@ resource "aws_secretsmanager_secret_version" "app" {
   secret_string = jsonencode(merge(
     { for k, v in random_password.secreto : k => v.result },
     { DATABASE_URL = local.database_url },
-    var.sms_provider_token != "" ? { SMS_PROVIDER_TOKEN = var.sms_provider_token } : {},
   ))
 }
 
+# El token de Meta y el secreto de la app no los genera ni los ve Terraform: el
+# secreto se crea vacío y se llena a mano (infra/LEEME.md). Así no quedan en el
+# estado de Terraform ni los borra el `apply` de cada despliegue.
+resource "aws_secretsmanager_secret" "whatsapp" {
+  count                   = var.whatsapp_secreto ? 1 : 0
+  name                    = "${local.nombre}/whatsapp"
+  recovery_window_in_days = var.entorno == "dev" ? 0 : 30
+}
+
 locals {
-  claves_secretas = concat(
-    keys(random_password.secreto),
-    ["DATABASE_URL"],
-    var.sms_provider_token != "" ? ["SMS_PROVIDER_TOKEN"] : [],
+  claves_secretas = concat(keys(random_password.secreto), ["DATABASE_URL"])
+  whatsapp_activo = var.whatsapp_secreto && var.whatsapp_phone_number_id != ""
+  # Lo que ECS pone en cada contenedor a partir de los secretos.
+  secrets_ecs = concat(
+    [
+      for k in local.claves_secretas : {
+        name      = k
+        valueFrom = "${aws_secretsmanager_secret.app.arn}:${k}::"
+      }
+    ],
+    local.whatsapp_activo ? [
+      for k in ["WHATSAPP_TOKEN", "WHATSAPP_APP_SECRET"] : {
+        name      = k
+        valueFrom = "${aws_secretsmanager_secret.whatsapp[0].arn}:${k}::"
+      }
+    ] : [],
   )
-  # Lo que ECS pone en cada contenedor a partir del secreto.
-  secrets_ecs = [
-    for k in local.claves_secretas : {
-      name      = k
-      valueFrom = "${aws_secretsmanager_secret.app.arn}:${k}::"
-    }
-  ]
+  secretos_arn = concat(
+    [aws_secretsmanager_secret.app.arn],
+    aws_secretsmanager_secret.whatsapp[*].arn,
+  )
 }

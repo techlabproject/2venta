@@ -71,9 +71,12 @@ test("las dos partes encuentran la conversación", async ({ browser }) => {
   await buyer.getByRole("button", { name: "Enviar" }).click();
   await expect(buyer.getByRole("main")).toContainText("¿Sigue disponible?");
 
-  // La bandeja vive en /chats desde la S-35; aquí solo queda el camino hacia ella.
+  // La bandeja vive en /chats desde la S-35; aquí van las tres más recientes, con
+  // el último mensaje, y el camino a todas (corrección 27).
   await buyer.goto("/actividad");
-  await expect(buyer.getByRole("link", { name: "Ver conversaciones" })).toBeVisible();
+  await expect(buyer.getByTestId("chats-recientes")).toContainText(titulo);
+  await expect(buyer.getByTestId("chats-recientes")).toContainText("¿Sigue disponible?");
+  await expect(buyer.getByRole("link", { name: "Ver todas" })).toHaveAttribute("href", "/chats");
 
   await buyer.goto("/chats");
   await expect(buyer.getByTestId("chats")).toContainText(titulo);

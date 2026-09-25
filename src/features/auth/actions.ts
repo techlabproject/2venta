@@ -47,7 +47,16 @@ export async function sendCode(): Promise<OtpResult> {
     [user.phoneNumber, encryptCode(code), String(EXPIRY_MINUTES)]
   );
 
-  await sendVerificationCode(user.phoneNumber, code);
+  try {
+    await sendVerificationCode(user.phoneNumber, code);
+  } catch (err) {
+    // Sin el número ni el código en el registro (D-117).
+    console.error(`[codigo] no se pudo enviar: ${err instanceof Error ? err.message : err}`);
+    return {
+      error:
+        "¡Uy! No pudimos mandarte el código por WhatsApp. Revisa que ese número tenga WhatsApp y vuelve a intentarlo en un momento.",
+    };
+  }
   return { error: "" };
 }
 

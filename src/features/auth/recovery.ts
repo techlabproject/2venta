@@ -1,5 +1,7 @@
 "use server";
 
+import { CODIGO_VALIDO_MINUTOS } from "./vigencia";
+
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
@@ -10,7 +12,7 @@ import { codeMatches, encryptCode, generateCode, MAX_ATTEMPTS, normalize } from 
 
 export type RecoveryResult = { error: string; sent?: boolean; verified?: boolean };
 
-const EXPIRY_MINUTES = 10;
+const EXPIRY_MINUTES = CODIGO_VALIDO_MINUTOS;
 
 /**
  * Manda un código de recuperación al celular.
@@ -46,7 +48,7 @@ export async function requestRecovery(
                attempts = 0, used_at = null`,
         [phone, encryptCode(code), String(EXPIRY_MINUTES)]
       );
-      await sendVerificationCode(phone, code);
+      await sendVerificationCode(phone, code, "recuperacion");
     } catch {
       // El límite de envíos tampoco puede revelar si la cuenta existe: se calla y
       // se responde igual.

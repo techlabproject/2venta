@@ -1,5 +1,5 @@
 import { test, expect, type Browser } from "@playwright/test";
-import { alertIn, sellerWithListing, signUpVerified, withDb } from "./helpers";
+import { alertIn, freshImei, sellerWithListing, signUpVerified, withDb } from "./helpers";
 
 // La prueba de punta a punta de la rebanada S-19.
 // Ver slices/19-editar-y-retirar.md
@@ -61,27 +61,32 @@ test("marcar como reservada la saca del catálogo, y volver a publicarla la devu
   await seller.context.close();
 });
 
-test("marcar como vendida la saca del catálogo", async ({ browser }) => {
+// Corrección 29 (decisión de Nicolás): un artículo queda vendido solo completando la
+// compra en 2venta. Ya no hay botón, y el servidor no acepta el estado.
+test("ya no se puede marcar como vendida a mano", async ({ browser }) => {
   const titulo = `Vendible ${Date.now()}`;
   const seller = await sellerWithListing(browser, titulo, 80_000, "ropa");
 
   await seller.page.goto(`/producto/${seller.listingId}`);
-  await seller.page.getByRole("button", { name: "Marcar como vendida" }).click();
+  await expect(seller.page.getByRole("button", { name: "Marcar como vendida" })).toHaveCount(0);
+  await seller.page.goto("/vender/metricas");
+  await expect(seller.page.getByRole("button", { name: "Vendida" })).toHaveCount(0);
 
-  // Se espera al estado real y no al botón: el botón puede desaparecer mientras la
-  // página se vuelve a dibujar, antes de que el cambio esté escrito.
-  await expect(async () => {
-    const estado = await withDb(async (c) => {
-      const { rows } = await c.query<{ status: string }>(
-        `select status from listings where id = $1`,
-        [seller.listingId]
-      );
-      return rows[0].status;
-    });
-    expect(estado).toBe("vendida");
-  }).toPass({ timeout: 10_000 });
-
-  expect(await visibleInCatalog(browser, titulo)).toBe(false);
+  // Esquivando la pantalla: se reutiliza el formulario de reservar con otro estado.
+  await seller.page.goto(`/producto/${seller.listingId}`);
+  await seller.page.evaluate(() => {
+    const campo = document.querySelector<HTMLInputElement>('input[name="status"][value="reservada"]')!;
+    campo.value = "vendida";
+  });
+  await seller.page.getByRole("button", { name: "Marcar como reservada" }).click();
+  await expect(alertIn(seller.page)).toContainText("Ese estado no existe");
+  const estado = await withDb(async (c) => {
+    const { rows } = await c.query<{ status: string }>(`select status from listings where id = $1`, [
+      seller.listingId,
+    ]);
+    return rows[0].status;
+  });
+  expect(estado).toBe("activa");
 
   await seller.context.close();
 });
@@ -113,6 +118,13 @@ test("retirar no borra: el pedido asociado sigue funcionando", async ({ browser 
   await buyer.goto(`/pedido/${orderId}`);
   await expect(buyer.getByTestId("estado")).toHaveText("Pago recibido y guardado");
   await expect(buyer.getByRole("main")).toContainText(titulo);
+
+  // Y con un pedido en curso no vuelve al catálogo: se vendería dos veces
+  // (corrección 31).
+  await seller.page.goto(`/producto/${seller.listingId}`);
+  await seller.page.getByRole("button", { name: "Volver a publicar" }).click();
+  await expect(alertIn(seller.page)).toContainText("Tiene un pedido en curso");
+  expect(await visibleInCatalog(browser, titulo)).toBe(false);
 
   await seller.context.close();
   await ctx.close();
@@ -175,11 +187,26 @@ test("un precio inválido al editar se rechaza", async ({ browser }) => {
   const seller = await sellerWithListing(browser, `Precio ${Date.now()}`, 60_000, "ropa");
 
   await seller.page.goto(`/producto/${seller.listingId}/editar`);
+  // El campo solo deja dígitos y detiene el envío por debajo del mínimo
+  // (corrección 24).
   await seller.page.getByLabel("Precio").fill("-5000");
+  await expect(seller.page.getByLabel("Precio")).toHaveValue("5.000");
   await seller.page.getByRole("button", { name: "Guardar cambios" }).click();
-  await expect(alertIn(seller.page)).toContainText("mayor que cero");
+  await expect(seller.page.getByText("El mínimo es $10.000.")).toBeVisible();
+  await expect(seller.page).toHaveURL(/\/editar/);
 
-  await seller.page.getByLabel("Precio").fill("500");
+  // Y el servidor no le cree al campo: con el campo esquivado, el precio que llega
+  // igual se rechaza.
+  await seller.page.getByLabel("Precio").fill("60000");
+  await seller.page.evaluate(() => {
+    const campo = document.getElementById("price") as HTMLInputElement;
+    campo.removeAttribute("name");
+    const falso = document.createElement("input");
+    falso.type = "hidden";
+    falso.name = "price";
+    falso.value = "500";
+    campo.form!.appendChild(falso);
+  });
   await seller.page.getByRole("button", { name: "Guardar cambios" }).click();
   await expect(alertIn(seller.page)).toContainText("precio mínimo");
 
@@ -255,5 +282,89 @@ test("la pantalla de editar de una publicación vendida no muestra el formulario
   await seller.page.goto(`/producto/${seller.listingId}/editar`);
   await expect(seller.page.getByRole("status")).toContainText("ya no se puede editar");
   await expect(seller.page.getByLabel("Título")).toHaveCount(0);
+  await seller.context.close();
+});
+
+// Corrección 24 (Catalina): el precio aceptaba cualquier carácter.
+test("el precio solo acepta dígitos, separa los miles y dice que es en pesos", async ({ browser }) => {
+  const seller = await sellerWithListing(browser, `Miles ${Date.now()}`, 60_000, "ropa");
+  await seller.page.goto(`/producto/${seller.listingId}/editar`);
+
+  const precio = seller.page.getByLabel("Precio");
+  await expect(precio).toHaveValue("60.000");
+  await expect(seller.page.getByRole("main")).toContainText("COP");
+
+  await precio.fill("");
+  await precio.pressSequentially("8a5b0.00c0");
+  await expect(precio).toHaveValue("850.000");
+
+  // Pegado con signo, puntos y centavos, queda el número entero.
+  await precio.fill("$ 1.250.000,00");
+  await expect(precio).toHaveValue("1.250.000");
+
+  await seller.page.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(seller.page).toHaveURL(new RegExp(`/producto/${seller.listingId}$`));
+  await expect(seller.page.getByRole("main")).toContainText("$ 1.250.000");
+
+  await seller.context.close();
+});
+
+// Corrección 25 (Catalina): el aviso del IMEI salía en publicaciones que no son de
+// tecnología, y había que comprobar que el IMEI de verdad no se edita.
+test("el aviso nombra el IMEI solo si el artículo lo tiene, y el IMEI no se puede cambiar", async ({ browser }) => {
+  const ropa = await sellerWithListing(browser, `Chaqueta ${Date.now()}`, 60_000, "ropa");
+  await ropa.page.goto(`/producto/${ropa.listingId}/editar`);
+  await expect(ropa.page.getByRole("main")).toContainText("La categoría (Ropa) no se cambia");
+  await expect(ropa.page.getByRole("main")).not.toContainText("IMEI");
+  await ropa.context.close();
+
+  const tec = await sellerWithListing(browser, `Celular ${Date.now()}`, 600_000, "tecnologia");
+  const imei = freshImei();
+  await withDb((c) => c.query(`update listings set imei = $2 where id = $1`, [tec.listingId, imei]));
+  await tec.page.goto(`/producto/${tec.listingId}/editar`);
+  await expect(tec.page.getByRole("main")).toContainText("y el IMEI no se cambian");
+  await expect(tec.page.getByLabel(/IMEI/)).toHaveCount(0);
+
+  // Aunque se manden a la fuerza, el servidor no los toca.
+  await tec.page.evaluate(() => {
+    const form = document.getElementById("price")!.closest("form")!;
+    for (const [name, value] of [["imei", "490154203237518"], ["category", "ropa"]]) {
+      const falso = document.createElement("input");
+      falso.type = "hidden";
+      falso.name = name;
+      falso.value = value;
+      form.appendChild(falso);
+    }
+  });
+  await tec.page.getByLabel("Título").fill(`Celular editado ${Date.now()}`);
+  await tec.page.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(tec.page).toHaveURL(new RegExp(`/producto/${tec.listingId}$`));
+  const fila = await withDb(async (c) => {
+    const { rows } = await c.query<{ imei: string; category: string }>(
+      `select imei, category from listings where id = $1`,
+      [tec.listingId],
+    );
+    return rows[0];
+  });
+  expect(fila).toEqual({ imei, category: "tecnologia" });
+  await tec.context.close();
+});
+
+// Luna, filas 24–25 (y fila 7 con el celular): Supr delante de un separador que
+// puso el campo no hacía nada, mientras Retroceso sí borraba.
+test("Supr delante del punto de miles borra el dígito siguiente, como Retroceso detrás", async ({ browser }) => {
+  const seller = await sellerWithListing(browser, `Supr ${Date.now()}`, 60_000, "ropa");
+  await seller.page.goto(`/producto/${seller.listingId}/editar`);
+  const precio = seller.page.getByLabel("Precio");
+
+  await precio.fill("260000");
+  await expect(precio).toHaveValue("260.000");
+  // Cursor justo antes del punto: «260|.000».
+  await precio.evaluate((i: HTMLInputElement) => i.setSelectionRange(3, 3));
+  await precio.press("Delete");
+  await expect(precio).toHaveValue("26.000");
+  // Y el cursor sigue después de los mismos tres dígitos: «26.0|00».
+  expect(await precio.evaluate((i: HTMLInputElement) => i.selectionStart)).toBe(4);
+
   await seller.context.close();
 });

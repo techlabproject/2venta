@@ -125,7 +125,12 @@ test("un precio de cero se rechaza", async ({ page }) => {
   await page.getByLabel("Descripción").fill("Gratis");
   await page.getByRole("button", { name: "Publicar" }).click();
 
-  await expect(alertIn(page)).toContainText("mayor que cero");
+  // El campo no deja escribir un cero a la izquierda (corrección 24): queda vacío
+  // y el envío lo detiene el `required` del navegador. El servidor sigue
+  // rechazándolo si llega (edit.spec).
+  await expect(page.getByLabel("Precio")).toHaveValue("");
+  expect(await page.getByLabel("Precio").evaluate((i: HTMLInputElement) => i.validity.valueMissing)).toBe(true);
+  await expect(page).toHaveURL(/\/publicar/);
 });
 
 test("la aplicación ya no sirve archivos: eso lo hace el bucket (D-50)", async ({

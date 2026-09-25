@@ -369,6 +369,21 @@ export default async function ListingPage({
             que trae a revisión lo que se le escapó. */}
         {user && !isSeller && <ReportForm listingId={listing.id} />}
 
+        {isSeller && listing.status === "retirada" && (
+          // Corrección 31: lo retirado se recupera. Vuelve a pasar por la
+          // moderación, y lo que estaba en revisión vuelve a revisión.
+          <section className="mt-8 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line">
+            <h2 className="font-medium">Retiraste esta publicación</h2>
+            <p className="mt-1 text-muted">
+              Nadie más la ve. Si la quieres vender otra vez, vuelve al catálogo
+              con el mismo video.
+            </p>
+            <div className="mt-3">
+              <StatusButton listingId={listing.id} status="activa" />
+            </div>
+          </section>
+        )}
+
         {isSeller &&
           ["activa", "reservada", "en_revision"].includes(listing.status) && (
             <section className="mt-8 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line">
@@ -399,10 +414,12 @@ export default async function ListingPage({
                 {listing.status === "reservada" && (
                   <StatusButton listingId={listing.id} status="activa" />
                 )}
-                <StatusButton listingId={listing.id} status="vendida" />
+                {/* Sin «Marcar como vendida» (corrección 29): se vende
+                    completando la compra en 2venta; lo vendido por fuera se retira. */}
                 <StatusButton
                   listingId={listing.id}
                   status="retirada"
+                  titulo={listing.title}
                   variant="ghost"
                 />
               </div>

@@ -90,10 +90,28 @@ export const REQUIREMENTS: Requirement[] = [
     purpose: "rol con el que MediaConvert lee y escribe el bucket; sin él, el video no se convierte",
     optional: true,
   },
+  // D-117: los códigos salen por WhatsApp Cloud. En desarrollo pueden faltar (el
+  // código sale por el registro); en producción, sin ellas nadie podría registrarse.
   {
-    name: "SMS_PROVIDER_TOKEN",
-    purpose: "envío real de los códigos por SMS (en desarrollo salen por consola)",
+    name: "WHATSAPP_TOKEN",
+    purpose: "token permanente del usuario de sistema de Meta para enviar los códigos por WhatsApp",
     productionOnly: true,
+  },
+  {
+    name: "WHATSAPP_PHONE_NUMBER_ID",
+    purpose: "id del número de WhatsApp Business desde el que salen los códigos",
+    productionOnly: true,
+  },
+  {
+    name: "WHATSAPP_APP_SECRET",
+    purpose: "secreto de la app de Meta: firma de los avisos de entrega de WhatsApp",
+    productionOnly: true,
+  },
+  {
+    name: "WHATSAPP_VERIFY_TOKEN",
+    purpose: "clave con la que Meta verifica la dirección del webhook de WhatsApp",
+    productionOnly: true,
+    check: secret,
   },
 ];
 

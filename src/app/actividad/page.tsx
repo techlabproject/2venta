@@ -13,6 +13,8 @@ import { breakdown } from "@/features/payments/money";
 import { Volver } from "@/components/Volver";
 import { getVerification } from "@/features/kyc/queries";
 import { getVendedor } from "@/features/sellers/queries";
+import { listConversations } from "@/features/chat/queries";
+import { ListaDeChats } from "@/features/chat/ListaDeChats";
 
 // S-18. No es una función nueva: hasta ahora la única forma de volver a un pedido
 // era tener su dirección guardada. Se pagaba, se cerraba la pestaña, y no se
@@ -39,11 +41,12 @@ export default async function Actividad() {
   const user = await currentUser();
   if (!user) redirect("/ingresar");
 
-  const [purchases, sales, verification, vendedor] = await Promise.all([
+  const [purchases, sales, verification, vendedor, chats] = await Promise.all([
     listPurchases(user.id),
     listSales(user.id),
     getVerification(user.id),
     getVendedor(user.id),
+    listConversations(user.id),
   ]);
 
   // Corrección 17: una sección vacía que no es de la persona sobra. Quien solo
@@ -102,18 +105,20 @@ export default async function Actividad() {
           </Section>
         )}
 
-        {/* Las conversaciones se fueron a `/chats` (D-90). Esta pantalla es la de
-            pedidos; tener la misma lista en dos sitios es lo que hacía que ninguno
-            de los dos se sintiera el sitio. Queda el camino, no la copia. */}
-        <section className="mt-8">
-          <h2 className="font-title text-lg font-semibold">Conversaciones</h2>
-          <p className="mt-2 text-sm text-ink2">
-            Tus chats con compradores y vendedores tienen pantalla propia.{" "}
-            <Link href="/chats" className="text-brand underline">
-              Ver conversaciones
-            </Link>
-          </p>
-        </section>
+        {/* Las conversaciones viven en `/chats` (D-90). Aquí van las tres más
+            recientes, con la misma fila que allá: un párrafo con un enlace no le
+            decía a nadie si tenía algo pendiente (corrección 27). */}
+        {chats.length > 0 && (
+          <section className="mt-8">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="font-title text-lg font-semibold">Conversaciones</h2>
+              <Link href="/chats" className="text-sm text-brand underline">
+                Ver todas
+              </Link>
+            </div>
+            <ListaDeChats conversations={chats.slice(0, 3)} testId="chats-recientes" />
+          </section>
+        )}
       </main>
     </>
   );

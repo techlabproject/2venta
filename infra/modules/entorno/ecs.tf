@@ -15,8 +15,9 @@ locals {
     { name = "BETTER_AUTH_URL", value = "https://${aws_cloudfront_distribution.app.domain_name}" },
   ]
   # Sin la variable, el worker usa el proveedor de prueba (no convierte nada).
-  env_video = var.video_transcodificar ? [{ name = "MEDIACONVERT_ROLE_ARN", value = aws_iam_role.mediaconvert.arn }] : []
-  env_todo  = concat(local.env_comun, local.env_video)
+  env_video    = var.video_transcodificar ? [{ name = "MEDIACONVERT_ROLE_ARN", value = aws_iam_role.mediaconvert.arn }] : []
+  env_whatsapp = local.whatsapp_activo ? [{ name = "WHATSAPP_PHONE_NUMBER_ID", value = var.whatsapp_phone_number_id }] : []
+  env_todo     = concat(local.env_comun, local.env_video, local.env_whatsapp)
 }
 
 resource "aws_ecs_cluster" "principal" {
@@ -69,7 +70,7 @@ resource "aws_iam_role_policy" "ejecucion_secretos" {
     Statement = [{
       Effect   = "Allow"
       Action   = ["secretsmanager:GetSecretValue"]
-      Resource = aws_secretsmanager_secret.app.arn
+      Resource = local.secretos_arn
     }]
   })
 }

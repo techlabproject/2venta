@@ -1,6 +1,7 @@
-# Producción. Definido y sin aplicar: sin proveedor de SMS la aplicación se niega
-# a arrancar en `produccion` (D-47). Cuando exista, hay que pasar
-# `sms_provider_token` y aplicar. Todo lo de ARQUITECTURA.md 5: Multi-AZ, NAT,
+# Producción. Definido y sin aplicar: sin WhatsApp la aplicación se niega a
+# arrancar en `produccion` (D-47, D-117). Para aplicarla: `whatsapp_secreto = true`,
+# llenar el secreto `2venta-prod/whatsapp` a mano (infra/LEEME.md), poner el id del
+# número y aplicar. Todo lo de ARQUITECTURA.md 5: Multi-AZ, NAT,
 # endpoints de VPC, WAF, dos tareas web en dos zonas.
 
 terraform {
@@ -23,9 +24,9 @@ provider "aws" {
 }
 
 variable "image_tag" { type = string }
-variable "sms_provider_token" {
-  type      = string
-  sensitive = true
+variable "whatsapp_phone_number_id" {
+  type    = string
+  default = ""
 }
 
 data "terraform_remote_state" "cuenta" {
@@ -58,8 +59,9 @@ module "entorno" {
   waf                  = true
   video_transcodificar = true
 
-  sms_provider_token = var.sms_provider_token
-  correos_alertas    = ["catalinag0226@outlook.com", "nicolasdrr25@gmail.com"]
+  whatsapp_secreto         = true
+  whatsapp_phone_number_id = var.whatsapp_phone_number_id
+  correos_alertas          = ["catalinag0226@outlook.com", "nicolasdrr25@gmail.com"]
 }
 
 output "url" { value = module.entorno.url }

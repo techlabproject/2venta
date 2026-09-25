@@ -310,7 +310,7 @@ test("quien no tiene celular llega a la pantalla que se lo pide", async ({ page 
 test("el código de verificación no queda en claro en la base", async ({ page }) => {
   // Cierra la D-27, que arrastraba desde S-01: la biblioteca lo guardaba en texto
   // plano y quien tuviera lectura de la base podía tomar el control de cualquier
-  // cuenta durante los cinco minutos que el código vive.
+  // cuenta durante los minutos que el código vive.
   const { email, phoneDigits } = uniqueAccount();
   await page.goto("/registro?rol=comprador");
   await page.getByLabel("Nombre").fill("Cifrado Uno");

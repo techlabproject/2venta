@@ -11,6 +11,7 @@ import { ButtonLink } from "@/components/ui";
 import { StatusButton } from "@/features/publish/EditForms";
 import { mediaUrl } from "@/lib/media";
 import { Volver } from "@/components/Volver";
+import { rangoDeVisitas } from "@/features/metrics/rangos";
 
 // D-24: métricas del vendedor. Vistas, favoritos y conversaciones por publicación.
 //
@@ -41,20 +42,32 @@ const STATUS_STYLE: Record<string, string> = {
 /** Qué puede hacer el vendedor desde aquí, según el estado (RF-17). */
 const ACCIONES: Record<
   string,
-  ("reservada" | "activa" | "vendida" | "retirada")[]
+  ("reservada" | "activa" | "retirada")[]
 > = {
-  activa: ["reservada", "vendida", "retirada"],
-  reservada: ["activa", "vendida", "retirada"],
+  // Sin «vendida» (corrección 29) y con «Republicar» para lo retirado (31).
+  activa: ["reservada", "retirada"],
+  reservada: ["activa", "retirada"],
   en_revision: ["retirada"],
+  retirada: ["activa"],
 };
 
 const EDITABLE = ["activa", "en_revision", "reservada"];
 
-export default async function Metricas() {
+export default async function Metricas({
+  searchParams,
+}: {
+  searchParams: Promise<{ retirada?: string }>;
+}) {
   const user = await currentUser();
   if (!user) redirect("/ingresar");
 
-  const metrics = await listSellerMetrics(user.id);
+  const todas = await listSellerMetrics(user.id);
+  // Lo retirado va aparte, al final: no se ve en el catálogo, pero se recupera
+  // desde aquí (corrección 31).
+  const metrics = todas.filter((m) => m.status !== "retirada");
+  const retiradas = todas.filter((m) => m.status === "retirada");
+  const { retirada } = await searchParams;
+  const recienRetirada = retiradas.find((m) => m.listing_id === retirada);
   const activas = metrics.filter((m) => m.status === "activa").length;
   const vistas = metrics.reduce((t, m) => t + m.views, 0);
   const guardados = metrics.reduce((t, m) => t + m.favorites, 0);
@@ -75,7 +88,18 @@ export default async function Metricas() {
           </ButtonLink>
         </div>
 
-        {metrics.length === 0 ? (
+        {recienRetirada && (
+          <p
+            role="status"
+            data-testid="recien-retirada"
+            className="mt-6 rounded-2xl bg-brand/10 px-4 py-3 text-sm text-brand"
+          >
+            Retiraste «{recienRetirada.title}». Ya no se ve en el catálogo; la
+            tienes abajo, en Retiradas, por si la quieres volver a publicar.
+          </p>
+        )}
+
+        {todas.length === 0 ? (
           <div className="mt-8 rounded-2xl bg-white shadow-xs p-8 text-center ring-1 ring-line">
             <p className="font-title text-lg font-semibold">
               Todavía no has publicado nada
@@ -98,7 +122,7 @@ export default async function Metricas() {
                 línea, no tres objetos. */}
             <dl className="mt-6 flex divide-x divide-line overflow-hidden rounded-2xl bg-white shadow-xs ring-1 ring-line">
               <Resumen label="Activas" value={activas} />
-              <Resumen label="Visitas" value={vistas} />
+              <Resumen label="Visitas" value={rangoDeVisitas(vistas)} />
               <Resumen label="Guardados" value={guardados} />
             </dl>
 
@@ -110,6 +134,23 @@ export default async function Metricas() {
                 <Tarjeta key={m.listing_id} m={m} />
               ))}
             </ul>
+
+            {retiradas.length > 0 && (
+              <section className="mt-10">
+                <h2 className="font-title text-lg font-semibold">Retiradas</h2>
+                <p className="mt-1 text-sm text-muted">
+                  Nadie las ve. Vuelven al catálogo con «Republicar».
+                </p>
+                <ul
+                  data-testid="retiradas"
+                  className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+                >
+                  {retiradas.map((m) => (
+                    <Tarjeta key={m.listing_id} m={m} />
+                  ))}
+                </ul>
+              </section>
+            )}
           </>
         )}
       </main>
@@ -117,11 +158,15 @@ export default async function Metricas() {
   );
 }
 
-function Resumen({ label, value }: { label: string; value: number }) {
+function Resumen({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="flex-1 px-4 py-3">
       <dt className="text-xs text-muted">{label}</dt>
-      <dd className="font-title text-2xl font-semibold tabular-nums">
+      {/* Un rango («10 a 50») es texto: a la altura de las cifras se partía. */}
+      <dd
+        data-testid={`resumen-${label.toLowerCase()}`}
+        className={`font-title font-semibold tabular-nums ${typeof value === "string" ? "mt-1 whitespace-nowrap text-sm sm:text-base" : "text-2xl"}`}
+      >
         {value}
       </dd>
     </div>
@@ -166,9 +211,9 @@ function Tarjeta({ m }: { m: ListingMetrics }) {
           <dt className="text-xs text-muted">Visitas</dt>
           <dd
             data-testid={`vistas-${m.listing_id}`}
-            className="font-title font-semibold tabular-nums"
+            className="font-title text-xs font-semibold leading-5"
           >
-            {m.views}
+            {rangoDeVisitas(m.views)}
           </dd>
         </div>
         <div>
@@ -183,7 +228,7 @@ function Tarjeta({ m }: { m: ListingMetrics }) {
               esas tres conversaciones. */}
           <dd className="font-title font-semibold tabular-nums">
             {m.messages > 0 ? (
-              <Link href="/actividad" className="underline">
+              <Link href="/chats" className="underline">
                 {m.messages}
               </Link>
             ) : (
@@ -209,6 +254,7 @@ function Tarjeta({ m }: { m: ListingMetrics }) {
               key={a}
               listingId={m.listing_id}
               status={a}
+              titulo={m.title}
               variant="ghost"
               compact
             />

@@ -83,6 +83,8 @@ test("el celular de quien recibe usa el mismo campo y se guarda normalizado", as
 test("borrar hacia atrás justo después de un espacio borra el dígito anterior", async ({ page }) => {
   await page.goto("/registro");
   const celular = page.getByLabel("Celular");
+  // Escribir antes de que la página esté lista pierde lo escrito.
+  await page.waitForLoadState("networkidle");
   await celular.pressSequentially("3004128805");
   await expect(celular).toHaveValue("300 412 8805");
   // Cursor justo después de «300 ».
@@ -92,4 +94,18 @@ test("borrar hacia atrás justo después de un espacio borra el dígito anterior
   // Y el cursor queda donde estaba el dígito borrado: seguir escribiendo lo repone.
   await celular.press("0");
   await expect(celular).toHaveValue("300 412 8805");
+});
+
+// Luna, filas 7 y 24: Supr justo antes de un espacio no hacía nada.
+test("Supr justo antes de un espacio borra el dígito siguiente", async ({ page }) => {
+  await page.goto("/registro");
+  const celular = page.getByLabel("Celular");
+  // Escribir antes de que la página esté lista pierde lo escrito.
+  await page.waitForLoadState("networkidle");
+  await celular.pressSequentially("3004128805");
+  await expect(celular).toHaveValue("300 412 8805");
+  // Cursor justo antes del primer espacio: «300| 412 8805».
+  await celular.evaluate((el: HTMLInputElement) => el.setSelectionRange(3, 3));
+  await celular.press("Delete");
+  await expect(celular).toHaveValue("300 128 805");
 });

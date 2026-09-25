@@ -233,10 +233,20 @@ test("el vendedor ve las vistas de su publicación, sin contar las suyas", async
   await anon.goto(`/producto/${seller.listingId}`);
   await anon.goto(`/producto/${seller.listingId}`);
 
+  // El conteo exacto vive en la base; la pantalla lo muestra en rango
+  // (corrección 32).
+  const vistas = await withDb(async (c) => {
+    const { rows } = await c.query<{ n: number }>(
+      `select count(*)::int as n from listing_views where listing_id = $1`,
+      [seller.listingId],
+    );
+    return rows[0].n;
+  });
+  expect(vistas).toBe(2);
   await seller.page.goto("/vender/metricas");
   await expect(
     seller.page.getByTestId(`vistas-${seller.listingId}`),
-  ).toHaveText("2");
+  ).toHaveText("Menos de 10");
 
   await seller.context.close();
   await anonCtx.close();

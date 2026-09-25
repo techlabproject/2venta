@@ -676,3 +676,43 @@ test("el chat vacío le habla a cada lado desde su punto de vista", async ({ bro
 
   await vendedor.context.close();
 });
+
+// Corrección 24: el panel de oferta usa el mismo campo de precio, con el mismo
+// mínimo que el pago; antes una oferta aceptada de $5.000 no se podía pagar.
+test("una oferta por debajo del mínimo no sale, ni desde el campo ni esquivándolo", async ({ browser, page }) => {
+  const titulo = `Cojín ${Date.now()}`;
+  const vendedor = await sellerWithListing(browser, titulo, 40_000, "ropa");
+  await vendedor.context.close();
+
+  await signUpVerified(page, "minimo", "Mina Mínimo");
+  await page.goto(`/producto/${vendedor.listingId}`);
+  await page.getByRole("button", { name: "Escribirle al vendedor" }).click();
+  await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}$/);
+  const chat = new URL(page.url()).pathname;
+
+  await page.getByRole("link", { name: "Hacer una oferta" }).click();
+  const campo = page.getByLabel("Cuánto ofreces");
+  await campo.fill("5000");
+  await expect(campo).toHaveValue("5.000");
+  await page.getByRole("button", { name: "Enviar la oferta" }).click();
+  await expect(page.getByText("El mínimo es $10.000.")).toBeVisible();
+
+  await campo.fill("30000");
+  await page.evaluate(() => {
+    const input = document.getElementById("precio-oferta") as HTMLInputElement;
+    input.removeAttribute("name");
+    const falso = document.createElement("input");
+    falso.type = "hidden";
+    falso.name = "price";
+    falso.value = "5000";
+    input.form!.appendChild(falso);
+  });
+  await page.getByRole("button", { name: "Enviar la oferta" }).click();
+  await expect(page.getByText("La oferta mínima es de $10.000.")).toBeVisible();
+
+  const ofertas = await withDb(async (c) => {
+    const { rows } = await c.query(`select 1 from offers where conversation_id = $1`, [chat.split("/").pop()]);
+    return rows.length;
+  });
+  expect(ofertas).toBe(0);
+});

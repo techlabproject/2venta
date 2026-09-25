@@ -88,6 +88,8 @@ test.describe("Cruce 2: oferta aceptada y publicación retirada antes de pagar",
     await sellerPage.goto(`/producto/${listingId}`);
     const retirar = sellerPage.getByRole("button", { name: /Retirar la publicación/i });
     await retirar.click();
+    // Retirar pide confirmación (corrección 30).
+    await sellerPage.getByRole("button", { name: "Sí, retirarla" }).click();
     await sellerPage.waitForTimeout(400);
 
     const estado = await withDb((c) => c.query(`select status from listings where id = $1`, [listingId]));
@@ -147,6 +149,7 @@ test.describe("Cruce 3: destacar y luego retirar", () => {
     // Retiramos la publicación (el botón vive en la ficha, no en /editar).
     await sellerPage.goto(`/producto/${listingId}`);
     await sellerPage.getByRole("button", { name: /Retirar la publicación/i }).click();
+    await sellerPage.getByRole("button", { name: "Sí, retirarla" }).click();
     await sellerPage.waitForTimeout(400);
 
     const listingStatus = await withDb((c) => c.query(`select status from listings where id = $1`, [listingId]));

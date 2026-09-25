@@ -74,13 +74,13 @@ test("rechaza una URL de base de datos que no lo es", () => {
 });
 
 test("en desarrollo no se exige lo que solo hace falta en producción", () => {
-  // Exigir el proveedor de SMS o el dominio en desarrollo haría imposible trabajar.
+  // Exigir WhatsApp o el dominio en desarrollo haría imposible trabajar.
   const env = completo(false);
   assert.deepEqual(checkConfig(env, false), []);
 
   // El mismo entorno, en producción, sí falla.
   const problems = checkConfig(env, true);
-  assert.ok(problems.some((p) => p.name === "SMS_PROVIDER_TOKEN"));
+  assert.ok(problems.some((p) => p.name === "WHATSAPP_TOKEN"));
   assert.ok(problems.some((p) => p.name === "BETTER_AUTH_URL"));
 });
 
@@ -111,7 +111,7 @@ test("APP_ENV puede faltar, pero si está tiene que ser válida", () => {
 
 test("el entorno se deduce de APP_ENV: en producción se exigen las de producción", () => {
   const env = completo(true);
-  delete env.SMS_PROVIDER_TOKEN;
+  delete env.WHATSAPP_TOKEN;
   const [problem] = checkConfig(env);
-  assert.equal(problem.name, "SMS_PROVIDER_TOKEN");
+  assert.equal(problem.name, "WHATSAPP_TOKEN");
 });

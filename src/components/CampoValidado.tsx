@@ -98,6 +98,18 @@ export function CampoValidado({
               antes -= 1;
               limpio = limpiar(bruto);
             }
+            // Lo mismo con Supr delante del separador («260|.000»): se borra el
+            // dígito de después (Luna, correcciones 7 y 24).
+            if (tipo === "deleteContentForward" && limpio === valor) {
+              let vistos = 0;
+              const letras = [...bruto];
+              const i = letras.findIndex((c) => esUtil(c) && ++vistos === antes + 1);
+              if (i >= 0) {
+                letras.splice(i, 1);
+                bruto = letras.join("");
+                limpio = limpiar(bruto);
+              }
+            }
             if (limpio !== input.value) {
               input.value = limpio;
               let pos = 0;

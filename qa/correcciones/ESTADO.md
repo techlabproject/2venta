@@ -44,8 +44,12 @@ Lista de problemas y pendientes para el documento final: `pendientes.md`.
 - **Fila 18: hecha, sin confirmar** (D-113; ya la resolvía la fila 1; Luna pasa con una observación baja anotada en `pendientes.md`).
 - **Filas 19, 20 y 22: hechas, sin confirmar** (D-114; `docs/alcance/chat.md`; `e2e/chat-en-vivo.spec.ts`). **Fila 21: en evaluación** (fotos del chat se quedan).
 - **Fila 23: resuelta por la fila 1.** Luna probó 19–23 juntas: vuelta 2 PASA (`fila-19-23/`).
-- **Siguiente: fila 24** (precio en editar publicación).
-- Fila 24 en adelante: pendientes. Las de alcance (12, 15, 17, 20, 22, 29, 31, 32, 36,
+- Filas 9–23 **aprobadas y desplegadas** en `dev` (commit f28ce10, CI verde).
+- **Filas 24 y 25: hechas, sin confirmar** (D-115; Luna PASA).
+- **Filas 26 a 32: hechas, sin confirmar** (D-116; migración 0019; Luna PASA).
+- **WhatsApp Cloud para los códigos: construido, sin confirmar** (D-117; `src/lib/whatsapp.ts`, `src/lib/sms.ts`, `/api/whatsapp/webhook`, migración 0020, Terraform en dos pasos, `infra/LEEME.md`). Código válido 10 min en registro y recuperación. Falta que Nicolás rote y cargue los secretos.
+- **Siguiente: fila 33.**
+- Fila 33 en adelante: pendientes. Las de alcance (12, 15, 17, 20, 22, 29, 31, 32, 36,
   40, 42, 46, 47, 48, 49, 51, 52) se resuelven con propuesta escrita para decidir.
   Catalina ya dejó su postura en 15, 29, 32 y 47 (versión 2 del documento).
 

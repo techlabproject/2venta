@@ -1,9 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef } from "react";
 import { editListing, setListingStatus, type EditResult } from "./edit";
 import { Button, ErrorNote, Field } from "@/components/ui";
 import { CONDITION_LABEL } from "@/features/catalog/labels";
+import { CampoPrecio } from "@/components/CampoPrecio";
+import { MIN_PRICE_COP } from "@/features/payments/money";
+import { formatearPrecio } from "@/lib/precio";
 
 export function EditForm({
   listing,
@@ -14,6 +17,8 @@ export function EditForm({
     description: string;
     price_cop: number;
     condition: string;
+    category_label: string;
+    has_imei: boolean;
   };
 }) {
   const [result, submit, pending] = useActionState<EditResult | null, FormData>(
@@ -33,14 +38,14 @@ export function EditForm({
         required
         defaultValue={listing.title}
       />
-      <Field
+      <CampoPrecio
         id="price"
         name="price"
         label="Precio"
-        inputMode="numeric"
         required
-        defaultValue={String(listing.price_cop)}
-        hint="En pesos, sin puntos ni comas."
+        minimo={MIN_PRICE_COP}
+        defaultValue={listing.price_cop}
+        hint={`Mínimo $${formatearPrecio(String(MIN_PRICE_COP))}.`}
       />
 
       <fieldset className="flex flex-col gap-2">
@@ -76,8 +81,11 @@ export function EditForm({
       </div>
 
       <p className="text-xs text-muted">
-        La categoría y el IMEI no se cambian: eso alteraría la revisión que esta
-        publicación ya pasó. Para eso hay que publicar de nuevo.
+        {/* El IMEI solo se nombra si el artículo tiene uno: salía también en ropa
+            y juguetes, que nunca lo pidieron (corrección 25). */}
+        {listing.has_imei
+          ? `La categoría (${listing.category_label}) y el IMEI no se cambian: eso alteraría la revisión que esta publicación ya pasó. Para eso hay que publicar de nuevo.`
+          : `La categoría (${listing.category_label}) no se cambia: eso alteraría la revisión que esta publicación ya pasó. Para eso hay que publicar de nuevo.`}
       </p>
 
       <Button type="submit" disabled={pending}>
@@ -90,7 +98,6 @@ export function EditForm({
 const LABEL: Record<string, string> = {
   reservada: "Marcar como reservada",
   activa: "Volver a publicar",
-  vendida: "Marcar como vendida",
   retirada: "Retirar la publicación",
 };
 
@@ -100,18 +107,27 @@ const LABEL: Record<string, string> = {
 const LABEL_CORTA: Record<string, string> = {
   reservada: "Reservar",
   activa: "Republicar",
-  vendida: "Vendida",
   retirada: "Retirar",
 };
 
+/**
+ * Cambiar el estado de una publicación (RF-17).
+ *
+ * Retirar pide confirmación (correcciones 26, 28 y 30): un toque de más sacaba el
+ * artículo del catálogo sin decir nada. El diálogo dice qué pasa y cómo se
+ * recupera. «Marcar como vendida» ya no existe (corrección 29).
+ */
 export function StatusButton({
   listingId,
   status,
+  titulo,
   variant = "outline",
   compact = false,
 }: {
   listingId: string;
   status: keyof typeof LABEL;
+  /** El título de la publicación, para que el diálogo diga cuál se retira. */
+  titulo?: string;
   variant?: "outline" | "ghost";
   compact?: boolean;
 }) {
@@ -119,23 +135,73 @@ export function StatusButton({
     setListingStatus,
     null,
   );
+  const dialogo = useRef<HTMLDialogElement>(null);
+  const etiqueta = compact ? LABEL_CORTA[status] : LABEL[status];
 
-  return (
-    <form
-      action={submit}
-      className={compact ? "contents" : "flex flex-col gap-2"}
-    >
-      {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
+  const campos = (
+    <>
       <input type="hidden" name="listingId" value={listingId} />
       <input type="hidden" name="status" value={status} />
+    </>
+  );
+
+  if (status !== "retirada") {
+    return (
+      <form action={submit} className={compact ? "contents" : "flex flex-col gap-2"}>
+        {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
+        {campos}
+        <Button type="submit" variant={variant} size={compact ? "sm" : "md"} disabled={pending}>
+          {pending ? "Guardando…" : etiqueta}
+        </Button>
+      </form>
+    );
+  }
+
+  return (
+    <div className={compact ? "contents" : "flex flex-col gap-2"}>
+      {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
       <Button
-        type="submit"
+        type="button"
         variant={variant}
         size={compact ? "sm" : "md"}
-        disabled={pending}
+        onClick={() => dialogo.current?.showModal()}
       >
-        {pending ? "Guardando…" : compact ? LABEL_CORTA[status] : LABEL[status]}
+        {etiqueta}
       </Button>
-    </form>
+      <dialog
+        ref={dialogo}
+        aria-labelledby={`retirar-${listingId}`}
+        // Tocar fuera cierra, como Cancelar y Escape (Luna, correcciones 26–31): el
+        // clic en el fondo le llega al propio <dialog>, no a su contenido.
+        onClick={(e) => {
+          if (e.target === e.currentTarget) e.currentTarget.close();
+        }}
+        className="m-auto w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl bg-white p-5 text-left shadow-lg ring-1 ring-line backdrop:bg-ink/40"
+      >
+        <form action={submit} className="flex flex-col gap-3">
+          {campos}
+          <h2 id={`retirar-${listingId}`} className="font-title text-lg font-semibold">
+            {titulo ? `¿Retirar «${titulo}»?` : "¿Retirar esta publicación?"}
+          </h2>
+          <p className="text-sm text-ink2">
+            Deja de verse en el catálogo y nadie más puede comprarla. No se borra:
+            queda en «Tus publicaciones», en Retiradas, y la puedes volver a
+            publicar cuando quieras.
+          </p>
+          <div className="mt-1 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => dialogo.current?.close()}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" variant="outline" disabled={pending}>
+              {pending ? "Retirando…" : "Sí, retirarla"}
+            </Button>
+          </div>
+        </form>
+      </dialog>
+    </div>
   );
 }

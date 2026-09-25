@@ -1,5 +1,7 @@
 "use client";
 
+import { CODIGO_VALIDO_MINUTOS } from "./vigencia";
+
 import { useActionState, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { sendCode, verifyCode, type OtpResult } from "./actions";
@@ -73,7 +75,7 @@ export function VerifyForm({ phone }: { phone: string }) {
         id="code"
         name="code"
         required
-        hint={`Lo mandamos al ${mostrarCelular(phone)}. Vence en cinco minutos.`}
+        hint={`Lo mandamos al ${mostrarCelular(phone)}. Vence en ${CODIGO_VALIDO_MINUTOS} minutos.`}
       />
 
       <Button type="submit" disabled={pending}>
