@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
-import { query } from "@/lib/db";
+import { actualizarEnvio } from "@/lib/envios";
 import { firmaValida, leerEstados } from "@/lib/whatsapp";
 
 /**
@@ -32,10 +32,6 @@ export async function GET(request: Request) {
   return new Response(reto, { status: 200, headers: { "Content-Type": "text/plain" } });
 }
 
-// El orden en que avanza un mensaje. `failed` gana siempre: un mensaje que falló
-// no llegó, aunque antes haya dicho «enviado».
-const ORDEN: Record<string, number> = { aceptado: 0, sent: 1, delivered: 2, read: 3, failed: 4 };
-
 export async function POST(request: Request) {
   // Crudo: la firma se calcula sobre los bytes exactos que mandó Meta.
   const crudo = await request.text();
@@ -60,14 +56,7 @@ export async function POST(request: Request) {
   // le escribe al número) no actualiza nada. Se responde 200 igual: si no, Meta
   // reintenta sin fin.
   for (const e of leerEstados(aviso)) {
-    await query(
-      `update envios_codigo
-          set estado = $2, error = coalesce($3, error), updated_at = now()
-        where wamid = $1
-          and (case estado when 'aceptado' then 0 when 'sent' then 1 when 'delivered' then 2
-                           when 'read' then 3 when 'failed' then 4 end) < $4`,
-      [e.wamid, e.estado, e.error, ORDEN[e.estado]],
-    );
+    await actualizarEnvio(e.wamid, e.estado, e.error);
   }
 
   return NextResponse.json({ ok: true });

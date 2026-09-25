@@ -35,6 +35,7 @@ async function publish(page: Page, title: string, photos: number) {
   }
   await page.getByLabel("Título").fill(title);
   await page.getByLabel("Categoría").selectOption("ropa");
+  await page.getByLabel("Talla").selectOption("M");
   await page.getByLabel("Precio").fill("70000");
   await page.getByLabel("Descripción").fill("Prenda de prueba.");
   await page.getByRole("button", { name: "Publicar" }).click();
@@ -134,6 +135,7 @@ test("un archivo que no es imagen se rechaza", async ({ browser }) => {
   });
   await page.getByLabel("Título").fill(`Archivo malo ${Date.now()}`);
   await page.getByLabel("Categoría").selectOption("ropa");
+  await page.getByLabel("Talla").selectOption("M");
   await page.getByLabel("Precio").fill("50000");
   await page.getByLabel("Descripción").fill("Prueba.");
   await page.getByRole("button", { name: "Publicar" }).click();

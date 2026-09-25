@@ -222,6 +222,49 @@ test("se ven las sesiones abiertas y se pueden cerrar", async ({ browser }) => {
   // La sesión actual se marca y no se puede cerrar desde aquí.
   await expect(sesiones.first()).toContainText("esta");
   await expect(sesiones.first().getByRole("button", { name: "Cerrar" })).toHaveCount(0);
+  // Con una sola sesión no hay «demás» que cerrar.
+  await expect(page.getByRole("button", { name: "Cerrar todas las demás" })).toHaveCount(0);
 
   await ctx.close();
+});
+
+// Corrección 42 (Catalina; Nicolás eligió agregarlo): quien perdió el celular o entró
+// en un computador ajeno las cierra de una vez, sin salir de la que está usando.
+test("«Cerrar todas las demás» deja fuera a los otros dispositivos y no a este", async ({
+  browser,
+}) => {
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  const { email } = await signUpVerified(page, "sesiones", "Laura Compradora");
+
+  const otros = [];
+  for (let i = 0; i < 2; i++) {
+    const otroCtx = await browser.newContext();
+    const otro = await otroCtx.newPage();
+    await otro.goto("/ingresar");
+    await otro.getByLabel("Correo").fill(email);
+    await otro.getByLabel("Contraseña").fill("unaClaveLarga1");
+    await otro.getByRole("button", { name: "Iniciar sesión" }).click();
+    await expect(otro.getByTestId("usuario")).toBeVisible();
+    otros.push({ otroCtx, otro });
+  }
+
+  await page.goto("/cuenta");
+  const sesiones = page.getByTestId("sesiones").getByRole("listitem");
+  await expect(sesiones).toHaveCount(3);
+  await page.getByRole("button", { name: "Cerrar todas las demás" }).click();
+  await expect(sesiones).toHaveCount(1);
+  await expect(sesiones.first()).toContainText("esta");
+  await expect(page.getByRole("button", { name: "Cerrar todas las demás" })).toHaveCount(0);
+
+  for (const { otro } of otros) {
+    await otro.goto("/actividad");
+    await expect(otro).toHaveURL(/\/ingresar/);
+  }
+  // Este sigue adentro.
+  await page.goto("/actividad");
+  await expect(page).toHaveURL(/\/actividad/);
+
+  await ctx.close();
+  for (const { otroCtx } of otros) await otroCtx.close();
 });

@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { AuthShell } from "@/components/ui";
 import { VerifyForm } from "@/features/auth/VerifyForm";
 import { PhoneForm } from "@/features/auth/PhoneForm";
-import { currentUser } from "@/lib/session";
+import { usuarioSinConfirmar } from "@/lib/session";
+import { segundosParaReenviar } from "@/lib/otp-rate-limit";
+import { SignOutButton } from "@/features/auth/SignOutButton";
 import { conVolver, destinoInterno } from "@/lib/destino";
 
 // D-01: sin celular verificado no se compra ni se escribe. El número verificado es
@@ -16,7 +18,8 @@ export default async function Verificar({
   searchParams: Promise<{ volver?: string }>;
 }) {
   const volver = destinoInterno((await searchParams).volver);
-  const user = await currentUser();
+  // D-123: aquí se termina el registro, así que sirve la sesión sin confirmar.
+  const user = await usuarioSinConfirmar();
   if (!user) redirect(conVolver("/ingresar", volver));
 
   // Ya confirmado: no hay nada que hacer aquí; se sigue a donde iba.
@@ -25,6 +28,8 @@ export default async function Verificar({
   // Quien entró con Google llega sin número, porque Google trae correo y no
   // celular. Primero hay que pedírselo.
   const needsPhone = !user.phoneNumber;
+  // 30 s entre códigos: el botón de reenviar arranca con lo que falte del último.
+  const espera = user.phoneNumber ? await segundosParaReenviar(user.phoneNumber) : 0;
 
   return (
     <AuthShell
@@ -32,12 +37,16 @@ export default async function Verificar({
       subtitle={
         needsPhone
           ? "Google nos dio tu correo, pero no tu número. Lo necesitamos para que puedas comprar y escribirle a un vendedor."
-          : "Es lo que evita que alguien estafe y vuelva a entrar con otra cuenta."
+          : "Tu cuenta queda creada cuando confirmes el código. Si no lo confirmas en 24 horas, el registro se borra."
       }
     >
       <Suspense fallback={null}>
-        {needsPhone ? <PhoneForm /> : <VerifyForm phone={user.phoneNumber!} />}
+        {needsPhone ? <PhoneForm /> : <VerifyForm phone={user.phoneNumber!} espera={espera} />}
       </Suspense>
+      <p className="text-center text-sm text-ink2">
+        ¿Te equivocaste de cuenta?{" "}
+        <SignOutButton className="text-brand underline" />
+      </p>
     </AuthShell>
   );
 }

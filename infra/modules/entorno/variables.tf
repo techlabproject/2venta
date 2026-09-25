@@ -103,3 +103,45 @@ variable "video_transcodificar" {
   description = "Usar MediaConvert de verdad. En una cuenta con plan gratuito no está disponible (SubscriptionRequired)."
   type        = bool
 }
+
+# SMS por Twilio para los códigos (D-120). Los mismos dos pasos que WhatsApp:
+# `twilio_secreto = true` crea el secreto `<entorno>/twilio` vacío y alguien le pone
+# TWILIO_AUTH_TOKEN a mano; después `twilio_account_sid` y `twilio_from` lo conectan.
+variable "twilio_secreto" {
+  description = "Crea el secreto <entorno>/twilio, vacío, para llenarlo a mano."
+  type        = bool
+  default     = false
+}
+
+variable "twilio_account_sid" {
+  description = "Cuenta de Twilio (AC…). Vacío = los códigos no salen por SMS."
+  type        = string
+  default     = ""
+}
+
+variable "twilio_from" {
+  description = "Número de Twilio desde el que salen los SMS, con + y código de país."
+  type        = string
+  default     = ""
+}
+
+variable "twilio_verify_service_sid" {
+  description = "Servicio de Twilio Verify (VA…): Twilio genera y comprueba el código. Sirve con la cuenta de prueba."
+  type        = string
+  default     = ""
+}
+
+# SMS por Inalambria Express para los códigos (D-124). Dos pasos: `inalambria_secreto
+# = true` crea el secreto `<entorno>/inalambria` vacío y alguien le pone
+# INALAMBRIA_TOKEN a mano; después `inalambria_activo = true` lo conecta.
+variable "inalambria_secreto" {
+  description = "Crea el secreto <entorno>/inalambria, vacío, para llenarlo a mano."
+  type        = bool
+  default     = false
+}
+
+variable "inalambria_activo" {
+  description = "Pasa INALAMBRIA_TOKEN a los contenedores. Solo después de llenar el secreto: vacío, la tarea no arranca."
+  type        = bool
+  default     = false
+}

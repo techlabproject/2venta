@@ -53,11 +53,15 @@ test("un rechazo muestra el motivo y deja reintentar", async ({ page }) => {
 test("el distintivo aparece en el catálogo solo del vendedor verificado", async ({
   page,
 }) => {
-  await page.goto("/");
+  // Por palabra y no en la portada: con 24 por página (D-118), lo que crean las demás
+  // pruebas empuja lo sembrado a la segunda.
   const cards = page.getByRole("main").getByRole("listitem");
 
   // Camila está verificada en los datos de prueba; el taller no.
+  await page.goto(`/buscar?q=${encodeURIComponent("iPhone 13")}`);
   await expect(cards.filter({ hasText: "iPhone 13 128 GB" })).toContainText("Verificado");
+  await page.goto(`/buscar?q=${encodeURIComponent("Chaqueta de jean")}`);
+  await expect(cards.filter({ hasText: "Chaqueta de jean talla M" })).toHaveCount(1);
   await expect(
     cards.filter({ hasText: "Chaqueta de jean talla M" })
   ).not.toContainText("Verificado");
@@ -66,7 +70,7 @@ test("el distintivo aparece en el catálogo solo del vendedor verificado", async
 test("el perfil público muestra alias y zona, y nada de datos personales", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto(`/buscar?q=${encodeURIComponent("iPhone 13")}`);
   await page
     .getByRole("main")
     .getByRole("listitem")

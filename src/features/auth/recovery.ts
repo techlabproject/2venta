@@ -8,7 +8,8 @@ import { auth } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { sendVerificationCode } from "@/lib/sms";
 import { assertCanSendCode } from "@/lib/otp-rate-limit";
-import { codeMatches, encryptCode, generateCode, MAX_ATTEMPTS, normalize } from "./otp";
+import { encryptCode, generateCode, MAX_ATTEMPTS, normalize } from "./otp";
+import { codigoCorrecto } from "./comprobar";
 
 export type RecoveryResult = { error: string; sent?: boolean; verified?: boolean };
 
@@ -38,7 +39,7 @@ export async function requestRecovery(
 
   if (users.length > 0) {
     try {
-      await assertCanSendCode(phone);
+      await assertCanSendCode(phone, "recuperacion");
       const code = generateCode();
       await query(
         `insert into recovery_codes (phone, code_enc, expires_at, attempts, used_at)
@@ -48,7 +49,12 @@ export async function requestRecovery(
                attempts = 0, used_at = null`,
         [phone, encryptCode(code), String(EXPIRY_MINUTES)]
       );
-      await sendVerificationCode(phone, code, "recuperacion");
+      const quien = await sendVerificationCode(phone, code, "recuperacion");
+      // D-120: si el código lo mandó Twilio Verify, se comprueba con Twilio.
+      await query(`update recovery_codes set verificado_por = $2 where phone = $1`, [
+        phone,
+        quien === "twilio_verify" ? "twilio_verify" : null,
+      ]);
     } catch {
       // El límite de envíos tampoco puede revelar si la cuenta existe: se calla y
       // se responde igual.
@@ -77,9 +83,10 @@ export async function resetPassword(
     attempts: number;
     expired: boolean;
     used: boolean;
+    verificado_por: string | null;
   }>(
     `select code_enc, attempts, (expires_at < now()) as expired,
-            (used_at is not null) as used
+            (used_at is not null) as used, verificado_por
        from recovery_codes where phone = $1 for update`,
     [phone]
   );
@@ -92,7 +99,14 @@ export async function resetPassword(
     return { error: "Demasiados intentos. Pide un código nuevo." };
   }
 
-  if (!codeMatches(given, state.code_enc)) {
+  let acierta: boolean;
+  try {
+    acierta = await codigoCorrecto(phone, given, state);
+  } catch (err) {
+    console.error(`[codigo] no se pudo comprobar: ${err instanceof Error ? err.message : err}`);
+    return { error: "¡Uy! No pudimos comprobar el código. Intenta de nuevo en un momento." };
+  }
+  if (!acierta) {
     const bumped = await query<{ attempts: number }>(
       `update recovery_codes set attempts = attempts + 1 where phone = $1 returning attempts`,
       [phone]
@@ -147,4 +161,21 @@ export async function revokeSession(
   // (ronda de usuario, 2026-09-14). Que la fila desaparezca ES la confirmación.
   revalidatePath("/cuenta");
   return { error: "" };
+}
+
+/**
+ * Corrección 42: cerrar de una vez todas las sesiones menos esta (se perdió el
+ * celular, se entró en un computador ajeno). Quién es el dueño y cuál es «esta» salen
+ * de la cookie, nunca del formulario.
+ */
+export async function revokeOtherSessions(): Promise<void> {
+  const { headers } = await import("next/headers");
+  const actual = await auth.api.getSession({ headers: await headers() });
+  if (!actual) redirect("/ingresar");
+
+  await query(`delete from session where "userId" = $1 and id <> $2`, [
+    actual.user.id,
+    actual.session.id,
+  ]);
+  revalidatePath("/cuenta");
 }

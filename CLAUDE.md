@@ -187,6 +187,12 @@ el número y se le manda el código antes de dejarlo comprar o escribir.
   como HTML del servidor para que un buscador los indexe. Lo cazan dos pruebas
   («la búsqueda funciona sin JavaScript del cliente», «la ficha se sirve como
   HTML»). En pantallas privadas no hay conflicto. Ver D-87.
+- Con `TWILIO_*` (o `WHATSAPP_TOKEN`) en `.env.local`, cada registro de las pruebas
+  llamaría al proveedor de verdad: gasta las verificaciones de la cuenta de prueba y
+  agota su límite de solicitudes (así se perdió un SMS real). Por eso
+  `CODIGOS_REALES_SOLO_A` (solo en desarrollo) deja salir de verdad solo los códigos
+  de esos números; los inventados van solo al registro. No hay que comentar nada;
+  si falta la variable, sí (D-120).
 - Las imágenes de MinIO son las de Chainguard (`cgr.dev/chainguard/minio`): MinIO dejó
   de publicar en Docker Hub y después en `quay.io` (401 desde 2026-09-24, CI caído).
   La del cliente (`minio-client`) no trae `sh`; por eso `minio-init` usa la del servidor.

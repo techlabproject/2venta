@@ -44,11 +44,20 @@ test("filtra por categoría", async ({ page }) => {
   await expect(page.getByRole("main")).not.toContainText("Chaqueta de jean");
 });
 
+// Con la palabra, lo sembrado no depende de cuántos artículos hayan creado las demás
+// pruebas: con 24 por página (D-118) quedaba en la segunda y la prueba fallaba.
 test("filtra por rango de precio", async ({ page }) => {
-  await page.goto("/buscar?min=100000&max=500000");
+  await page.goto("/buscar?q=Chicco&min=100000&max=500000");
   await expect(card(page, "Coche Chicco")).toHaveCount(1);
-  await expect(page.getByRole("main")).not.toContainText("iPhone");
-  await expect(page.getByRole("main")).not.toContainText("Chaqueta de jean");
+  for (const [palabra, titulo] of [
+    ["iPhone 13", "iPhone 13 128 GB"],
+    ["Chaqueta de jean", "Chaqueta de jean talla M"],
+  ]) {
+    await page.goto(`/buscar?q=${encodeURIComponent(palabra)}`);
+    await expect(card(page, titulo)).toHaveCount(1);
+    await page.goto(`/buscar?q=${encodeURIComponent(palabra)}&min=100000&max=500000`);
+    await expect(card(page, titulo)).toHaveCount(0);
+  }
 });
 
 test("filtra por estado del artículo", async ({ page }) => {
@@ -101,7 +110,7 @@ test("una búsqueda sin resultados explica qué hacer", async ({ page }) => {
 
 test("los atajos del feed llevan a una búsqueda filtrada", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("navigation", { name: "Atajos" }).getByRole("link", { name: "Niños" }).click();
+  await page.getByRole("navigation", { name: "Atajos" }).getByRole("link", { name: "Artículos para niños" }).click();
   await expect(page).toHaveURL(/categoria=ninos/);
   await expect(card(page, "Coche Chicco")).toHaveCount(1);
 });
@@ -119,10 +128,11 @@ test("la búsqueda funciona sin JavaScript del cliente", async ({ browser }) => 
 });
 
 test("un precio mínimo mayor que el máximo no rompe nada", async ({ page }) => {
-  await page.goto("/buscar?min=500000&max=100000");
   // Se ordenan solos, así que devuelve lo que hay entre 100.000 y 500.000.
+  await page.goto("/buscar?q=Chicco&min=500000&max=100000");
   await expect(card(page, "Coche Chicco")).toHaveCount(1);
-  await expect(page.getByRole("main")).not.toContainText("iPhone");
+  await page.goto(`/buscar?q=${encodeURIComponent("iPhone 13")}&min=500000&max=100000`);
+  await expect(card(page, "iPhone 13 128 GB")).toHaveCount(0);
 });
 
 test("parámetros con basura se ignoran en vez de tumbar la página", async ({ page }) => {
@@ -139,11 +149,12 @@ test("una comilla en la búsqueda no altera la consulta", async ({ page }) => {
   expect(res?.status()).toBe(200);
   await expect(results(page)).toHaveCount(0);
 
-  // La tabla sigue ahí.
-  await page.goto("/");
-  await expect(card(page, "iPhone")).toHaveCount(1);
-  await expect(card(page, "Chaqueta de jean")).toHaveCount(1);
-  await expect(card(page, "Coche Chicco")).toHaveCount(1);
+  // La tabla sigue ahí. Se busca cada sembrado por nombre: la portada va de a 24
+  // (corrección 33) y las demás pruebas dejan artículos más nuevos delante.
+  for (const nombre of ["iPhone", "Chaqueta de jean", "Coche Chicco"]) {
+    await page.goto(`/buscar?q=${encodeURIComponent(nombre)}`);
+    await expect(card(page, nombre).first()).toBeVisible();
+  }
 });
 
 // Hallazgos de la ronda de QA del 2026-09-13 (agente técnico).

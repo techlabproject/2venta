@@ -1,3 +1,10 @@
+> **Actualización 2026-09-25 (D-124):** los códigos salen por **Inalambria Express**
+> (paquete de 500 SMS por $19.500 con IVA); Twilio queda de respaldo con su cuenta de
+> prueba (solo números inscritos, «SAMPLE TEST»). Pasar Twilio a pago exigía US$20 de
+> entrada. Otras opciones revisadas ese día: LabsMobile (US$10 mínimo, 200 créditos que
+> duran 18 meses), Firebase (10 SMS gratis al día, con su SDK y reCAPTCHA) y AWS
+> (US$0,05 por SMS, cuenta en plan gratuito y modo de prueba).
+>
 > **Actualización 2026-09-24 (D-117):** Nicolás eligió **WhatsApp Cloud (Meta)** como canal de los códigos. Lo de abajo sobre el agregador de SMS queda como referencia para un canal de respaldo. Ver `infra/LEEME.md`.
 
 # Verificación del celular: alcance y cotización

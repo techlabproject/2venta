@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { currentUser } from "@/lib/session";
 import { auth } from "@/lib/auth";
 import { query } from "@/lib/db";
-import { RevokeButton } from "@/features/auth/SessionList";
+import { RevokeButton, RevokeOthersButton } from "@/features/auth/SessionList";
 import { AppHeader } from "@/components/AppHeader";
 import { Avatar } from "@/components/Avatar";
 import { ButtonLink } from "@/components/ui";
@@ -188,6 +188,11 @@ export default async function Cuenta() {
                 );
               })}
             </ul>
+            {sessions.length > 1 && (
+              <div className="mt-3">
+                <RevokeOthersButton />
+              </div>
+            )}
           </section>
         </div>
       </main>

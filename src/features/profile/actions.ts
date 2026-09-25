@@ -6,6 +6,7 @@ import { query } from "@/lib/db";
 import { CONTACT_REJECTED, hasContact, redact } from "@/features/chat/redact";
 import { claim } from "@/features/publish/claim";
 import { AVATAR_MAX_BYTES } from "@/lib/storage";
+import { aCuadricula, zonaReconocida } from "@/features/ubicacion/zonas";
 
 export type ProfileResult = { error: string };
 
@@ -38,7 +39,11 @@ export async function updateProfile(
   }
 
 
-  const zone = String(form.get("zone") ?? "").trim().slice(0, 60) || null;
+  // D-122: de la lista cerrada, con su punto aproximado (el centro de la zona). Lo que
+  // no está en la lista se rechaza: un formulario manipulado no inventa zonas.
+  const zonaEscrita = String(form.get("zone") ?? "").trim();
+  const zona = zonaEscrita ? zonaReconocida(zonaEscrita) : null;
+  if (zonaEscrita && !zona) return { error: "Elige tu zona de la lista." };
   // La descripción es pública, así que pasa por el mismo filtro que el chat.
   const rawBio = String(form.get("bio") ?? "").trim().slice(0, 300);
   const bio = rawBio ? redact(rawBio).text : null;
@@ -52,12 +57,18 @@ export async function updateProfile(
     ]);
   }
 
-  await query(`update "user" set alias = $2, zone = $3, bio = $4 where id = $1`, [
-    user.id,
-    alias,
-    zone,
-    bio,
-  ]);
+  await query(
+    `update "user" set alias = $2, zone = $3, bio = $4, ubicacion_lat = $5, ubicacion_lng = $6
+      where id = $1`,
+    [
+      user.id,
+      alias,
+      zona?.nombre ?? null,
+      bio,
+      zona ? aCuadricula(zona.lat) : null,
+      zona ? aCuadricula(zona.lng) : null,
+    ],
+  );
 
   revalidatePath("/cuenta");
   revalidatePath(`/vendedor/${user.id}`);

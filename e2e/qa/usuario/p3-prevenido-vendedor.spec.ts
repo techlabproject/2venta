@@ -134,6 +134,7 @@ test.describe("Persona 3 — el prevenido, vendedor, reacio a la comisión", () 
       const titulo = `Coche de bebé ${Date.now()}`;
       await page.getByLabel("Título").fill(titulo);
       await page.getByLabel("Categoría").selectOption("ninos");
+      await page.getByLabel("Para qué edad").selectOption("3 a 4 años");
       await page.getByLabel("Precio").fill(String(precioPublicado));
       await page
         .getByLabel("Descripción")
@@ -239,6 +240,7 @@ test.describe("Persona 3 — el prevenido, vendedor, reacio a la comisión", () 
 
     await page.getByLabel("Título").fill("Ropa de bebé con precio en puntos");
     await page.getByLabel("Categoría").selectOption("ninos");
+    await page.getByLabel("Para qué edad").selectOption("3 a 4 años");
     await page.getByLabel("Precio").fill("150.000");
     await page.getByLabel("Descripción").fill("Precio escrito con puntos de miles, como lo haría alguien real.");
     await page.getByRole("button", { name: "Publicar" }).click();

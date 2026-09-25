@@ -1,6 +1,7 @@
 import { parseCop } from "@/features/payments/money";
 import { MIN_PRICE_COP } from "@/features/payments/money";
 import { isValidImei, normalizeImei } from "@/features/moderation/imei";
+import { pareceCelular } from "@/features/moderation/pareceCelular";
 import { moderateListing } from "@/features/moderation/rules";
 import type { Condition } from "@/features/catalog/labels";
 
@@ -130,9 +131,15 @@ export function parseBulk(text: string, validCategories: string[]): ParseResult 
       return;
     }
 
+    // Corrección 40: el IMEI es de los celulares. Si viene se valida; si la fila
+    // habla de un celular y no viene, falta.
     let imei: string | null = null;
-    if (category === "tecnologia") {
-      const raw = at("imei");
+    const raw = at("imei");
+    if (category === "tecnologia" && (raw || pareceCelular(title, description))) {
+      if (!raw) {
+        errors.push({ line: lineNumber, message: "Parece un celular: falta el IMEI." });
+        return;
+      }
       if (!isValidImei(raw)) {
         errors.push({ line: lineNumber, message: `El IMEI "${raw}" no es válido.` });
         return;

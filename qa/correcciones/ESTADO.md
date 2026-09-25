@@ -1,6 +1,6 @@
 # Estado de las correcciones de Catalina — leer esto primero al retomar
 
-Última actualización: 2026-09-24. Registro fila por fila: `2026-09-22.md` (52 filas).
+Última actualización: 2026-09-25. Registro fila por fila: `2026-09-22.md` (52 filas).
 Lista de problemas y pendientes para el documento final: `pendientes.md`.
 
 ## Cómo se trabaja (acordado con Nicolás)
@@ -48,10 +48,42 @@ Lista de problemas y pendientes para el documento final: `pendientes.md`.
 - **Filas 24 y 25: hechas, sin confirmar** (D-115; Luna PASA).
 - **Filas 26 a 32: hechas, sin confirmar** (D-116; migración 0019; Luna PASA).
 - **WhatsApp Cloud para los códigos: construido, sin confirmar** (D-117; `src/lib/whatsapp.ts`, `src/lib/sms.ts`, `/api/whatsapp/webhook`, migración 0020, Terraform en dos pasos, `infra/LEEME.md`). Código válido 10 min en registro y recuperación. Falta que Nicolás rote y cargue los secretos.
-- **Siguiente: fila 33.**
-- Fila 33 en adelante: pendientes. Las de alcance (12, 15, 17, 20, 22, 29, 31, 32, 36,
-  40, 42, 46, 47, 48, 49, 51, 52) se resuelven con propuesta escrita para decidir.
-  Catalina ya dejó su postura en 15, 29, 32 y 47 (versión 2 del documento).
+- Filas 24–32 y WhatsApp **aprobadas y desplegadas** (commit 25a06dc).
+- **Filas 33 y 34: hechas, sin confirmar** (D-118; `e2e/paginacion.spec.ts`; Luna PASA).
+- **WhatsApp en Meta (2026-09-24):** plantilla `codigo_verificacion` rechazada al crear («la cuenta no tiene permiso») — el portafolio «Boteame» no está verificado; cambio del nombre visible del número +57 311 5705501 a «2venta» enviado, **en revisión**. Ver `pendientes.md`.
+- **Filas 35 a 40: hechas, sin confirmar** (D-119; migraciones 0021 y 0022).
+- **Fila 41: hecha, sin confirmar** (texto de Guardados y Avisos que eligió Nicolás; Luna
+  vuelta 1 no pasa —un guardado retirado desaparecía—, arreglado: pasa a «Ya no están»
+  sin enlace; vuelta 2 PASA).
+- **SMS por Twilio (D-120): construido, sin confirmar**; cuenta de prueba de Nicolás
+  creada, SMS de prueba recibido. La cuenta de prueba rechaza texto propio (572006):
+  los códigos salen por **Twilio Verify** (Twilio genera y comprueba el código;
+  migración 0024 `verificado_por`). Envío real por el código de la app comprobado.
+- **Filas 42–49, 51, 52: propuesta escrita, decide Nicolás** (`docs/alcance/`:
+  `sesiones.md`, `ubicacion.md`, `encuentro-seguro.md`, `impuestos-y-envio.md`,
+  `administracion.md`, `proveedores-identidad.md`). No se construye nada hasta que decida.
+- **Resumen de cierre:** `CIERRE.md`. Informe para Catalina publicado como artefacto
+  (ver el mensaje final de la sesión del 2026-09-25).
+- **Esperan aprobación para commit y despliegue:** filas 33–41, Twilio/Verify y el
+  destino de IAM en `.github/workflows/desplegar-dev.yml`.
+- **Veredicto de la fase (2026-09-25):** unitarias 164/164; tipos y linter sin errores;
+  suite completa contra la imagen **418/418** en 4,5 min (primera pasada 414/418: cuatro
+  pruebas de `search.spec` y `kyc.spec` esperaban lo sembrado en la primera página y,
+  con 24 por página, lo acumulado por la suite lo empujaba a la segunda; ahora buscan
+  por palabra; 30/30 con la base acumulada).
+- **Pedido de Nicolás (2026-09-25):** sin nombres de personas en los textos de ejemplo:
+  registro («Nombre y apellido», «nombre@gmail.com»), quién recibe el envío y el error de
+  correo sin nada antes de la @. Hecho, sin confirmar.
+- **Fila 42: hecha, sin confirmar** (D-121; «Cerrar todas las demás»; Luna PASA).
+- **Filas 43, 44, 45 y 51: en curso** (D-122). Decisiones de Nicolás: ubicación como
+  Marketplace — distancia aproximada y radio; ubicación del vendedor **en el perfil**
+  («Usar mi ubicación» o la localidad), guardada en cuadrícula de ~1 km; tarjeta
+  «Chapinero · a unos 3 km»; radio **opcional** (2/5/10/20 km) y orden «Más cerca»;
+  **Bogotá y municipios vecinos** (Soacha, Chía, Cajicá, Cota, Funza, Mosquera, Madrid,
+  La Calera); **solo Bogotá** por ahora (nada de otras ciudades). La ubicación del
+  comprador va en una cookie, nunca en la URL ni en la base. La zona deja de ser texto
+  libre (19 localidades urbanas + 8 municipios); `zone` deja de ser escribible por
+  `/api/auth/update-user`.
 
 ## Fila 11 (términos y condiciones) — cerrada; se deja el detalle como referencia
 

@@ -25,11 +25,11 @@ test.describe("en el teléfono", () => {
     await botonFiltros(page).click();
     const panel = page.getByRole("dialog", { name: "Filtros" });
     await expect(panel.getByLabel("Ropa")).toBeChecked();
-    await panel.getByLabel("Niños").check();
+    await panel.getByLabel("Artículos para niños").check();
     await panel.getByRole("button", { name: /^Ver \d+ resultados?$/ }).click();
 
     await expect(page).toHaveURL(/\/buscar\?categoria=ropa&categoria=ninos$/);
-    await soloDe(page, "Ropa", "Niños");
+    await soloDe(page, "Ropa", "Artículos para niños");
   });
 
   test("el panel conserva la palabra buscada", async ({ page }) => {
@@ -50,10 +50,10 @@ test.describe("en el teléfono", () => {
       await page.goto("/buscar");
       await expect(botonFiltros(page)).toHaveAttribute("href", "#filtros");
       await expect(columna(page)).toBeVisible();
-      await columna(page).getByLabel("Niños").check();
+      await columna(page).getByLabel("Artículos para niños").check();
       await columna(page).getByRole("button", { name: "Aplicar" }).click();
       await expect(page).toHaveURL(/categoria=ninos/);
-      await soloDe(page, "Niños");
+      await soloDe(page, "Artículos para niños");
     });
   });
 });

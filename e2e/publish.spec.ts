@@ -40,6 +40,7 @@ test("un vendedor verificado graba, publica y el artículo aparece en el feed", 
   const titulo = `Bicicleta todoterreno ${Date.now()}`;
   await page.getByLabel("Título").fill(titulo);
   await page.getByLabel("Categoría").selectOption("ninos");
+  await page.getByLabel("Para qué edad").selectOption("3 a 4 años");
   await page.getByLabel("Precio").fill("450000");
   await page.getByLabel("Descripción").fill("Usada dos temporadas, frenos nuevos.");
   await page.getByRole("button", { name: "Publicar" }).click();
@@ -49,6 +50,8 @@ test("un vendedor verificado graba, publica y el artículo aparece en el feed", 
     page.getByRole("heading", { name: titulo })
   ).toBeVisible();
   await expect(page.getByRole("main")).toContainText("$ 450.000");
+  // Corrección 38: la edad elegida se ve en la ficha.
+  await expect(page.getByTestId("atributos")).toContainText("Para 3 a 4 años");
 
   // El video queda servido y la portada salió del propio video.
   const src = await page.getByTestId("video-articulo").getAttribute("src");
@@ -121,6 +124,7 @@ test("un precio de cero se rechaza", async ({ page }) => {
   // Ropa a propósito: esta prueba es sobre el precio, no sobre el IMEI que exige
   // la categoría de tecnología.
   await page.getByLabel("Categoría").selectOption("ropa");
+  await page.getByLabel("Talla").selectOption("M");
   await page.getByLabel("Precio").fill("0");
   await page.getByLabel("Descripción").fill("Gratis");
   await page.getByRole("button", { name: "Publicar" }).click();
@@ -159,4 +163,83 @@ test("al escribir el precio, el vendedor ve cuánto le llega después de la comi
   // Por debajo del mínimo no se calcula nada.
   await page.getByLabel("Precio").fill("5000");
   await expect(page.getByTestId("te-llegan")).toHaveCount(0);
+});
+
+// Corrección 35 (Catalina; texto elegido por Nicolás): en vez de explicar por qué
+// el video se graba aquí, se le dice al vendedor qué mostrar, hasta que empieza a
+// grabar.
+test("antes de grabar, el vendedor ve qué mostrar en el video", async ({ page }) => {
+  await signUpVerified(page, "vendedor", "Andrés Molina");
+  await approveKyc(page);
+  await page.goto("/publicar");
+
+  const consejos = page.getByTestId("consejos-video");
+  await expect(consejos.getByRole("heading", { name: "Antes de grabar" })).toBeVisible();
+  await expect(consejos).toContainText("Tienes 30 segundos");
+  await expect(consejos).toContainText("Si prende, préndelo.");
+  await expect(page.getByText("Es lo que le permite al comprador")).toHaveCount(0);
+
+  // Con la cámara abierta sigue ahí; al grabar se va.
+  await page.getByRole("button", { name: "Abrir cámara" }).click();
+  await expect(consejos).toBeVisible();
+  await page.getByRole("button", { name: /^Grabar/ }).click();
+  await expect(consejos).toHaveCount(0);
+});
+
+// Corrección 38 (decisión de Nicolás): ropa pide talla; se ve en la ficha y se
+// corrige al editar. Sin talla no se publica.
+test("la ropa pide talla, se ve en la ficha y se corrige al editar", async ({ page }) => {
+  await signUpVerified(page, "vendedor", "Andrés Molina");
+  await approveKyc(page);
+  await page.goto("/publicar");
+  await recordVideo(page);
+
+  const titulo = `Chaqueta talla ${Date.now()}`;
+  await page.getByLabel("Título").fill(titulo);
+  await page.getByLabel("Categoría").selectOption("ropa");
+  await expect(page.getByLabel("Para qué edad")).toHaveCount(0);
+  await page.getByLabel("Precio").fill("80000");
+  await page.getByLabel("Descripción").fill("Poco uso.");
+  // Sin talla, el navegador no deja enviar.
+  await page.getByRole("button", { name: "Publicar" }).click();
+  await expect(page).toHaveURL(/\/publicar/);
+  expect(await page.getByLabel("Talla").evaluate((s: HTMLSelectElement) => s.validity.valueMissing)).toBe(true);
+
+  await page.getByLabel("Talla").selectOption("L");
+  await page.getByRole("button", { name: "Publicar" }).click();
+  await expect(page).toHaveURL(/\/producto\//);
+  await expect(page.getByTestId("atributos")).toContainText("Talla L");
+
+  const id = new URL(page.url()).pathname.split("/").pop();
+  await page.goto(`/producto/${id}/editar`);
+  await expect(page.getByLabel("Talla")).toHaveValue("L");
+  await page.getByLabel("Talla").selectOption("32");
+  await page.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(page).toHaveURL(new RegExp(`/producto/${id}$`));
+  await expect(page.getByTestId("atributos")).toContainText("Talla 32");
+});
+
+// Corrección 36 (decisiones de Nicolás): el video se graba sin sonido, y antes de
+// grabar se pide que no salgan caras, documentos ni la dirección.
+test("la cámara se abre sin micrófono y el vendedor ve el consejo de privacidad", async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    (window as unknown as { pedidos: MediaStreamConstraints[] }).pedidos = [];
+    navigator.mediaDevices.getUserMedia = (c?: MediaStreamConstraints) => {
+      (window as unknown as { pedidos: MediaStreamConstraints[] }).pedidos.push(c ?? {});
+      return original(c);
+    };
+  });
+  await signUpVerified(page, "vendedor", "Andrés Molina");
+  await approveKyc(page);
+  await page.goto("/publicar");
+
+  await expect(page.getByTestId("consejos-video")).toContainText(
+    "Que no salgan caras, documentos ni la dirección de tu casa",
+  );
+  await page.getByRole("button", { name: "Abrir cámara" }).click();
+  await expect(page.getByRole("button", { name: /^Grabar/ })).toBeVisible();
+  const pedidos = await page.evaluate(() => (window as unknown as { pedidos: MediaStreamConstraints[] }).pedidos);
+  expect(pedidos.length).toBeGreaterThan(0);
+  expect(pedidos.every((c) => !c.audio)).toBe(true);
 });

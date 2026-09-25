@@ -25,6 +25,7 @@ import { listPhotos } from "@/features/publish/photo-queries";
 import { currentUser } from "@/lib/session";
 import { esEmpresa } from "@/features/sellers/queries";
 import { EMPRESA_NO_COMPRA } from "@/features/sellers/reglas";
+import { etiquetaDeEdad, etiquetaDeTalla } from "@/features/catalog/atributos";
 import { Avatar } from "@/components/Avatar";
 import { getReputation } from "@/features/ratings/queries";
 import { Volver } from "@/components/Volver";
@@ -156,6 +157,8 @@ export default async function ListingPage({
             <ul data-testid="atributos" className="mt-4 flex flex-wrap gap-2">
               <Atributo>{CONDITION_LABEL[listing.condition]}</Atributo>
               <Atributo>{listing.category_label}</Atributo>
+              {listing.talla && <Atributo>{etiquetaDeTalla(listing.talla)}</Atributo>}
+              {listing.edad && <Atributo>{etiquetaDeEdad(listing.edad)}</Atributo>}
               {listing.has_imei && (
                 // Se le pide al vendedor, se valida con dígito de verificación y se
                 // guarda desde la primera rebanada; al comprador, que es a quien le

@@ -47,9 +47,7 @@ test("no rechaza publicaciones legítimas que se parecen", () => {
   }
 });
 
-test("la electrónica entra en revisión y el resto sale directo", () => {
-  // R-03: sin contraste automático de IMEI, la electrónica la mira una persona.
-  assert.equal(initialStatus("tecnologia"), "en_revision");
-  assert.equal(initialStatus("ropa"), "activa");
-  assert.equal(initialStatus("ninos"), "activa");
+test("todo sale directo al catálogo, electrónica incluida", () => {
+  // Corrección 40 (decisión de Nicolás): sin revisión humana previa.
+  assert.equal(initialStatus(), "activa");
 });

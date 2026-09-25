@@ -62,6 +62,8 @@ const ROUTES = [
   "/api/tareas/liberar",
   // Sin sesión responde 401 al momento; basta para compilarla (corrección 20).
   "/api/chat/00000000-0000-4000-8000-000000000000/eventos",
+  "/api/whatsapp/webhook",
+  "/api/twilio/estado",
 ];
 
 export default async function globalSetup() {

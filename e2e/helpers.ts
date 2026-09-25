@@ -98,12 +98,16 @@ export async function sellerWithListing(
       [sellerId, `ref-${sellerId}`]
     );
 
+    // Como publica hoy la app: ropa con talla y artículos para niños con edad
+    // (corrección 38).
     const { rows } = await c.query<{ id: string }>(
       `insert into listings
          (seller_id, title, description, category, condition, price_cop,
-          video_path, poster_path)
+          video_path, poster_path, talla, edad)
        values ($1, $2, 'Descripción de prueba.', $3, 'usado_bueno', $4,
-               'seed/demo.webm', 'seed/demo.jpg')
+               'seed/demo.webm', 'seed/demo.jpg',
+               case when $3 = 'ropa' then 'M' end,
+               case when $3 = 'ninos' then '3 a 4 años' end)
        returning id`,
       [sellerId, title, category, price]
     );
@@ -244,4 +248,19 @@ export async function aceptarTerminos(page: Page): Promise<void> {
   const panel = page.getByRole("dialog", { name: "Términos y política de datos" });
   await panel.getByRole("button", { name: "Aceptar", exact: true }).click();
   await expect(page.getByRole("checkbox", { name: /Leí y acepto/ })).toBeChecked();
+}
+
+/**
+ * Deja pedir otro código ya, sin esperar los 30 segundos entre envíos (D-123): el
+ * servidor mide desde el último envío guardado, así que se envejece; y la pantalla
+ * cuenta con su reloj, así que se adelanta (la prueba tiene que haber hecho
+ * `page.clock.install()` antes de abrir la página).
+ */
+export async function permitirReenvio(page: Page, phone: string): Promise<void> {
+  await withDb((c) =>
+    c.query(`update otp_sends set sent_at = sent_at - interval '31 seconds' where phone = $1`, [
+      phone,
+    ]),
+  );
+  await page.clock.fastForward(31_000);
 }

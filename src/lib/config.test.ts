@@ -18,7 +18,13 @@ function completo(isProduction = false): Record<string, string | undefined> {
         ? "postgres://u:p@localhost:5433/db"
         : r.name === "BETTER_AUTH_URL" || r.name === "MEDIA_BASE_URL" || r.name === "SQS_QUEUE_URL"
           ? "https://2venta.co"
-          : LARGO;
+          : r.name === "TWILIO_ACCOUNT_SID"
+            ? "AC" + "0".repeat(32)
+            : r.name === "TWILIO_FROM"
+              ? "+17372508034"
+              : r.name === "TWILIO_VERIFY_SERVICE_SID"
+                ? "VA" + "0".repeat(32)
+                : LARGO;
   }
   return env;
 }
@@ -78,9 +84,13 @@ test("en desarrollo no se exige lo que solo hace falta en producción", () => {
   const env = completo(false);
   assert.deepEqual(checkConfig(env, false), []);
 
-  // El mismo entorno, en producción, sí falla.
-  const problems = checkConfig(env, true);
-  assert.ok(problems.some((p) => p.name === "WHATSAPP_TOKEN"));
+  // El mismo entorno, en producción, sí falla (sin canal para los códigos).
+  const sinCanales = { ...env };
+  for (const n of ["WHATSAPP_TOKEN", "WHATSAPP_PHONE_NUMBER_ID", "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM", "INALAMBRIA_TOKEN"]) {
+    delete sinCanales[n];
+  }
+  const problems = checkConfig(sinCanales, true);
+  assert.ok(problems.some((p) => p.problem === "falta al menos un canal completo"));
   assert.ok(problems.some((p) => p.name === "BETTER_AUTH_URL"));
 });
 
@@ -111,7 +121,29 @@ test("APP_ENV puede faltar, pero si está tiene que ser válida", () => {
 
 test("el entorno se deduce de APP_ENV: en producción se exigen las de producción", () => {
   const env = completo(true);
-  delete env.WHATSAPP_TOKEN;
+  delete env.BETTER_AUTH_URL;
   const [problem] = checkConfig(env);
-  assert.equal(problem.name, "WHATSAPP_TOKEN");
+  assert.equal(problem.name, "BETTER_AUTH_URL");
+});
+
+test("un canal de códigos a medias se reporta, y en producción basta con uno completo", () => {
+  const env = completo(true);
+  delete env.TWILIO_FROM;
+  delete env.TWILIO_VERIFY_SERVICE_SID;
+  const [problem] = checkConfig(env, true);
+  assert.equal(problem.name, "TWILIO_VERIFY_SERVICE_SID");
+  assert.equal(problem.problem, "el canal está a medias");
+
+  // Con Verify y sin número propio, el canal está completo.
+  const soloVerify = completo(true);
+  delete soloVerify.TWILIO_FROM;
+  delete soloVerify.WHATSAPP_TOKEN;
+  delete soloVerify.WHATSAPP_PHONE_NUMBER_ID;
+  assert.deepEqual(checkConfig(soloVerify, true), []);
+
+  // Solo Twilio, sin WhatsApp: en producción está bien.
+  const soloTwilio = completo(true);
+  delete soloTwilio.WHATSAPP_TOKEN;
+  delete soloTwilio.WHATSAPP_PHONE_NUMBER_ID;
+  assert.deepEqual(checkConfig(soloTwilio, true), []);
 });

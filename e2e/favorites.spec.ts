@@ -88,6 +88,41 @@ test("un artículo vendido sigue en la lista, marcado como ya no disponible", as
   await ctx.close();
 });
 
+// Corrección 41 (Luna): «Se vendieron o los retiraron» prometía algo que no pasaba;
+// el retirado desaparecía en silencio. Su ficha no es pública, así que la tarjeta no
+// lleva a ella; si el vendedor lo republica, vuelve a la lista de arriba.
+test("un artículo retirado pasa a «Ya no están», sin enlace a su ficha", async ({ browser }) => {
+  const titulo = `Guante retirado ${Date.now()}`;
+  const seller = await sellerWithListing(browser, titulo, 90_000, "ropa");
+  const ctx = await browser.newContext();
+  const buyer = await ctx.newPage();
+  await signUpVerified(buyer, "comprador", "Laura Compradora");
+
+  await buyer.goto(`/producto/${seller.listingId}`);
+  await buyer.getByTestId("favorito").click();
+  await expect(buyer.getByTestId("favorito")).toHaveText("Guardado");
+
+  await withDb((c) =>
+    c.query(`update listings set status = 'retirada' where id = $1`, [seller.listingId])
+  );
+
+  await buyer.goto("/favoritos");
+  const idos = buyer.getByTestId("favoritos-vendidos");
+  await expect(idos).toContainText(titulo);
+  await expect(buyer.getByRole("main")).toContainText("Se vendieron o los retiraron.");
+  await expect(idos.getByRole("link")).toHaveCount(0);
+
+  await withDb((c) =>
+    c.query(`update listings set status = 'activa' where id = $1`, [seller.listingId])
+  );
+  await buyer.goto("/favoritos");
+  await expect(buyer.getByTestId("favoritos")).toContainText(titulo);
+  await expect(buyer.getByTestId("favoritos-vendidos")).toHaveCount(0);
+
+  await seller.context.close();
+  await ctx.close();
+});
+
 test("el favorito cuenta en las métricas del vendedor", async ({ browser }) => {
   const seller = await sellerWithListing(browser, `Bufanda ${Date.now()}`, 40_000, "ropa");
   const ctx = await browser.newContext();
@@ -140,4 +175,20 @@ test("los favoritos de otro no se ven", async ({ browser }) => {
   await seller.context.close();
   await unoCtx.close();
   await dosCtx.close();
+});
+
+// Corrección 41 (Catalina; texto elegido por Nicolás): cada pantalla dice qué es y
+// manda a la otra: Guardados son artículos marcados con ♡; Avisos, lo nuevo.
+test("Guardados y Avisos explican la diferencia y se enlazan", async ({ page }) => {
+  await signUpVerified(page, "guarda", "Gabriel Guarda");
+
+  await page.goto("/favoritos");
+  await expect(page.getByRole("main")).toContainText("Toca el ♡ en un artículo para tenerlo a mano aquí.");
+  await expect(page.getByRole("main")).not.toContainText("El corazón de cada artículo");
+  await page.getByRole("main").getByRole("link", { name: "Avisos" }).click();
+  await expect(page).toHaveURL(/\/avisos$/);
+
+  await expect(page.getByRole("main")).toContainText("Aquí te llegan los mensajes, las ofertas");
+  await page.getByRole("main").getByRole("link", { name: "Guardados" }).click();
+  await expect(page).toHaveURL(/\/favoritos$/);
 });

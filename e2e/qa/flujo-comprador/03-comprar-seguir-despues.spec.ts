@@ -67,6 +67,7 @@ async function publishListing(page: Page, title: string, price: string) {
 
   await page.getByLabel("Título").fill(title);
   await page.getByLabel("Categoría").selectOption("ropa");
+  await page.getByLabel("Talla").selectOption("M");
   await page.getByLabel("Precio").fill(price);
   await page.getByLabel("Descripción").fill("Publicado por la QA de flujo-comprador.");
   await page.getByRole("button", { name: "Publicar" }).click();

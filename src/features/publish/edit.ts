@@ -7,6 +7,7 @@ import { query } from "@/lib/db";
 import { parseCop, MIN_PRICE_COP } from "@/features/payments/money";
 import { moderateListing } from "@/features/moderation/rules";
 import { CONDITION_LABEL } from "@/features/catalog/labels";
+import { CAMPO_DE_CATEGORIA, EDADES, TALLAS } from "@/features/catalog/atributos";
 
 export type EditResult = { error: string };
 
@@ -52,15 +53,26 @@ export async function editListing(
   const condition = String(form.get("condition") ?? "");
   if (!(condition in CONDITION_LABEL)) return { error: "Elige el estado del artículo." };
 
+  // Corrección 38: la talla o la edad, de la lista cerrada de su categoría.
+  const categoria = await query<{ category: string }>(`select category from listings where id = $1`, [id]);
+  const campo = CAMPO_DE_CATEGORIA[categoria[0]?.category ?? ""];
+  const talla = campo === "talla" ? String(form.get("talla") ?? "") : null;
+  const edad = campo === "edad" ? String(form.get("edad") ?? "") : null;
+  if (talla !== null && !TALLAS.includes(talla)) return { error: "Elige la talla." };
+  if (edad !== null && !(EDADES as readonly string[]).includes(edad)) {
+    return { error: "Elige para qué edad es." };
+  }
+
   // Editar no es la puerta trasera: si no se volviera a filtrar, bastaría publicar
   // algo inocente y cambiarlo después.
   const verdict = moderateListing({ title, description });
   if (!verdict.allowed) return { error: verdict.reason };
 
   await query(
-    `update listings set title = $2, description = $3, price_cop = $4, condition = $5
+    `update listings set title = $2, description = $3, price_cop = $4, condition = $5,
+            talla = coalesce($7, talla), edad = coalesce($8, edad)
       where id = $1 and seller_id = $6`,
-    [id, title, description, price, condition, user.id]
+    [id, title, description, price, condition, user.id, talla, edad]
   );
 
   revalidatePath(`/producto/${id}`);

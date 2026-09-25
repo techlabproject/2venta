@@ -48,6 +48,9 @@ async function publish(
   await expect(page.getByRole("status")).toContainText("Video listo");
   await page.getByLabel("Título").fill(title);
   await page.getByLabel("Categoría").selectOption(category);
+  // Corrección 38: talla en ropa, edad en artículos para niños.
+  if (category === "ropa") await page.getByLabel("Talla").selectOption("M");
+  if (category === "ninos") await page.getByLabel("Para qué edad").selectOption("3 a 4 años");
   await page.getByLabel("Precio").fill(String(price));
   await page.getByLabel("Descripción").fill("Descripción de prueba.");
   await page.getByRole("button", { name: "Publicar" }).click();
@@ -131,6 +134,7 @@ test("no avisa de la publicación de uno mismo", async ({ browser }) => {
   await expect(page.getByRole("status")).toContainText("Video listo");
   await page.getByLabel("Título").fill(`Propia ${marca}`);
   await page.getByLabel("Categoría").selectOption("ropa");
+  await page.getByLabel("Talla").selectOption("M");
   await page.getByLabel("Precio").fill("55000");
   await page.getByLabel("Descripción").fill("Mía.");
   await page.getByRole("button", { name: "Publicar" }).click();

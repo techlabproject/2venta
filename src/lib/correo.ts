@@ -20,7 +20,7 @@ export function problemaDeCorreo(crudo: string): string | null {
   if (arrobas === 0) return "¡Uy! Le falta la @. Debería verse como nombre@gmail.com.";
   if (arrobas > 1) return "Tiene más de una @. Debería verse como nombre@gmail.com.";
   const [usuario, dominio] = correo.split("@");
-  if (!usuario) return "Falta lo que va antes de la @, por ejemplo catalina@gmail.com.";
+  if (!usuario) return "Falta lo que va antes de la @, por ejemplo nombre@gmail.com.";
   if (!dominio) return "Falta lo que va después de la @, por ejemplo @gmail.com.";
   if (!dominio.includes(".")) {
     return `Le falta el final del dominio: ¿${usuario}@${dominio}.com?`;

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/session";
 import {
   listSellerMetrics,
+  resumenDelVendedor,
   type ListingMetrics,
 } from "@/features/metrics/queries";
 import { AppHeader } from "@/components/AppHeader";
@@ -12,6 +13,8 @@ import { StatusButton } from "@/features/publish/EditForms";
 import { mediaUrl } from "@/lib/media";
 import { Volver } from "@/components/Volver";
 import { rangoDeVisitas } from "@/features/metrics/rangos";
+import { VerMas } from "@/components/VerMas";
+import { leerPagina, POR_PAGINA } from "@/features/catalog/paginas";
 
 // D-24: métricas del vendedor. Vistas, favoritos y conversaciones por publicación.
 //
@@ -56,21 +59,24 @@ const EDITABLE = ["activa", "en_revision", "reservada"];
 export default async function Metricas({
   searchParams,
 }: {
-  searchParams: Promise<{ retirada?: string }>;
+  searchParams: Promise<{ retirada?: string; pagina?: string }>;
 }) {
   const user = await currentUser();
   if (!user) redirect("/ingresar");
 
-  const todas = await listSellerMetrics(user.id);
+  const { retirada, pagina: paginaCruda } = await searchParams;
+  // Corrección 34: 24 por página y «Ver más». Las cifras de arriba salen de una
+  // consulta aparte, sin cargar todas las publicaciones para sumarlas.
+  const pagina = leerPagina(paginaCruda);
   // Lo retirado va aparte, al final: no se ve en el catálogo, pero se recupera
   // desde aquí (corrección 31).
-  const metrics = todas.filter((m) => m.status !== "retirada");
-  const retiradas = todas.filter((m) => m.status === "retirada");
-  const { retirada } = await searchParams;
+  const [metrics, retiradas, resumen] = await Promise.all([
+    listSellerMetrics(user.id, { limite: pagina * POR_PAGINA }),
+    listSellerMetrics(user.id, { retiradas: true, limite: 100 }),
+    resumenDelVendedor(user.id),
+  ]);
   const recienRetirada = retiradas.find((m) => m.listing_id === retirada);
-  const activas = metrics.filter((m) => m.status === "activa").length;
-  const vistas = metrics.reduce((t, m) => t + m.views, 0);
-  const guardados = metrics.reduce((t, m) => t + m.favorites, 0);
+  const { activas, visitas: vistas, guardados } = resumen;
 
   return (
     <>
@@ -99,7 +105,7 @@ export default async function Metricas({
           </p>
         )}
 
-        {todas.length === 0 ? (
+        {resumen.vigentes + resumen.retiradas === 0 ? (
           <div className="mt-8 rounded-2xl bg-white shadow-xs p-8 text-center ring-1 ring-line">
             <p className="font-title text-lg font-semibold">
               Todavía no has publicado nada
@@ -134,6 +140,12 @@ export default async function Metricas({
                 <Tarjeta key={m.listing_id} m={m} />
               ))}
             </ul>
+            <VerMas
+              mostrados={metrics.length}
+              total={resumen.vigentes}
+              href={`/vender/metricas?pagina=${pagina + 1}`}
+              que="publicaciones"
+            />
 
             {retiradas.length > 0 && (
               <section className="mt-10">

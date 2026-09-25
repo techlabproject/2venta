@@ -44,9 +44,27 @@ resource "aws_secretsmanager_secret" "whatsapp" {
   recovery_window_in_days = var.entorno == "dev" ? 0 : 30
 }
 
+# Igual con Twilio (D-120): el Auth Token se pone a mano.
+resource "aws_secretsmanager_secret" "twilio" {
+  count                   = var.twilio_secreto ? 1 : 0
+  name                    = "${local.nombre}/twilio"
+  recovery_window_in_days = var.entorno == "dev" ? 0 : 30
+}
+
+# Y con Inalambria Express (D-124): el token de su API se pone a mano.
+resource "aws_secretsmanager_secret" "inalambria" {
+  count                   = var.inalambria_secreto ? 1 : 0
+  name                    = "${local.nombre}/inalambria"
+  recovery_window_in_days = var.entorno == "dev" ? 0 : 30
+}
+
 locals {
   claves_secretas = concat(keys(random_password.secreto), ["DATABASE_URL"])
   whatsapp_activo = var.whatsapp_secreto && var.whatsapp_phone_number_id != ""
+  twilio_activo   = var.twilio_secreto && var.twilio_account_sid != ""
+  # Inalambria no tiene un identificador que no sea secreto: se conecta con su
+  # propia bandera, después de llenar el secreto.
+  inalambria_activo = var.inalambria_secreto && var.inalambria_activo
   # Lo que ECS pone en cada contenedor a partir de los secretos.
   secrets_ecs = concat(
     [
@@ -61,9 +79,19 @@ locals {
         valueFrom = "${aws_secretsmanager_secret.whatsapp[0].arn}:${k}::"
       }
     ] : [],
+    local.twilio_activo ? [{
+      name      = "TWILIO_AUTH_TOKEN"
+      valueFrom = "${aws_secretsmanager_secret.twilio[0].arn}:TWILIO_AUTH_TOKEN::"
+    }] : [],
+    local.inalambria_activo ? [{
+      name      = "INALAMBRIA_TOKEN"
+      valueFrom = "${aws_secretsmanager_secret.inalambria[0].arn}:INALAMBRIA_TOKEN::"
+    }] : [],
   )
   secretos_arn = concat(
     [aws_secretsmanager_secret.app.arn],
     aws_secretsmanager_secret.whatsapp[*].arn,
+    aws_secretsmanager_secret.twilio[*].arn,
+    aws_secretsmanager_secret.inalambria[*].arn,
   )
 }

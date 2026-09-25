@@ -176,7 +176,7 @@ export function AddressForm({
             label="Quién recibe"
             required
             autoComplete="name"
-            placeholder="Laura Torres"
+            placeholder="Nombre y apellido"
           />
           <CampoCelular
             id="phone"

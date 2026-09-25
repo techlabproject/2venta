@@ -5,6 +5,8 @@ import { editListing, setListingStatus, type EditResult } from "./edit";
 import { Button, ErrorNote, Field } from "@/components/ui";
 import { CONDITION_LABEL } from "@/features/catalog/labels";
 import { CampoPrecio } from "@/components/CampoPrecio";
+import { CampoDeCategoria } from "./CampoDeCategoria";
+import { CAMPO_DE_CATEGORIA } from "@/features/catalog/atributos";
 import { MIN_PRICE_COP } from "@/features/payments/money";
 import { formatearPrecio } from "@/lib/precio";
 
@@ -17,8 +19,11 @@ export function EditForm({
     description: string;
     price_cop: number;
     condition: string;
+    category: string;
     category_label: string;
     has_imei: boolean;
+    talla: string | null;
+    edad: string | null;
   };
 }) {
   const [result, submit, pending] = useActionState<EditResult | null, FormData>(
@@ -47,6 +52,14 @@ export function EditForm({
         defaultValue={listing.price_cop}
         hint={`Mínimo $${formatearPrecio(String(MIN_PRICE_COP))}.`}
       />
+
+      {/* Corrección 38: la talla o la edad sí se corrigen. */}
+      {CAMPO_DE_CATEGORIA[listing.category] && (
+        <CampoDeCategoria
+          campo={CAMPO_DE_CATEGORIA[listing.category]!}
+          valor={CAMPO_DE_CATEGORIA[listing.category] === "talla" ? listing.talla : listing.edad}
+        />
+      )}
 
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-medium">
@@ -84,8 +97,8 @@ export function EditForm({
         {/* El IMEI solo se nombra si el artículo tiene uno: salía también en ropa
             y juguetes, que nunca lo pidieron (corrección 25). */}
         {listing.has_imei
-          ? `La categoría (${listing.category_label}) y el IMEI no se cambian: eso alteraría la revisión que esta publicación ya pasó. Para eso hay que publicar de nuevo.`
-          : `La categoría (${listing.category_label}) no se cambia: eso alteraría la revisión que esta publicación ya pasó. Para eso hay que publicar de nuevo.`}
+          ? `La categoría (${listing.category_label}) y el IMEI no se cambian: para eso hay que publicar de nuevo.`
+          : `La categoría (${listing.category_label}) no se cambia: para eso hay que publicar de nuevo.`}
       </p>
 
       <Button type="submit" disabled={pending}>

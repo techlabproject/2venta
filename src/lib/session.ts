@@ -20,7 +20,22 @@ export async function currentAdmin(): Promise<SessionUser | null> {
 
 // Punto único para leer la sesión desde el servidor. Ninguna pantalla debe
 // deducir quién es el usuario de otra forma: la cookie se valida aquí.
+//
+// D-123: sin el celular confirmado nadie ha entrado. La biblioteca abre la sesión al
+// registrarse o al iniciar sesión, pero hasta confirmar el código la app la trata
+// como si no existiera: la cabecera dice «Entrar» y toda pantalla privada manda a
+// entrar, que a su vez manda a confirmar el celular.
 export async function currentUser(): Promise<SessionUser | null> {
+  const user = await usuarioSinConfirmar();
+  return user?.phoneNumberVerified ? user : null;
+}
+
+/**
+ * La persona de la sesión aunque no haya confirmado el celular. SOLO para lo que
+ * termina el registro: la pantalla del código, mandarlo, comprobarlo y cambiar el
+ * número. Cualquier otra cosa usa `currentUser`.
+ */
+export async function usuarioSinConfirmar(): Promise<SessionUser | null> {
   const session = await auth.api.getSession({ headers: await headers() });
   return (session?.user as SessionUser | undefined) ?? null;
 }

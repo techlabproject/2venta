@@ -41,7 +41,7 @@ async function main() {
     `insert into categories (slug, label, position) values
        ('tecnologia', 'Tecnología', 1),
        ('ropa',       'Ropa',       2),
-       ('ninos',      'Niños',      3)`
+       ('ninos',      'Artículos para niños', 3)`
   );
 
   // Vendedores de prueba. Son usuarios reales de la tabla de cuentas (D-03), sin
@@ -49,9 +49,9 @@ async function main() {
   const camila = "seed-camila";
   const taller = "seed-taller";
   await pool.query(
-    `insert into "user" (id, name, email, "emailVerified", "updatedAt", "phoneNumber", "phoneNumberVerified", alias, zone) values
-       ($1, 'Camila Rodríguez', 'camila@ejemplo.co', true, now(), '+573001000001', true, 'Camila R.', 'Chapinero'),
-       ($2, 'Taller Usaquén',   'taller@ejemplo.co', true, now(), '+573001000002', true, 'Taller Usaquén', 'Usaquén')`,
+    `insert into "user" (id, name, email, "emailVerified", "updatedAt", "phoneNumber", "phoneNumberVerified", alias, zone, ubicacion_lat, ubicacion_lng) values
+       ($1, 'Camila Rodríguez', 'camila@ejemplo.co', true, now(), '+573001000001', true, 'Camila R.', 'Chapinero', 4.65, -74.06),
+       ($2, 'Taller Usaquén',   'taller@ejemplo.co', true, now(), '+573001000002', true, 'Taller Usaquén', 'Usaquén', 4.71, -74.03)`,
     [camila, taller]
   );
 
@@ -71,10 +71,10 @@ async function main() {
   );
 
   await pool.query(
-    `insert into listings (seller_id, title, description, category, condition, price_cop, video_path, poster_path, imei) values
-      ($1, 'iPhone 13 128 GB', 'Batería al 89%. Sin golpes, con caja y cargador original.', 'tecnologia', 'usado_bueno', 1850000, 'seed/demo.webm', 'seed/demo.jpg', '490154203237518'),
-      ($2, 'Chaqueta de jean talla M', 'Poco uso, sin manchas ni descosidos. Talla M real.', 'ropa', 'usado_bueno', 95000, 'seed/demo.webm', 'seed/demo.jpg', null),
-      ($1, 'Coche Chicco reclinable', 'Lo usó mi hija hasta los dos años. Ruedas y cinturones perfectos.', 'ninos', 'usado_regular', 260000, 'seed/demo.webm', 'seed/demo.jpg', null)`,
+    `insert into listings (seller_id, title, description, category, condition, price_cop, video_path, poster_path, imei, talla, edad) values
+      ($1, 'iPhone 13 128 GB', 'Batería al 89%. Sin golpes, con caja y cargador original.', 'tecnologia', 'usado_bueno', 1850000, 'seed/demo.webm', 'seed/demo.jpg', '490154203237518', null, null),
+      ($2, 'Chaqueta de jean talla M', 'Poco uso, sin manchas ni descosidos. Talla M real.', 'ropa', 'usado_bueno', 95000, 'seed/demo.webm', 'seed/demo.jpg', null, 'M', null),
+      ($1, 'Coche Chicco reclinable', 'Lo usó mi hija hasta los dos años. Ruedas y cinturones perfectos.', 'ninos', 'usado_regular', 260000, 'seed/demo.webm', 'seed/demo.jpg', null, null, '1 a 2 años')`,
     [camila, taller]
   );
 

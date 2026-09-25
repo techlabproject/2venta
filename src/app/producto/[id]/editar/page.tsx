@@ -29,11 +29,15 @@ export default async function Editar({
     price_cop: number;
     condition: string;
     status: string;
+    category: string;
     category_label: string;
     has_imei: boolean;
+    talla: string | null;
+    edad: string | null;
   }>(
     `select l.id, l.title, l.description, l.price_cop, l.condition, l.status,
-            c.label as category_label, (l.imei is not null) as has_imei
+            l.category, c.label as category_label, (l.imei is not null) as has_imei,
+            l.talla, l.edad
        from listings l join categories c on c.slug = l.category
       where l.id = $1 and l.seller_id = $2`,
     [id, user.id],

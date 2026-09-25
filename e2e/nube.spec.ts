@@ -88,6 +88,7 @@ test("el circuito completo funciona contra la nube", async ({ browser }) => {
   const titulo = `Bicicleta en la nube ${Date.now()}`;
   await seller.getByLabel("Título").fill(titulo);
   await seller.getByLabel("Categoría").selectOption("ropa");
+  await seller.getByLabel("Talla").selectOption("M");
   await seller.getByLabel("Precio").fill("120000");
   await seller.getByLabel("Descripción").fill("Publicada desde la prueba de humo.");
   await seller.getByRole("button", { name: "Publicar" }).click();

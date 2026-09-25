@@ -240,10 +240,10 @@ test("grabado el video, el borrador se publica como cualquier otro", async ({
   await anonCtx.close();
 });
 
-test("un borrador de electrónica pasa igual por revisión al publicarse", async ({
+test("un borrador de electrónica sale al catálogo al grabarle el video", async ({
   browser,
 }) => {
-  // Cargar en lote no es una puerta trasera para saltarse la moderación.
+  // Desde la corrección 40 nada entra en revisión al publicar, tampoco en lote.
   const store = await storeAccount(browser);
   const titulo = `Tablet lote ${Date.now()}`;
   await uploadCsv(
@@ -262,13 +262,25 @@ test("un borrador de electrónica pasa igual por revisión al publicarse", async
 
   const anonCtx = await browser.newContext();
   const anon = await anonCtx.newPage();
-  await anon.goto("/");
+  await anon.goto(`/buscar?q=${encodeURIComponent(titulo)}`);
   await expect(
     anon.getByRole("main").getByRole("listitem").filter({ hasText: titulo })
-  ).toHaveCount(0);
+  ).toHaveCount(1);
 
   await store.ctx.close();
   await anonCtx.close();
+});
+
+test("en lote, un celular sin IMEI se rechaza y una consola sin IMEI pasa", async ({ browser }) => {
+  const store = await storeAccount(browser);
+  const marca = Date.now();
+  await uploadCsv(
+    store.page,
+    [`Samsung Galaxy S21 ${marca},tecnologia,900000,usado bueno,Buen estado,`, `Xbox One ${marca},tecnologia,700000,usado bueno,Con un control,`].join("\n"),
+  );
+  await expect(store.page.getByTestId("lote-creados")).toContainText("1 borrador");
+  await expect(store.page.getByRole("main")).toContainText("Parece un celular: falta el IMEI.");
+  await store.ctx.close();
 });
 
 test("el distintivo de tienda aparece en el catálogo y en el perfil", async ({

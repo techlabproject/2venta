@@ -2,7 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { Client } from "pg";
 import { config } from "dotenv";
 import { decryptCode } from "../src/features/auth/otp";
-import { cerrarSesion, aceptarTerminos } from "./helpers";
+import { cerrarSesion, aceptarTerminos, permitirReenvio } from "./helpers";
 import { VERSION_TERMINOS } from "../src/features/legal/version";
 
 config({ path: ".env.local" });
@@ -143,6 +143,12 @@ test("el código de otro usuario no sirve", async ({ page }) => {
 test("un correo ya registrado no crea una segunda cuenta", async ({ page }) => {
   const { email, phoneDigits } = uniqueAccount();
   await fillRegistration(page, email, phoneDigits);
+  // Confirmada: un registro sin confirmar se reemplaza (D-123,
+  // `registro-pendiente.spec.ts`); uno confirmado no.
+  await page.getByLabel("Código de seis dígitos").fill(await readOtp(`+57${phoneDigits}`));
+  await page.getByRole("button", { name: "Confirmar celular" }).click();
+  await expect(page.getByTestId("usuario")).toBeVisible();
+  await cerrarSesion(page);
 
   const otro = uniqueAccount();
   await page.goto("/registro?rol=comprador");
@@ -197,13 +203,18 @@ test("el sexto código pedido para el mismo celular se bloquea", async ({ page }
   // por número y no por dirección IP a propósito: detrás de una misma IP puede
   // haber un edificio entero de usuarios legítimos.
   const { email, phoneDigits } = uniqueAccount();
+  await page.clock.install();
   await fillRegistration(page, email, phoneDigits); // envío 1
 
   for (let i = 0; i < 4; i++) {
+    // Sin los 30 segundos de espera entre envíos (D-123), que prueba aparte
+    // `registro-pendiente.spec.ts`.
+    await permitirReenvio(page, `+57${phoneDigits}`);
     await page.getByRole("button", { name: "No me llegó, mandar otro" }).click();
     await expect(page.getByRole("status")).toBeVisible();
   }
 
+  await permitirReenvio(page, `+57${phoneDigits}`);
   await page.getByRole("button", { name: "No me llegó, mandar otro" }).click();
   await expect(alertIn(page)).toContainText("demasiados códigos");
 });
@@ -376,6 +387,7 @@ test("un celular ya confirmado en otra cuenta no confirma una segunda", async ({
 
   const b = await browser.newContext();
   const pageB = await b.newPage();
+  await pageB.clock.install();
   const emailB = uniqueAccount().email;
   await fillRegistration(pageB, emailB, phoneDigits);
 
@@ -384,6 +396,7 @@ test("un celular ya confirmado en otra cuenta no confirma una segunda", async ({
   await expect(pageA.getByTestId("usuario")).toBeVisible();
 
   // Hay un código por celular y A ya lo usó: B pide uno nuevo, como haría cualquiera.
+  await permitirReenvio(pageB, phone);
   await pageB.getByRole("button", { name: "No me llegó, mandar otro" }).click();
   await expect(pageB.getByRole("status")).toContainText("Te mandamos otro código");
   await pageB.getByLabel("Código de seis dígitos").fill(await readOtp(phone));

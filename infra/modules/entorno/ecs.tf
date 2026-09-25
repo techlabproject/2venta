@@ -17,7 +17,12 @@ locals {
   # Sin la variable, el worker usa el proveedor de prueba (no convierte nada).
   env_video    = var.video_transcodificar ? [{ name = "MEDIACONVERT_ROLE_ARN", value = aws_iam_role.mediaconvert.arn }] : []
   env_whatsapp = local.whatsapp_activo ? [{ name = "WHATSAPP_PHONE_NUMBER_ID", value = var.whatsapp_phone_number_id }] : []
-  env_todo     = concat(local.env_comun, local.env_video, local.env_whatsapp)
+  env_twilio = local.twilio_activo ? concat(
+    [{ name = "TWILIO_ACCOUNT_SID", value = var.twilio_account_sid }],
+    var.twilio_from != "" ? [{ name = "TWILIO_FROM", value = var.twilio_from }] : [],
+    var.twilio_verify_service_sid != "" ? [{ name = "TWILIO_VERIFY_SERVICE_SID", value = var.twilio_verify_service_sid }] : [],
+  ) : []
+  env_todo = concat(local.env_comun, local.env_video, local.env_whatsapp, local.env_twilio)
 }
 
 resource "aws_ecs_cluster" "principal" {

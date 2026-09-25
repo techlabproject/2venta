@@ -18,6 +18,7 @@ import { signUpload } from "../src/lib/storage";
 import { VERSION_TERMINOS } from "../src/features/legal/version";
 import { appEnv } from "../src/lib/env";
 import { ARTICULOS } from "./demo/articulos";
+import { aCuadricula, zonaReconocida } from "../src/features/ubicacion/zonas";
 
 if (appEnv() === "produccion") {
   console.error("La demostración no se carga en producción.");
@@ -45,7 +46,7 @@ async function ensureAccount(c: (typeof CUENTAS)[number]): Promise<string> {
   const res = await fetch(`${APP_URL}/api/auth/sign-up/email`, {
     method: "POST",
     headers: { "content-type": "application/json", origin: APP_URL },
-    body: JSON.stringify({ name: c.name, email: c.email, password: PASSWORD, phoneNumber: c.phone, alias: c.alias, zone: c.zone, termsVersion: VERSION_TERMINOS, birthDate: "1990-01-01" }),
+    body: JSON.stringify({ name: c.name, email: c.email, password: PASSWORD, phoneNumber: c.phone, alias: c.alias, termsVersion: VERSION_TERMINOS, birthDate: "1990-01-01" }),
   });
   if (!res.ok) throw new Error(`No se pudo crear ${c.email}: ${res.status} ${await res.text()}`);
   const created = await pool.query<{ id: string }>(`select id from "user" where email = $1`, [c.email]);
@@ -55,6 +56,14 @@ async function ensureAccount(c: (typeof CUENTAS)[number]): Promise<string> {
     `update "user" set "phoneNumberVerified" = true, role = coalesce($2, role) where id = $1`,
     [id, c.role]
   );
+  // D-122: la zona ya no se escribe al registrarse; va con su punto aproximado.
+  const zona = zonaReconocida(c.zone);
+  if (zona) {
+    await pool.query(
+      `update "user" set zone = $2, ubicacion_lat = $3, ubicacion_lng = $4 where id = $1`,
+      [id, zona.nombre, aCuadricula(zona.lat), aCuadricula(zona.lng)]
+    );
+  }
   if (c.kyc) {
     await pool.query(
       `insert into kyc_verifications (user_id, provider, reference, status)
@@ -102,15 +111,24 @@ async function main() {
   for (const a of ARTICULOS) {
     const sellerId = ids[a.vendedor];
     const exists = await pool.query(`select 1 from listings where seller_id = $1 and title = $2`, [sellerId, a.title]);
-    if (exists.rows.length) continue;
+    if (exists.rows.length) {
+      // Los que ya estaban también reciben su talla o edad (corrección 38).
+      await pool.query(
+        `update listings set talla = coalesce(talla, $3), edad = coalesce(edad, $4)
+          where seller_id = $1 and title = $2`,
+        [sellerId, a.title, a.talla ?? null, a.edad ?? null],
+      );
+      continue;
+    }
 
     const video = await upload(`${a.slug}.mp4`, "video/mp4", sellerId);
     const poster = await upload(`${a.slug}-portada.jpg`, "image/jpeg", sellerId);
     const { rows } = await pool.query<{ id: string }>(
       `insert into listings (seller_id, title, description, category, condition, price_cop,
-                             video_path, poster_path, imei, status)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'activa') returning id`,
-      [sellerId, a.title, a.description, a.category, a.condition, a.price_cop, video, poster, a.imei ?? null]
+                             video_path, poster_path, imei, status, talla, edad)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'activa', $10, $11) returning id`,
+      [sellerId, a.title, a.description, a.category, a.condition, a.price_cop, video, poster, a.imei ?? null,
+       a.talla ?? null, a.edad ?? null]
     );
     for (let i = 1; i <= 3; i++) {
       const key = await upload(`${a.slug}-${i}.jpg`, "image/jpeg", sellerId);

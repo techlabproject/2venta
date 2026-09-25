@@ -1310,3 +1310,117 @@ token y el secreto de la app viven en el secreto `<entorno>/whatsapp`, que se ll
 mano (infra/LEEME.md), nunca en Terraform ni en el repositorio. Si WhatsApp falla, la
 persona ve «No pudimos mandarte el código por WhatsApp…». **Quien no tiene WhatsApp
 no puede registrarse** hasta que haya un canal de respaldo (pendientes.md).
+
+### D-118 — 24 por página y «Ver más» (correcciones 33 y 34, 2026-09-24)
+Decisiones de Nicolás. La portada (con y sin filtros), la búsqueda y «Tus
+publicaciones» van de a 24, con «Ver más» al final. Antes la portada sin filtros
+cargaba todo lo activo y la búsqueda cortaba en 60 sin forma de ver el resto.
+`?pagina=N` muestra los primeros N × 24: «Ver más» es un enlace de verdad, así que
+con JavaScript lo nuevo aparece debajo sin mover el scroll y sin JavaScript es una
+página que un buscador sigue (D-25); no hay estado en el navegador. Tope de 50
+páginas. La página no viaja con los filtros: cambiarlos o guardar la búsqueda vuelve
+a la primera. **Destacados**: hasta 3 arriba en la primera página, también en la
+portada sin filtros (antes ahí iban todos arriba), aunque sean viejos, y siempre
+dentro de los filtros (D-10). Las cifras de «Tus publicaciones» salen de una consulta
+aparte, sin cargar todas las publicaciones.
+
+### D-119 — Publicar: sin revisión humana, IMEI solo en celulares, talla y edad, video sin sonido (correcciones 35 a 40, 2026-09-24)
+Decisiones de Nicolás.
+**Sin revisión humana previa (40, reemplaza a la D-32):** todo sale directo al
+catálogo, electrónica incluida; quedan el filtro automático, el IMEI validado y los
+reportes (la cola de `/admin` sigue para lo reportado). **El IMEI solo en celulares:**
+en tecnología se pregunta «¿Es un celular?»; con «Sí» el IMEI es obligatorio, y si el
+texto habla de un celular (iPhone, Galaxy, Redmi…, sin contar forros o cargadores) el
+servidor lo pide igual (`src/features/moderation/pareceCelular.ts`). En lote se
+valida si viene y se exige si la fila parece un celular. **Talla y edad (38):** talla
+en ropa (letras, «Talla única» y números 2–46) y edad en artículos para niños (7
+rangos), de listas cerradas (`src/features/catalog/atributos.ts`), obligatorias al
+publicar, visibles en la ficha y editables; en lote, opcionales por ahora.
+**«Artículos para niños» (37)** en vez de «Niños»; el `slug` sigue siendo `ninos`.
+**Antes de grabar (35):** una tarjeta que le dice al vendedor qué mostrar, hasta que
+empieza a grabar. **Cámara y datos (36):** el video se graba **sin sonido** (y la
+conversión tampoco produce audio) y la tarjeta pide que no salgan caras, documentos
+ni la dirección; ver `docs/alcance/camara-y-datos.md`. **(39)** Fuera «Lo pedimos
+para que nadie venda equipos robados».
+
+### D-120 — Los códigos también salen por SMS con Twilio (2026-09-24)
+Decisión de Nicolás. Meta no deja crear la plantilla de autenticación de WhatsApp sin
+la verificación del negocio, que hoy no se puede hacer; mientras tanto los códigos
+salen por **SMS con Twilio** (se eligió sobre el agregador local de la D-107 por no
+exigir compra mínima: la cuenta de prueba trae SMS gratis). Orden de canales en
+`src/lib/sms.ts`: WhatsApp si está configurado; si no está o falla, Twilio. En
+producción tiene que haber al menos un canal completo (lo exige la configuración al
+arrancar) y el código nunca va al registro; en desarrollo sí, y un envío fallido no
+bloquea. El texto deja el código al final (D-106). Cada envío queda en
+`envios_codigo` con su canal (migración 0023) y Twilio avisa la entrega a
+`/api/twilio/estado`, con la firma `X-Twilio-Signature` validada. Número de prueba
++1 737 250 8034; el Auth Token va en el secreto `<entorno>/twilio`, que se llena a mano.
+
+**Actualización (2026-09-25), Twilio Verify:** la cuenta de prueba rechaza el SMS con
+texto propio (error 572006) y solo manda sus plantillas. Se agregó **Twilio Verify**
+como tercer canal: Twilio genera, manda («Tu código de verificación de 2venta es:
+…», con el código al final) y comprueba el código. Cada código pedido anota quién
+lo tiene (`verificado_por`, migración 0024): el propio se compara con el cifrado,
+el de Verify se comprueba con Twilio (`src/features/auth/comprobar.ts`); el límite
+de intentos y el vencimiento siguen siendo de 2venta. Si Twilio no responde al
+comprobar, se dice «No pudimos comprobar el código» y no se cuenta como intento.
+
+**Actualización (2026-09-25), seguir en prueba:** Nicolás decidió no pasar Twilio a
+pago todavía (US$20 de entrada); quedan 39 verificaciones. En la prueba, el mensaje
+dice «SAMPLE TEST» en vez de «2venta» y solo llega a números inscritos en la consola
+(Verified Caller IDs). Para no gastarlas ni agotar el límite de solicitudes con las
+pruebas, en desarrollo `CODIGOS_REALES_SOLO_A` lista los números que reciben el
+código de verdad; el resto solo va al registro del servidor.
+
+### D-121 — «Cerrar todas las demás» en las sesiones (corrección 42, 2026-09-25)
+Catalina preguntó si las sesiones activas eran de verdad una funcionalidad: sí (RF-05,
+`docs/alcance/sesiones.md`). Nicolás eligió agregar **«Cerrar todas las demás»** en
+«Tu cuenta», visible solo con más de una sesión: borra todas las del dueño menos la
+actual, y quién es el dueño y cuál es la actual salen de la cookie, no del
+formulario. Es un formulario (sirve antes de que cargue el JavaScript). Descartados
+por ahora: el aviso por SMS de dispositivo nuevo (cuesta un SMS por entrada) y la
+ciudad aproximada por IP.
+Con la misma corrección, por pedido de Nicolás, **los textos de ejemplo no llevan
+nombres de personas**: «Nombre y apellido» y «nombre@gmail.com» en el registro y en
+quién recibe el envío.
+
+### D-123 — La cuenta existe solo cuando se confirma el celular (2026-09-25)
+Pedido de Nicolás al probar el registro: no tenía sentido quedar adentro con el
+código sin confirmar, y un número mal escrito no tenía arreglo. Ahora:
+- La biblioteca sigue abriendo la sesión al registrarse, pero **`currentUser()` no
+  cuenta a nadie sin el celular confirmado**: la cabecera dice «Entrar» y toda
+  pantalla privada manda a `/ingresar`, que manda a `/verificar`. Solo terminar el
+  registro usa `usuarioSinConfirmar()` (la pantalla del código, mandarlo,
+  comprobarlo y cambiar el número).
+- La cuenta nace con `registro_pendiente_desde` (migración 0026). **A las 24 horas sin
+  confirmar se borra** (el trabajo `liberar` de cada hora y cada registro nuevo), y
+  el correo y el celular quedan libres. **Un registro nuevo con el mismo correo
+  reemplaza al pendiente**; uno confirmado nunca. Un disparador quita la marca al
+  confirmar el celular por cualquier camino (la demo y las pruebas lo marcan
+  directo en la base).
+- **«¿No es tu número? Cámbialo»** en la pantalla del código: corrige el celular sin
+  volver a llenar nada y manda el código al nuevo; hasta 3 cambios por registro
+  (contra usar el cambio para mandar códigos a números ajenos) y nunca a un número
+  ya confirmado en otra cuenta.
+- Quien inicia sesión con un registro sin confirmar recibe un código y va a
+  confirmarlo. En `/verificar`, «¿Te equivocaste de cuenta? Salir».
+- Quien entra con Google (hoy apagado) también nace pendiente hasta dar y confirmar
+  su celular.
+Con el mismo pedido, **los términos se abren a pantalla completa** (antes, un panel
+desde la derecha que dejaba el formulario asomado), con el texto en una columna
+centrada.
+
+### D-124 — Los códigos por SMS salen por Inalambria Express (2026-09-25)
+Decisión de Nicolás: pasar Twilio a pago exige US$20 de entrada y todavía no vale la
+pena. Se comparó (tabla en `docs/alcance/verificacion-celular.md`): Inalambria
+Express (colombiano, paquete de 500 SMS por $19.500 con IVA, sin contrato, API con
+token), LabsMobile (US$10 mínimo), Hablame ($50.000 mínimo), Firebase (10 SMS gratis
+al día, pero cambia el flujo a su SDK con reCAPTCHA) y AWS (US$0,05 por SMS, con la
+cuenta en plan gratuito y modo de prueba). Ganó Inalambria: lo más barato para
+empezar, en pesos, y le llega a cualquier número sin inscribirlo.
+Orden de canales en `src/lib/sms.ts`: WhatsApp, **Inalambria**, Twilio (texto
+propio), Twilio Verify. Mismo texto que Twilio, con el código al final (D-106).
+`POST https://api.inalambria.express/v1/messages/send` con `async: false`, para
+saber al instante si lo aceptó; no hay aviso de entrega. Un error suyo se anota sin
+cifras largas (podría repetir el número). Token en `INALAMBRIA_TOKEN`; en la nube, en
+el secreto `<entorno>/inalambria`, conectado en dos pasos (`infra/LEEME.md`).

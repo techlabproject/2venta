@@ -90,7 +90,7 @@ test("sin palabra, el nombre del aviso sale de los filtros", async ({ page }) =>
   await page.goto("/?categoria=tecnologia&categoria=ninos&max=999");
   await vacio(page).getByText("Avísame cuando aparezca").click();
   await expect(vacio(page).getByLabel("Nombre de la búsqueda")).toHaveValue(
-    "Tecnología y Niños hasta $999",
+    "Tecnología y Artículos para niños hasta $999",
   );
 });
 

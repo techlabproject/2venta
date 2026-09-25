@@ -37,8 +37,14 @@ export default async function Avisos() {
 
         {notifications.length === 0 ? (
           <p className="mt-4 rounded-2xl bg-white shadow-xs p-4 text-sm text-ink2 ring-1 ring-line">
-            Nada nuevo. Guarda una búsqueda y te avisamos cuando aparezca algo
-            que coincida.
+            {/* Corrección 41: qué llega aquí y qué va en Guardados. */}
+            Nada nuevo por ahora. Aquí te llegan los mensajes, las ofertas y lo que
+            aparezca de tus búsquedas guardadas. Los artículos que marcas con ♡ están
+            en{" "}
+            <Link href="/favoritos" className="text-brand underline">
+              Guardados
+            </Link>
+            .
           </p>
         ) : (
           <>

@@ -100,7 +100,8 @@ async function sellerPublishesLaptop(browser: import("@playwright/test").Browser
   const titulo = `MacBook Pro 14" ${Date.now()}`;
   await page.getByLabel("Título").fill(titulo);
   await page.getByLabel("Categoría").selectOption("tecnologia");
-  await page.getByLabel("IMEI del equipo").fill(freshImei());
+  // Un portátil no tiene IMEI (corrección 40).
+  await page.getByRole("radio", { name: "No" }).check();
   await page.getByLabel("Precio").fill("4500000");
   await page
     .getByLabel("Descripción")

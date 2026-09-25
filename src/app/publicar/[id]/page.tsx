@@ -41,11 +41,9 @@ export default async function PublicarBorrador({
         <p className="mt-1 text-sm text-muted">
           {formatCop(draft.price_cop)} · {draft.label}
         </p>
-        <p className="mt-4 text-sm text-ink2">
-          Solo falta el video. Es lo que le permite al comprador ver que el
-          artículo existe y en qué estado está, y por eso se graba aquí y no se
-          sube.
-        </p>
+        {/* El porqué ya no va aquí: la tarjeta «Antes de grabar» dice qué
+            mostrar (corrección 35). */}
+        <p className="mt-4 text-sm text-ink2">Solo falta el video.</p>
         <DraftVideoForm draftId={id} />
       </main>
     </>

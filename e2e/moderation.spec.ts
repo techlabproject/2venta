@@ -31,6 +31,13 @@ async function fillPublishForm(
 
   await page.getByLabel("Título").fill(opts.title);
   await page.getByLabel("Categoría").selectOption(opts.category);
+  // Corrección 38: talla en ropa, edad en artículos para niños.
+  if (opts.category === "ropa") await page.getByLabel("Talla").selectOption("M");
+  if (opts.category === "ninos") await page.getByLabel("Para qué edad").selectOption("3 a 4 años");
+  // Corrección 40: en tecnología se dice si es un celular; el IMEI es solo suyo.
+  if (opts.category === "tecnologia") {
+    await page.getByRole("radio", { name: opts.imei !== undefined ? "Sí" : "No" }).check();
+  }
   if (opts.imei !== undefined) await page.getByLabel("IMEI del equipo").fill(opts.imei);
   await page.getByLabel("Precio").fill(String(opts.price));
   await page.getByLabel("Descripción").fill(opts.description ?? "En buen estado.");
@@ -44,10 +51,21 @@ test("publicar electrónica exige el IMEI", async ({ browser }) => {
 
   await page.goto("/publicar");
   await page.getByLabel("Categoría").selectOption("tecnologia");
+  // Corrección 40: primero se pregunta si es un celular; el IMEI es solo suyo.
+  await expect(page.getByText("¿Es un celular?")).toBeVisible();
+  await expect(page.getByLabel("IMEI del equipo")).toHaveCount(0);
+  await page.getByRole("radio", { name: "No" }).check();
+  await expect(page.getByLabel("IMEI del equipo")).toHaveCount(0);
+  await page.getByRole("radio", { name: "Sí" }).check();
   await expect(page.getByLabel("IMEI del equipo")).toBeVisible();
+  // Corrección 39: la pista dice cómo encontrarlo, sin sermón.
+  await expect(page.getByText("Son 15 dígitos.")).toBeVisible();
+  await expect(page.getByText("equipos robados")).toHaveCount(0);
 
-  // En ropa no se pide.
+  // En ropa no se pregunta ni se pide.
   await page.getByLabel("Categoría").selectOption("ropa");
+  await page.getByLabel("Talla").selectOption("M");
+  await expect(page.getByText("¿Es un celular?")).toHaveCount(0);
   await expect(page.getByLabel("IMEI del equipo")).toHaveCount(0);
 
   await ctx.close();
@@ -70,13 +88,14 @@ test("un IMEI inventado se rechaza", async ({ browser }) => {
   await ctx.close();
 });
 
-test("la electrónica queda en revisión y no sale al catálogo", async ({ browser }) => {
-  // R-03: sin contraste automático de IMEI, la electrónica la mira una persona.
+// Corrección 40 (decisión de Nicolás): sin revisión humana previa, y el IMEI solo
+// para celulares.
+test("la electrónica sale directo al catálogo, y un celular muestra su IMEI validado", async ({ browser }) => {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   await verifiedSeller(page);
 
-  const titulo = `Celular en revisión ${Date.now()}`;
+  const titulo = `Celular directo ${Date.now()}`;
   await fillPublishForm(page, {
     title: titulo,
     price: 900_000,
@@ -84,20 +103,46 @@ test("la electrónica queda en revisión y no sale al catálogo", async ({ brows
     imei: freshImei(),
   });
   await expect(page).toHaveURL(/\/producto\//);
+  await expect(page.getByTestId("atributos")).toContainText("IMEI validado");
 
   const anonCtx = await browser.newContext();
   const anon = await anonCtx.newPage();
-  await anon.goto("/");
+  await anon.goto(`/buscar?q=${encodeURIComponent(titulo)}`);
   await expect(
     anon.getByRole("main").getByRole("listitem").filter({ hasText: titulo })
-  ).toHaveCount(0);
-  await anon.goto(`/buscar?q=${encodeURIComponent(titulo.split(" ")[0])}`);
-  await expect(
-    anon.getByRole("main").getByRole("listitem").filter({ hasText: titulo })
-  ).toHaveCount(0);
+  ).toHaveCount(1);
 
   await ctx.close();
   await anonCtx.close();
+});
+
+test("una consola se publica sin IMEI", async ({ browser }) => {
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await verifiedSeller(page);
+
+  const titulo = `Xbox Series S ${Date.now()}`;
+  await fillPublishForm(page, { title: titulo, price: 1_200_000, category: "tecnologia" });
+  await expect(page).toHaveURL(/\/producto\//);
+  await expect(page.getByTestId("atributos")).not.toContainText("IMEI");
+
+  await ctx.close();
+});
+
+test("decir que no es un celular no evita el IMEI si el texto dice que lo es", async ({ browser }) => {
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await verifiedSeller(page);
+
+  await fillPublishForm(page, {
+    title: `iPhone 13 de 128 GB ${Date.now()}`,
+    price: 1_800_000,
+    category: "tecnologia",
+  });
+  await expect(alertIn(page)).toContainText("Parece un celular");
+  await expect(page).toHaveURL(/\/publicar/);
+
+  await ctx.close();
 });
 
 test("ropa y niños salen directo al catálogo", async ({ browser }) => {
@@ -190,6 +235,9 @@ test("un administrador aprueba y la publicación sale al catálogo", async ({
   });
   await expect(page).toHaveURL(/\/producto\//);
   const listingId = new URL(page.url()).pathname.split("/").pop()!;
+  // Desde la corrección 40 nada entra en revisión al publicar; la cola sigue para
+  // lo que llega por reportes.
+  await withDb((c) => c.query(`update listings set status = 'en_revision' where id = $1`, [listingId]));
 
   const adminCtx = await browser.newContext();
   const admin = await adminCtx.newPage();
@@ -240,6 +288,7 @@ test("quien no es administrador no puede aprobar llamando la acción directament
   });
   await expect(sp).toHaveURL(/\/producto\//);
   const listingId = new URL(sp.url()).pathname.split("/").pop()!;
+  await withDb((c) => c.query(`update listings set status = 'en_revision' where id = $1`, [listingId]));
 
   // El propio vendedor intenta aprobarse.
   await sp.evaluate(async (id) => {
@@ -325,6 +374,7 @@ test("un precio negativo se rechaza en vez de volverse positivo", async ({ brows
   await expect(page.getByRole("status")).toContainText("Video listo");
   await page.getByLabel("Título").fill(titulo);
   await page.getByLabel("Categoría").selectOption("ropa");
+  await page.getByLabel("Talla").selectOption("M");
   await page.getByLabel("Descripción").fill("En buen estado.");
 
   // Desde la corrección 24 el campo no deja escribir el signo, y lo dice a la

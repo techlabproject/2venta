@@ -3,14 +3,18 @@ import { releaseExpiredOrders } from "@/features/payments/release";
 import { expireAbandonedCheckouts } from "@/features/payments/abandon";
 import { notifyForListing } from "@/features/alerts/queries";
 import { markVideoReady, requestTranscode } from "@/features/video/queries";
+import { borrarPendientesVencidos } from "@/features/auth/pendientes";
 
 // Un trabajo, una función de features. Aquí no hay lógica: si alguna vez la hay,
 // el worker ya es un segundo sistema (regla 5 de ARQUITECTURA.md).
 export async function handle(job: Job): Promise<string> {
   switch (job.type) {
     case "liberar": {
+      // El mismo programador de cada hora barre los registros sin confirmar (D-123):
+      // un trabajo nuevo pediría otra regla en la nube para algo tan pequeño.
       const n = await releaseExpiredOrders();
-      return `liberados: ${n}`;
+      const borrados = await borrarPendientesVencidos();
+      return `liberados: ${n}; registros vencidos borrados: ${borrados}`;
     }
     case "caducar": {
       const n = await expireAbandonedCheckouts();

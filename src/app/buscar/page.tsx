@@ -6,6 +6,7 @@ import {
   BarraDeBusqueda,
   FiltrosLaterales,
 } from "@/features/catalog/SearchFilters";
+import { ZONAS } from "@/features/ubicacion/zonas";
 import { CamposDeFiltro } from "@/features/catalog/CamposDeFiltro";
 import { PanelDeFiltros } from "@/features/catalog/PanelDeFiltros";
 import { SinResultados } from "@/features/catalog/SinResultados";
@@ -16,11 +17,12 @@ import {
   cuantosFiltros,
   describirFiltros,
   hayFiltros,
-  listZones,
   parseFilters,
   searchListings,
 } from "@/features/catalog/search";
 import { Volver } from "@/components/Volver";
+import { VerMas } from "@/components/VerMas";
+import { hrefDePagina, leerPagina } from "@/features/catalog/paginas";
 
 // Pantalla 1e del mockup. Renderizada en servidor: los filtros viven en la
 // dirección, así que un resultado se puede compartir por chat y el buscador la
@@ -40,17 +42,17 @@ export default async function Buscar({
     }
   }
 
-  const [user, categories, zones] = await Promise.all([
-    currentUser(),
-    listCategories(),
-    listZones(),
-  ]);
+  const [user, categories] = await Promise.all([currentUser(), listCategories()]);
   const filters = conCategoriasConocidas(parseFilters(params), categories);
+  // Correcciones 33 y 34: 24 por página y «Ver más»; la página no viaja con los
+  // filtros (cambiarlos o guardar la búsqueda vuelve a la primera).
+  const pagina = leerPagina(params.get("pagina"));
+  params.delete("pagina");
   const [listings, total] = await Promise.all([
-    searchListings(filters),
+    searchListings(filters, pagina),
     countListings(filters),
   ]);
-  const nombresDeZona = zones.map((z) => z.zone);
+  const nombresDeZona = ZONAS.map((z) => z.nombre);
 
   return (
     <>
@@ -91,12 +93,6 @@ export default async function Buscar({
                 <p data-testid="conteo" className="text-sm text-muted">
                   {total === 1 ? "1 resultado" : `${total} resultados`}
                 </p>
-                {/* Hasta que haya paginación (corrección 33) se traen 60. */}
-                {total > listings.length && (
-                  <p className="text-xs text-muted">
-                    Se muestran los {listings.length} primeros.
-                  </p>
-                )}
               </div>
               <div className="lg:hidden">
                 <PanelDeFiltros
@@ -131,11 +127,18 @@ export default async function Buscar({
                 sugerencia={describirFiltros(filters, categories)}
               />
             ) : (
-              <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
-                {listings.map((l) => (
-                  <ListingCard key={l.id} listing={l} />
-                ))}
-              </ul>
+              <>
+                <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
+                  {listings.map((l) => (
+                    <ListingCard key={l.id} listing={l} />
+                  ))}
+                </ul>
+                <VerMas
+                  mostrados={listings.length}
+                  total={total}
+                  href={hrefDePagina("/buscar", params, pagina + 1)}
+                />
+              </>
             )}
           </div>
         </div>

@@ -74,10 +74,11 @@ export function moderateListing(input: {
 /**
  * Qué estado le corresponde a una publicación recién creada.
  *
- * R-03: sin acceso automatizado a la base de equipos reportados, la electrónica
- * pasa por revisión humana antes de estar visible. Ropa y niños salen directo.
- * Cuando el contraste sea automático, esta función es lo único que cambia.
+ * Todo sale directo al catálogo (corrección 40, decisión de Nicolás; reemplaza a la
+ * D-32): la revisión humana de la electrónica demoraba sin poder contrastar el IMEI
+ * contra nada. Queda el filtro automático, el IMEI validado en celulares y los
+ * reportes. `en_revision` sigue existiendo para lo que llegue reportado.
  */
-export function initialStatus(category: string): "activa" | "en_revision" {
-  return category === "tecnologia" ? "en_revision" : "activa";
+export function initialStatus(): "activa" | "en_revision" {
+  return "activa";
 }

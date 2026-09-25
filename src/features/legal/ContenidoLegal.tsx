@@ -167,13 +167,15 @@ export function ContenidoLegal() {
             equipo de 2venta antes de mostrarla como empresa.
           </li>
           <li>
-            Cada publicación lleva un video grabado dentro de la aplicación, que prueba
-            que tienes el artículo. Las fotos sí pueden venir de tu galería.
+            Cada publicación lleva un video grabado dentro de la aplicación, sin
+            sonido, que prueba que tienes el artículo. El video es público: cuida que no
+            salgan caras, documentos ni tu dirección. Las fotos sí pueden venir de tu
+            galería.
           </li>
           <li>
-            Describe el artículo tal como es: estado, detalles y defectos. En
-            electrónica se pide el IMEI o serial, y la publicación la revisa una
-            persona antes de quedar visible.
+            Describe el artículo tal como es: estado, detalles y defectos. En los
+            celulares se pide el IMEI; en ropa, la talla, y en artículos para niños, la
+            edad.
           </li>
           <li>
             El precio mínimo de publicación es de $10.000. No se permiten armas,
@@ -408,9 +410,9 @@ export function ContenidoLegal() {
             legal y el RUT, que solo ve el equipo.
           </li>
           <li>
-            <strong>Publicaciones:</strong> video, fotos, descripción y, en
-            electrónica, el IMEI o serial. Para mostrar el artículo y prevenir la venta
-            de equipos robados.
+            <strong>Publicaciones:</strong> video (sin sonido), fotos, descripción y,
+            en celulares, el IMEI. Para mostrar el artículo y prevenir la venta de
+            equipos robados.
           </li>
           <li>
             <strong>Pedidos:</strong> nombre y celular de quien recibe y la dirección

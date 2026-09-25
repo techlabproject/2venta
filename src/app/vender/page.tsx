@@ -6,7 +6,7 @@ import { beginVerification } from "@/features/kyc/actions";
 import { AppHeader } from "@/components/AppHeader";
 import { Button, ButtonLink } from "@/components/ui";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
-import { listSellerMetrics } from "@/features/metrics/queries";
+import { resumenDelVendedor } from "@/features/metrics/queries";
 import { Volver } from "@/components/Volver";
 import { rangoDeVisitas } from "@/features/metrics/rangos";
 import { getJuridica, getVendedor } from "@/features/sellers/queries";
@@ -38,9 +38,10 @@ export default async function Vender({
   const aprobado = v?.status === "aprobado";
   // Las cifras de la portada del panel salen de las mismas publicaciones que se
   // gestionan un clic más adentro: no hay una segunda fuente que pueda mentir.
-  const metrics = aprobado ? await listSellerMetrics(user.id) : [];
-  const activas = metrics.filter((m) => m.status === "activa").length;
-  const vistas = metrics.reduce((t, m) => t + m.views, 0);
+  const resumen = aprobado ? await resumenDelVendedor(user.id) : null;
+  const publicadas = resumen ? resumen.vigentes + resumen.retiradas : 0;
+  const activas = resumen?.activas ?? 0;
+  const vistas = resumen?.visitas ?? 0;
 
   return (
     <>
@@ -67,7 +68,7 @@ export default async function Vender({
                 Tu perfil muestra el distintivo de identidad verificada.
               </p>
 
-              {metrics.length > 0 && (
+              {publicadas > 0 && (
                 <dl className="mt-6 flex gap-8 border-t border-cream/20 pt-5">
                   <div>
                     <dt className="text-xs text-cream/70">
@@ -105,7 +106,7 @@ export default async function Vender({
                 titulo="Tus publicaciones"
                 texto="Ver visitas, corregir el precio, reservar o retirar."
                 accion={
-                  metrics.length > 0 ? `Gestionar las ${metrics.length}` : "Ver"
+                  publicadas > 0 ? `Gestionar las ${publicadas}` : "Ver"
                 }
               />
               <Atajo

@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { listCategories, listListings } from "@/features/catalog/queries";
+import { listCategories } from "@/features/catalog/queries";
+import { hrefDePagina, leerPagina } from "@/features/catalog/paginas";
+import { VerMas } from "@/components/VerMas";
 import { ListingCard } from "@/features/catalog/ListingCard";
 import { AppHeader } from "@/components/AppHeader";
 import { Arco } from "@/components/Arco";
@@ -9,10 +11,10 @@ import {
   cuantosFiltros,
   describirFiltros,
   hayFiltros,
-  listZones,
   parseFilters,
   searchListings,
 } from "@/features/catalog/search";
+import { ZONAS } from "@/features/ubicacion/zonas";
 import { CamposDeFiltro } from "@/features/catalog/CamposDeFiltro";
 import { PanelDeFiltros } from "@/features/catalog/PanelDeFiltros";
 import { SinResultados } from "@/features/catalog/SinResultados";
@@ -38,15 +40,20 @@ export default async function Home({
   }
   // La búsqueda por texto sigue siendo cosa de `/buscar`.
   params.delete("q");
-  const [categories, zonas, user] = await Promise.all([
-    listCategories(),
-    listZones(),
-    currentUser(),
-  ]);
+  const [categories, user] = await Promise.all([listCategories(), currentUser()]);
   const filtros = conCategoriasConocidas(parseFilters(params), categories);
   const filtrando = hayFiltros(filtros);
-  const listings = filtrando ? await searchListings(filtros) : await listListings();
-  const total = filtrando ? await countListings(filtros) : listings.length;
+  // Correcciones 33 y 34: 24 por página. Antes la portada sin filtros cargaba
+  // todas las publicaciones activas de una vez. Con y sin filtros es la misma
+  // consulta: sin filtros son todos los activos, del más reciente al más viejo.
+  const pagina = leerPagina(params.get("pagina"));
+  // Fuera de la dirección de los filtros: cambiar de categoría o guardar la
+  // búsqueda vuelve a la primera página.
+  params.delete("pagina");
+  const [listings, total] = await Promise.all([
+    searchListings(filtros, pagina),
+    countListings(filtros),
+  ]);
 
   return (
     <>
@@ -114,7 +121,7 @@ export default async function Home({
                 key={params.toString()}
                 filters={filtros}
                 categories={categories}
-                zones={zonas.map((z) => z.zone)}
+                zones={ZONAS.map((z) => z.nombre)}
                 prefijo="portada"
               />
             </PanelDeFiltros>
@@ -144,13 +151,6 @@ export default async function Home({
               <h2 data-testid="conteo" className="font-title text-xl font-semibold">
                 {total === 1 ? "1 resultado" : `${total} resultados`}
               </h2>
-              {/* Hasta que haya paginación (corrección 33) la grilla trae los
-                  primeros 60: decir 80 y mostrar 60 sin avisar es mentir. */}
-              {total > listings.length && (
-                <p className="mt-1 text-sm text-muted">
-                  Se muestran los {listings.length} primeros.
-                </p>
-              )}
             </div>
             <Link href="/" scroll={false} className="text-sm text-brand underline">
               Quitar filtros
@@ -183,6 +183,11 @@ export default async function Home({
             <ListingCard key={l.id} listing={l} />
           ))}
         </ul>
+        <VerMas
+          mostrados={listings.length}
+          total={total}
+          href={hrefDePagina("/", params, pagina + 1)}
+        />
       </main>
     </>
   );

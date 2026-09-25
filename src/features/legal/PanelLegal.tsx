@@ -6,8 +6,11 @@ import { ContenidoLegal } from "./ContenidoLegal";
 import { VERSION_TERMINOS } from "./version";
 
 /**
- * Los Términos y la Política de datos en un panel que entra desde la derecha, con
- * «Aceptar» al final (corrección 11, decisión de Nicolás).
+ * Los Términos y la Política de datos a pantalla completa, con «Aceptar» al final
+ * (corrección 11). Antes era un panel que entraba desde la derecha y dejaba el
+ * formulario asomado a la izquierda; Nicolás lo pidió a pantalla completa
+ * (2026-09-25). El texto va en una columna centrada: una línea de todo el ancho
+ * no se lee (D-70).
  *
  * Con `alAceptar` es el paso del registro: el botón está al final a propósito, para
  * que aceptar sea lo último después de leer. Sin él es solo lectura, desde «Tu
@@ -44,26 +47,35 @@ export function PanelLegal({
       ref={dialogo}
       onClose={alCerrar}
       aria-labelledby="titulo-legal"
-      onClick={(e) => e.target === dialogo.current && dialogo.current.close()}
-      // En el teléfono deja una franja del fondo a la izquierda: sin ella no había
-      // «fuera» que tocar para cerrar (Luna, fila 11).
-      className="fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-dvh w-[calc(100vw-2.5rem)] max-w-2xl bg-cream p-0 text-ink shadow-xl transition-[translate,overlay,display] duration-300 ease-salida transition-discrete not-open:translate-x-full starting:open:translate-x-full backdrop:bg-ink/40 motion-reduce:transition-none sm:rounded-l-2xl"
+      // A pantalla completa no hay «fuera» que tocar: se cierra con la X de la
+      // cabecera, que siempre está a la vista, o con Escape.
+      className="fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none bg-cream p-0 text-ink transition-[translate,opacity,overlay,display] duration-300 ease-salida transition-discrete not-open:translate-y-6 not-open:opacity-0 starting:open:translate-y-6 starting:open:opacity-0 backdrop:bg-ink/40 motion-reduce:transition-none"
     >
       <div className="flex h-full flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-line bg-white px-5 py-4 sm:rounded-tl-2xl">
-          <h2 id="titulo-legal" className="font-title text-lg font-semibold">
-            Términos y política de datos
-          </h2>
-          <button
-            type="button"
-            aria-label="Cerrar los términos"
-            onClick={() => dialogo.current?.close()}
-            className="grid size-9 place-items-center rounded-xl text-ink2 transition hover:bg-ph"
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
+        <header className="border-b border-line bg-white">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-5 py-4">
+            <h2 id="titulo-legal" className="font-title text-lg font-semibold">
+              Términos y política de datos
+            </h2>
+            <button
+              type="button"
+              aria-label="Cerrar los términos"
+              onClick={() => dialogo.current?.close()}
+              className="grid size-9 place-items-center rounded-xl text-ink2 transition hover:bg-ph"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="size-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          </div>
         </header>
 
         <div
@@ -80,23 +92,26 @@ export function PanelLegal({
           }}
           className="flex-1 overflow-y-auto px-5 py-6 [&_.nota-abogado]:hidden"
         >
-          <ContenidoLegal />
+          <div className="mx-auto max-w-3xl">
+            <ContenidoLegal />
 
-          <div className="mt-8 border-t border-line pt-5 pb-4">
-            {alAceptar ? (
-              <>
-                <Button type="button" onClick={alAceptar}>
-                  Aceptar
-                </Button>
-                <p className="mt-2 text-center text-xs text-muted">
-                  Aceptas la versión {VERSION_TERMINOS}. Guardamos cuándo lo hiciste.
+            <div className="mt-8 border-t border-line pt-5 pb-4">
+              {alAceptar ? (
+                <>
+                  <Button type="button" onClick={alAceptar}>
+                    Aceptar
+                  </Button>
+                  <p className="mt-2 text-center text-xs text-muted">
+                    Aceptas la versión {VERSION_TERMINOS}. Guardamos cuándo lo
+                    hiciste.
+                  </p>
+                </>
+              ) : aceptadoEl ? (
+                <p className="text-sm text-ink2">
+                  Aceptaste la versión {VERSION_TERMINOS} el {aceptadoEl}.
                 </p>
-              </>
-            ) : aceptadoEl ? (
-              <p className="text-sm text-ink2">
-                Aceptaste la versión {VERSION_TERMINOS} el {aceptadoEl}.
-              </p>
-            ) : null}
+              ) : null}
+            </div>
           </div>
         </div>
       </div>

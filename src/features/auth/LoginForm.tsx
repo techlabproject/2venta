@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Button, ErrorNote, Field } from "@/components/ui";
 import { CampoCorreo } from "@/components/CampoCorreo";
-import { destinoInterno } from "@/lib/destino";
+import { conVolver, destinoInterno } from "@/lib/destino";
+import { sendCode } from "./actions";
 
 export function LoginForm() {
   const router = useRouter();
@@ -49,6 +50,17 @@ export function LoginForm() {
             : "Correo o contraseña incorrectos.",
       );
       setBusy(false);
+      return;
+    }
+
+    // D-123: un registro que no confirmó el celular no entra: se le manda un código
+    // y va a confirmarlo. Si el código no sale, la pantalla del código deja pedirlo.
+    const confirmado = (res.data?.user as { phoneNumberVerified?: boolean } | undefined)
+      ?.phoneNumberVerified;
+    if (confirmado === false) {
+      await sendCode().catch(() => null);
+      router.refresh();
+      router.replace(conVolver("/verificar", destino === "/" ? null : destino));
       return;
     }
 

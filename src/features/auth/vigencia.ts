@@ -7,3 +7,10 @@
  * No importa nada: lo lee también la pantalla.
  */
 export const CODIGO_VALIDO_MINUTOS = 10;
+
+/**
+ * Cuánto hay que esperar para pedir otro código al mismo número (pedido de Nicolás,
+ * 2026-09-25: «cada 30 segundos, como otros logins»). La pantalla lo cuenta hacia
+ * atrás y el servidor lo exige.
+ */
+export const ESPERA_PARA_REENVIAR_S = 30;

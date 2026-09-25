@@ -26,13 +26,29 @@ export type Listing = {
    * identifica un equipo concreto y publicarlo deja rastrear a su dueño.
    */
   has_imei: boolean;
+  /** Corrección 38: solo en ropa y en artículos para niños; null en lo anterior. */
+  talla: string | null;
+  edad: string | null;
   promoted: boolean;
   status: string;
+  /**
+   * D-122: km entre el vendedor y quien mira, si se sabe dónde están los dos. Sale
+   * de puntos en cuadrícula de ~1 km, así que se muestra redondeada.
+   */
+  distancia_km: number | null;
 };
 
 // El distintivo de verificado no es una columna que la aplicación pueda escribir:
 // sale del estado que reportó el proveedor externo. Si no hay fila aprobada, no hay
 // distintivo.
+//
+// `distancia` es una expresión que arma el buscador con números de parámetro
+// (`distancia_km(u.ubicacion_lat, u.ubicacion_lng, $1, $2)`), nunca con valores: los
+// del comprador entran como parámetros (D-122). Sin punto, la columna es nula.
+export function listingSelect(distancia: string | null): string {
+  return LISTING_SELECT.replace("/*distancia*/ null", distancia ?? "null");
+}
+
 export const LISTING_SELECT = `
   select l.id, l.title, l.description, l.category, l.condition, l.price_cop,
          l.video_path,
@@ -51,7 +67,9 @@ export const LISTING_SELECT = `
          (st.user_id is not null) as seller_is_store,
          u.avatar_path as seller_avatar_path,
          (l.imei is not null) as has_imei,
-         (pr.id is not null) as promoted
+         l.talla, l.edad,
+         (pr.id is not null) as promoted,
+         /*distancia*/ null::double precision as distancia_km
   from listings l
   -- Las publicaciones de una cuenta suspendida no se ven (RF-41).
   join "user" u          on u.id = l.seller_id and u.suspended_at is null
@@ -69,21 +87,6 @@ export function listCategories(): Promise<Category[]> {
   return query<Category>(
     `select slug, label from categories where active order by position`
   );
-}
-
-// Solo lo activo sale al público: lo que está en revisión, rechazado o vendido no
-// tiene por qué verse.
-export function listListings(category?: string): Promise<Listing[]> {
-  // D-10: los destacados van primero, pero marcados. Nadie tiene que adivinar por
-  // qué ese artículo está arriba.
-  const order = `order by (pr.id is not null) desc, l.created_at desc`;
-  if (category) {
-    return query<Listing>(
-      `${LISTING_SELECT} where l.status = 'activa' and l.category = $1 ${order}`,
-      [category]
-    );
-  }
-  return query<Listing>(`${LISTING_SELECT} where l.status = 'activa' ${order}`);
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

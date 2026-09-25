@@ -6,6 +6,25 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
 
 ## Bloqueos para salir a producción
 
+- **SMS por Twilio (D-120), cuenta de prueba**: solo envía a números verificados en la
+  consola de Twilio y **rechaza el texto propio** (error 572006), por eso los códigos
+  salen por Twilio Verify con su plantilla; el número es de EE. UU. (+1 737 250 8034).
+  Con Verify, si Twilio no responde al comprobar, la persona ve «¡Uy! No pudimos
+  comprobar el código» y no puede seguir hasta que Twilio vuelva (no hay respaldo).
+  Nicolás decidió seguir en la prueba (2026-09-25; pasar a pago cuesta US$20 de
+  entrada): quedan **39 verificaciones**, el SMS dice «(SAMPLE TEST)» y solo llega a
+  números inscritos en *Verified Caller IDs* (cada persona que pruebe tiene que
+  inscribirse, dictando un código). En desarrollo solo `CODIGOS_REALES_SOLO_A` recibe
+  SMS de verdad. Para usuarios reales: pasarla a pago (unos US$0,05 por
+  SMS a Colombia, ~$210 COP) o volver al agregador local de la D-107 (~$6 COP).
+  Nicolás tiene que poner el Auth Token en el secreto `2venta-dev/twilio`.
+- **Meta (2026-09-24)**: la plantilla `codigo_verificacion` no se pudo crear («Esta cuenta
+  de WhatsApp Business no tiene permiso para crear una plantilla de mensaje»); el
+  portafolio «Boteame» **no está verificado** — Nicolás tiene que iniciar la
+  verificación del negocio (RUT o Cámara de Comercio). El nombre visible del número
+  +57 311 5705501 se pidió cambiar de «Bogota Detaling Center sede Polo» a «2venta»
+  (**en revisión**): los clientes del detailing que le escriben verán el cambio. La
+  foto del perfil y la categoría («Automóviles») siguen siendo del detailing.
 - **WhatsApp Cloud conectado en el código (D-117), falta encenderlo**: rotar el token
   y el secreto de la app (Nicolás los pegó en el chat el 2026-09-24), llenar el
   secreto `2venta-dev/whatsapp`, poner el id del número en `infra/envs/dev/main.tf`,
@@ -51,6 +70,17 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
   escritos, pero **no hay flujo en la app para ejecutarlos** con el proveedor de pagos.
 
 ## Producto y experiencia
+
+- **Guardados (fila 41)**: el retirado se ve en «Ya no están» sin enlace (su ficha no es
+  pública). Si suspenden al vendedor, sus artículos se retiran y pasa lo mismo.
+- **Talla y edad (fila 38)**: todavía no son filtros de búsqueda; en la carga en lote
+  son opcionales (columnas `talla` y `edad` sin agregar al CSV); las publicaciones
+  anteriores no las tienen y se piden al editarlas.
+- **Sin revisión humana de la electrónica (fila 40)**: un celular robado con IMEI
+  válido se publica; depende de los reportes. Si algún día hay acceso a la base de
+  IMEI reportados, se contrasta al publicar.
+- **Videos con personas o datos (fila 36)**: nada los detecta; depende de reportes.
+  Los videos grabados antes de la fila 36 conservan el sonido.
 
 - **Fotos en el chat: en evaluación** (fila 21). Opciones en `docs/alcance/chat.md`.
 - **Chat**: sin avisos por fuera de la app (correo/WhatsApp/push); nadie del equipo
@@ -125,6 +155,10 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
   borrar los `.png` y regenerar antes de confiar en ellas.
 - ~~Supr delante de un espacio del celular no hacía nada~~ — arreglado en la fila 24
   (también en el precio).
+- `e2e/catalog.spec.ts` y `e2e/buscar-filtros.spec.ts` todavía buscan lo sembrado en la
+  portada o en la búsqueda sin palabra. Con 24 por página (fila 33) pueden fallar si
+  corren tarde en la suite; hoy pasan. Si fallan, se hace lo mismo que en `search.spec`:
+  buscar por palabra.
 - **Credenciales de AWS del portátil vencidas** (2026-09-24): la prueba de humo contra
   la nube no pudo leer el código SMS de CloudWatch («security token … invalid»).
   Nicolás tiene que renovar el perfil `2venta`; después, correr la prueba de humo y

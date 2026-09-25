@@ -51,12 +51,12 @@ test("las etiquetas se suman entre sí", async ({ page }) => {
   await page.goto("/");
   await etiqueta(page, "Ropa").click();
   await expect(page).toHaveURL(/categoria=ropa/);
-  await etiqueta(page, "Niños").click();
+  await etiqueta(page, "Artículos para niños").click();
   await expect(page).toHaveURL(/categoria=ropa&categoria=ninos/);
-  await soloDe(page, "Ropa", "Niños");
+  await soloDe(page, "Ropa", "Artículos para niños");
   await expect(page.getByTestId("conteo")).toHaveText(new RegExp(`^${juntas} resultados?$`));
   await expect(etiqueta(page, "Ropa")).toHaveAttribute("aria-current", "true");
-  await expect(etiqueta(page, "Niños")).toHaveAttribute("aria-current", "true");
+  await expect(etiqueta(page, "Artículos para niños")).toHaveAttribute("aria-current", "true");
 
   // «Verificados» encima: todas las tarjetas de vendedor verificado.
   await etiqueta(page, "Verificados").click();
@@ -110,7 +110,7 @@ test.describe("sin JavaScript", () => {
 
   test("las etiquetas siguen filtrando y «Filtros» lleva a la búsqueda", async ({ page }) => {
     await page.goto("/?categoria=ninos");
-    await soloDe(page, "Niños");
+    await soloDe(page, "Artículos para niños");
     await expect(atajos(page).getByRole("link", { name: /^Filtros/ })).toHaveAttribute(
       "href",
       "/buscar?categoria=ninos",
@@ -148,6 +148,6 @@ test("muchas categorías inventadas delante no se comen las válidas", async ({ 
   const qs = [...basura.slice(0, 10), "categoria=ropa", "categoria=ninos", ...basura.slice(10)].join("&");
   await page.goto(`/?${qs}`);
   await expect(etiqueta(page, "Ropa")).toHaveAttribute("aria-current", "true");
-  await expect(etiqueta(page, "Niños")).toHaveAttribute("aria-current", "true");
-  await soloDe(page, "Ropa", "Niños");
+  await expect(etiqueta(page, "Artículos para niños")).toHaveAttribute("aria-current", "true");
+  await soloDe(page, "Ropa", "Artículos para niños");
 });

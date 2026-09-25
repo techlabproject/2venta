@@ -4,6 +4,8 @@ import { LoginForm } from "@/features/auth/LoginForm";
 import { GoogleButton } from "@/features/auth/GoogleButton";
 import { googleConfigured } from "@/lib/auth";
 import { conVolver, destinoInterno } from "@/lib/destino";
+import { redirect } from "next/navigation";
+import { usuarioSinConfirmar } from "@/lib/session";
 
 const MOTIVO: Record<string, string> = {
   comprar:
@@ -25,6 +27,10 @@ export default async function Ingresar({
   const razon = motivo ? MOTIVO[motivo] : undefined;
   // Quien no tiene cuenta y va a crearla no debe perder a dónde iba.
   const volver = destinoInterno(crudo) ?? undefined;
+  // D-123: quien tiene un registro a medias no inicia sesión otra vez: termina de
+  // confirmar el celular (y desde ahí puede salir y usar otra cuenta).
+  const pendiente = await usuarioSinConfirmar();
+  if (pendiente && !pendiente.phoneNumberVerified) redirect(conVolver("/verificar", volver));
 
   return (
     <AuthShell title="Iniciar sesión" subtitle={razon}>

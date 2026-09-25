@@ -40,7 +40,9 @@ const mediaConvert: VideoProvider = {
           Inputs: [
             {
               FileInput: `s3://${bucket}/${key}`,
-              AudioSelectors: { "Audio Selector 1": { DefaultSelection: "DEFAULT" } },
+              // Sin audio (corrección 36, decisión de Nicolás): el video es público y
+              // una conversación de la casa no tiene por qué quedar publicada. La
+              // salida no lleva pista de sonido aunque el original la traiga.
               VideoSelector: {},
               TimecodeSource: "ZEROBASED",
             },
@@ -71,14 +73,6 @@ const mediaConvert: VideoProvider = {
                       },
                     },
                   },
-                  AudioDescriptions: [
-                    {
-                      CodecSettings: {
-                        Codec: "AAC",
-                        AacSettings: { Bitrate: 96_000, CodingMode: "CODING_MODE_2_0", SampleRate: 48_000 },
-                      },
-                    },
-                  ],
                 },
               ],
             },

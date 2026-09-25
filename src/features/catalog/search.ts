@@ -1,21 +1,26 @@
 import { query } from "@/lib/db";
 import { CONDITION_LABEL, type Condition } from "./labels";
-import { LISTING_SELECT, type Listing } from "./queries";
+import { listingSelect, type Listing } from "./queries";
 import { MAX_PROMOTED_PER_PAGE } from "@/features/promotions/config";
+import { POR_PAGINA } from "./paginas";
+import { RADIOS, type Radio } from "@/features/ubicacion/zonas";
+import type { Punto } from "@/features/ubicacion/punto";
 
 /** El mayor valor que cabe en `price_cop` (integer de Postgres). */
 const MAX_PRECIO_COP = 2_147_483_647;
 
-export type SortKey = "recientes" | "precio_asc" | "precio_desc";
+export type SortKey = "recientes" | "precio_asc" | "precio_desc" | "cerca";
 
 export type SearchFilters = {
   q: string;
-  /** Varias a la vez (corrección 2): «Ropa» y «Niños» juntas suman, no se excluyen. */
+  /** Varias a la vez (corrección 2): «Ropa» y «Artículos para niños» juntas suman, no se excluyen. */
   categories: string[];
   minCop: number | null;
   maxCop: number | null;
   conditions: Condition[];
   zone: string | null;
+  /** D-122: km alrededor de quien busca. Solo filtra si se sabe dónde está. */
+  radio: Radio | null;
   verifiedOnly: boolean;
   sort: SortKey;
 };
@@ -24,26 +29,10 @@ const SORT_SQL: Record<SortKey, string> = {
   recientes: "l.created_at desc",
   precio_asc: "l.price_cop asc",
   precio_desc: "l.price_cop desc",
+  // Sin punto de quien busca no hay «cerca»: se ordena como «recientes». Con punto,
+  // `ordenSql` lo reemplaza.
+  cerca: "l.created_at desc",
 };
-
-/**
- * Sube los destacados al principio, con tope.
- *
- * Dos reglas que salieron de la D-10 y que importan más que el orden en sí:
- *
- * El destacado NO altera los filtros. Se aplica sobre el conjunto que el comprador
- * ya filtró, así que un destacado que no cumpla el rango de precio o la categoría
- * no se cuela. Un destacado que ignora el filtro es publicidad disfrazada de
- * resultado, y el comprador lo nota una vez y ya no confía en el orden nunca más.
- *
- * Y el tope: como máximo tres arriba. El resto del listado sigue el orden que pidió
- * el comprador, no el de quien más paga.
- */
-function reorderWithPromoted(rows: Listing[], max: number): Listing[] {
-  const promoted = rows.filter((r) => r.promoted).slice(0, max);
-  const ids = new Set(promoted.map((r) => r.id));
-  return [...promoted, ...rows.filter((r) => !ids.has(r.id))];
-}
 
 /**
  * Lee los filtros de la dirección.
@@ -92,6 +81,9 @@ export function parseFilters(params: URLSearchParams): SearchFilters {
     maxCop,
     conditions,
     zone: params.get("zona") || null,
+    radio: (RADIOS as readonly number[]).includes(Number(params.get("radio")))
+      ? (Number(params.get("radio")) as Radio)
+      : null,
     verifiedOnly: params.get("verificados") === "1",
     sort: sort && sort in SORT_SQL ? (sort as SortKey) : "recientes",
   };
@@ -114,7 +106,7 @@ export function conCategoriasConocidas(
 
 /**
  * Los filtros en palabras, para proponer el nombre de un aviso: «Tecnología
- * hasta $999» o «Ropa y Niños en Chapinero». Sin esto, quien pedía el aviso
+ * hasta $999» o «Ropa y Artículos para niños en Chapinero». Sin esto, quien pedía el aviso
  * desde la portada tenía que inventarle un nombre (Luna, corrección 5).
  */
 export function describirFiltros(f: SearchFilters, categorias: { slug: string; label: string }[]): string {
@@ -140,6 +132,8 @@ export function describirFiltros(f: SearchFilters, categorias: { slug: string; l
           ? `desde ${pesos(f.minCop)}`
           : "",
     f.zone ? `en ${f.zone}` : "",
+    // El radio no entra: depende de dónde está quien busca, que no se guarda con el
+    // aviso (D-122).
     f.verifiedOnly ? "de vendedores verificados" : "",
   ].filter(Boolean);
   const texto = partes.join(" ");
@@ -158,6 +152,7 @@ export function cuantosFiltros(f: SearchFilters): number {
     f.conditions.length +
     (f.minCop || f.maxCop ? 1 : 0) +
     (f.zone ? 1 : 0) +
+    (f.radio ? 1 : 0) +
     (f.verifiedOnly ? 1 : 0)
   );
 }
@@ -171,11 +166,15 @@ export function hayFiltros(f: SearchFilters): boolean {
       f.maxCop ||
       f.conditions.length ||
       f.zone ||
+      f.radio ||
       f.verifiedOnly,
   );
 }
 
-function condiciones(f: SearchFilters): { where: string[]; values: unknown[] } {
+function condiciones(
+  f: SearchFilters,
+  punto: Punto | null = null,
+): { where: string[]; values: unknown[]; distancia: string | null } {
   // Toda entrada del usuario entra como parámetro numerado. Nunca se concatena en
   // el texto de la consulta, ni siquiera "solo para este caso": eso es inyección
   // de SQL, y una comilla en el buscador bastaría.
@@ -185,6 +184,14 @@ function condiciones(f: SearchFilters): { where: string[]; values: unknown[] } {
     values.push(value);
     where.push(sql.replace("$?", `$${values.length}`));
   };
+
+  // D-122: el punto de quien busca también entra como parámetro. La expresión solo
+  // lleva los números de los parámetros, nunca los valores.
+  let distancia: string | null = null;
+  if (punto) {
+    values.push(punto.lat, punto.lng);
+    distancia = `distancia_km(u.ubicacion_lat, u.ubicacion_lng, $${values.length - 1}, $${values.length})`;
+  }
 
   if (f.q) {
     add(
@@ -198,24 +205,58 @@ function condiciones(f: SearchFilters): { where: string[]; values: unknown[] } {
   if (f.maxCop !== null) add("l.price_cop <= $?", f.maxCop);
   if (f.conditions.length) add("l.condition = any($?::listing_condition[])", f.conditions);
   if (f.zone) add("u.zone = $?", f.zone);
+  // Un vendedor sin ubicación no está «a menos de 5 km»: queda fuera del radio.
+  if (f.radio && distancia) add(`${distancia} <= $?`, f.radio);
   if (f.verifiedOnly) where.push("k.status = 'aprobado'");
 
   where.push("l.status = 'activa'");
-  return { where, values };
+  return { where, values, distancia };
 }
 
-export async function searchListings(f: SearchFilters): Promise<Listing[]> {
-  const { where, values } = condiciones(f);
-  const rows = await query<Listing>(
-    `${LISTING_SELECT} where ${where.join(" and ")} order by ${SORT_SQL[f.sort]} limit 60`,
+function ordenSql(f: SearchFilters, distancia: string | null): string {
+  if (f.sort === "cerca" && distancia) return `${distancia} asc nulls last, l.created_at desc`;
+  return SORT_SQL[f.sort];
+}
+
+/**
+ * Los artículos que cumplen los filtros, hasta la página `pagina` (correcciones 33
+ * y 34: `?pagina=N` muestra los primeros N × 24).
+ *
+ * Arriba, hasta tres destacados (D-10), aunque sean viejos: se pagaron para estar
+ * arriba, y con páginas uno de hace un mes quedaba fuera de la primera. Debajo, el
+ * resto en el orden que se pidió, sin repetirlos. Dos reglas de la D-10 que importan
+ * más que el orden: el destacado NO se salta los filtros (uno que no cumple el precio
+ * o la categoría no se cuela: sería publicidad disfrazada de resultado), y el tope
+ * de tres (el resto sigue el orden del comprador, no el de quien más paga).
+ */
+export async function searchListings(
+  f: SearchFilters,
+  pagina = 1,
+  punto: Punto | null = null,
+): Promise<Listing[]> {
+  const { where, values, distancia } = condiciones(f, punto);
+  const filtro = where.join(" and ");
+  const select = listingSelect(distancia);
+  const orden = ordenSql(f, distancia);
+  const destacados = await query<Listing>(
+    `${select} where ${filtro} and pr.id is not null
+      order by ${orden} limit ${MAX_PROMOTED_PER_PAGE}`,
     values
   );
-  return reorderWithPromoted(rows, MAX_PROMOTED_PER_PAGE);
+  const resto = await query<Listing>(
+    `${select} where ${filtro} and not (l.id = any($${values.length + 1}::uuid[]))
+      order by ${orden} limit $${values.length + 2}`,
+    [...values, destacados.map((d) => d.id), pagina * POR_PAGINA - destacados.length]
+  );
+  return [...destacados, ...resto];
 }
 
 /** Cuántos artículos cumplen los filtros, para el «Ver N resultados» del panel. */
-export async function countListings(f: SearchFilters): Promise<number> {
-  const { where, values } = condiciones(f);
+export async function countListings(
+  f: SearchFilters,
+  punto: Punto | null = null,
+): Promise<number> {
+  const { where, values } = condiciones(f, punto);
   const rows = await query<{ total: number }>(
     `select count(*)::int as total
        from listings l
@@ -228,11 +269,4 @@ export async function countListings(f: SearchFilters): Promise<number> {
     values,
   );
   return rows[0].total;
-}
-
-export function listZones(): Promise<{ zone: string }[]> {
-  return query<{ zone: string }>(
-    `select distinct u.zone from listings l join "user" u on u.id = l.seller_id
-      where u.zone is not null order by u.zone`
-  );
 }

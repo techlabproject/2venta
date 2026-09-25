@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { reportUser, updateProfile, type ProfileResult } from "./actions";
 import { Button, ErrorNote, Field } from "@/components/ui";
+import { ZONAS, zonaReconocida } from "@/features/ubicacion/zonas";
 
 const REASONS = [
   { value: "estafa", label: "Intentó estafarme" },
@@ -25,6 +26,9 @@ export function ProfileForm({
     ProfileResult | null,
     FormData
   >(updateProfile, null);
+  // Una zona escrita a mano antes de la lista que la migración no reconoció queda
+  // vacía: se le pide elegir.
+  const zona = zonaReconocida(zone)?.nombre ?? null;
 
   return (
     <form action={submit} className="mt-5 flex flex-col gap-4">
@@ -46,14 +50,38 @@ export function ProfileForm({
         defaultValue={alias}
         hint="Es lo que ven los demás. Tu nombre completo nunca es público."
       />
-      <Field
-        id="zone"
-        name="zone"
-        label="Zona"
-        defaultValue={zone ?? ""}
-        placeholder="Chapinero"
-        hint="Aproximada. Tu dirección exacta solo la ve la transportadora."
-      />
+      {/* Correcciones 43 y 51 (D-122): una lista cerrada. Escrita a mano, el filtro
+          mostraba «Chapinero», «chapinero» y «Chapi» como tres zonas distintas. */}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="zone" className="text-sm font-medium">
+          Zona
+        </label>
+        <select
+          id="zone"
+          name="zone"
+          defaultValue={zona ?? ""}
+          className="rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
+        >
+          <option value="">Elige tu zona</option>
+          <optgroup label="Bogotá">
+            {ZONAS.filter((z) => z.grupo === "bogota").map((z) => (
+              <option key={z.nombre} value={z.nombre}>
+                {z.nombre}
+              </option>
+            ))}
+          </optgroup>
+          <optgroup label="Municipios vecinos">
+            {ZONAS.filter((z) => z.grupo === "vecino").map((z) => (
+              <option key={z.nombre} value={z.nombre}>
+                {z.nombre}
+              </option>
+            ))}
+          </optgroup>
+        </select>
+        <p className="text-xs text-muted">
+          Aproximada. Tu dirección exacta solo la ve la transportadora.
+        </p>
+      </div>
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="bio" className="text-sm font-medium">

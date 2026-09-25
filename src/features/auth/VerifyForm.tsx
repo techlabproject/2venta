@@ -1,20 +1,44 @@
 "use client";
 
-import { CODIGO_VALIDO_MINUTOS } from "./vigencia";
+import { CODIGO_VALIDO_MINUTOS, ESPERA_PARA_REENVIAR_S } from "./vigencia";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { sendCode, verifyCode, type OtpResult } from "./actions";
+import { cambiarCelular, sendCode, verifyCode, type OtpResult } from "./actions";
 import { Button, ErrorNote } from "@/components/ui";
 import { CampoCodigo } from "@/components/CampoCodigo";
+import { CampoCelular } from "@/components/CampoCelular";
 import { digitosDeCelular, formatearCelular } from "@/lib/celular";
 
 /** «+573001110003» → «+57 300 111 0003», como se dice en voz alta. */
 const mostrarCelular = (p: string) => `+57 ${formatearCelular(digitosDeCelular(p))}`;
 import { destinoInterno } from "@/lib/destino";
 
-export function VerifyForm({ phone }: { phone: string }) {
+/**
+ * Cuenta hacia atrás los segundos que faltan para poder pedir otro código (30 entre
+ * envíos, pedido de Nicolás). El servidor también lo exige; esto solo evita tocar un
+ * botón que va a decir que no.
+ */
+function useCuentaRegresiva(inicial: number): [number, (s: number) => void] {
+  const [hasta, setHasta] = useState(() => Date.now() + inicial * 1000);
+  const [ahora, setAhora] = useState(() => Date.now());
+  useEffect(() => {
+    if (hasta <= ahora) return;
+    const t = setInterval(() => setAhora(Date.now()), 250);
+    return () => clearInterval(t);
+  }, [hasta, ahora]);
+  return [
+    Math.max(0, Math.ceil((hasta - ahora) / 1000)),
+    (segundos) => {
+      setAhora(Date.now());
+      setHasta(Date.now() + segundos * 1000);
+    },
+  ];
+}
+
+export function VerifyForm({ phone, espera: esperaInicial }: { phone: string; espera: number }) {
   const router = useRouter();
+  const [espera, reiniciarEspera] = useCuentaRegresiva(esperaInicial);
   const destino = destinoInterno(useSearchParams().get("volver")) ?? "/";
   const [note, setNote] = useState<string | null>(null);
   const [resendError, setResendError] = useState<string | null>(null);
@@ -48,8 +72,13 @@ export function VerifyForm({ phone }: { phone: string }) {
     setResendError(null);
     try {
       const res = await sendCode();
-      if (res.error) setResendError(res.error);
-      else setNote("Te mandamos otro código.");
+      if (res.error) {
+        setResendError(res.error);
+        if (res.espera) reiniciarEspera(res.espera);
+      } else {
+        setNote("Te mandamos otro código.");
+        reiniciarEspera(ESPERA_PARA_REENVIAR_S);
+      }
     } catch {
       setResendError("No pudimos mandar el código. Revisa tu conexión.");
     } finally {
@@ -58,6 +87,7 @@ export function VerifyForm({ phone }: { phone: string }) {
   }
 
   return (
+    <div className="flex flex-col gap-4">
     <form action={submit} className="flex flex-col gap-4">
       {(result?.error || resendError) && (
         <ErrorNote>{result?.error || resendError}</ErrorNote>
@@ -86,11 +116,94 @@ export function VerifyForm({ phone }: { phone: string }) {
         type="button"
         variant="ghost"
         onClick={resend}
-        disabled={reenviando}
+        disabled={reenviando || espera > 0}
         aria-busy={reenviando}
       >
-        {reenviando ? "Mandando…" : "No me llegó, mandar otro"}
+        {reenviando
+          ? "Mandando…"
+          : espera > 0
+            ? `Mandar otro en ${espera} s`
+            : "No me llegó, mandar otro"}
       </Button>
+    </form>
+    <CambiarNumero
+      onIntento={() => {
+        // Un aviso de antes no puede quedar junto al resultado nuevo (Luna, D-123).
+        setNote(null);
+        setResendError(null);
+      }}
+      onCambiado={(res) => {
+        setNote(
+          res.mismoNumero
+            ? "Es el mismo número: te mandamos otro código."
+            : "Listo: te mandamos un código al número nuevo.",
+        );
+        reiniciarEspera(ESPERA_PARA_REENVIAR_S);
+        router.refresh();
+      }}
+    />
+    </div>
+  );
+}
+
+/**
+ * D-123: «¿No es tu número?». Corrige el celular sin volver a llenar el registro y
+ * manda el código al nuevo.
+ */
+function CambiarNumero({
+  onIntento,
+  onCambiado,
+}: {
+  onIntento: () => void;
+  onCambiado: (res: OtpResult) => void;
+}) {
+  const [abierto, setAbierto] = useState(false);
+  const [result, submit, pending] = useActionState<OtpResult | null, FormData>(
+    async (prev, form) => {
+      onIntento();
+      const res = await cambiarCelular(prev, form);
+      if (!res.error) {
+        setAbierto(false);
+        onCambiado(res);
+      }
+      return res;
+    },
+    null,
+  );
+
+  if (!abierto) {
+    return (
+      <button
+        type="button"
+        onClick={() => setAbierto(true)}
+        className="text-center text-sm text-brand underline"
+      >
+        ¿No es tu número? Cámbialo
+      </button>
+    );
+  }
+  return (
+    <form
+      action={submit}
+      className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-xs ring-1 ring-line"
+    >
+      {result?.error && <ErrorNote>{result.error}</ErrorNote>}
+      <CampoCelular
+        id="nuevo-celular"
+        name="phone"
+        label="Tu celular"
+        autoComplete="tel"
+        required
+        hint="Te mandamos un código nuevo a este número."
+      />
+      <div className="flex gap-2">
+        <Button type="submit" disabled={pending}>
+          {pending ? "Mandando…" : "Mandar código a este número"}
+        </Button>
+        <Button type="button" variant="ghost" onClick={() => setAbierto(false)}>
+          Cancelar
+        </Button>
+      </div>
     </form>
   );
 }

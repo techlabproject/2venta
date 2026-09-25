@@ -11,6 +11,8 @@ import type { Category } from "@/features/catalog/queries";
 import type { SuggestionMap } from "@/features/pricing/suggest";
 import { MAX_PHOTOS } from "./photos";
 import { formatCop } from "@/lib/money";
+import { CampoDeCategoria } from "./CampoDeCategoria";
+import { CAMPO_DE_CATEGORIA } from "@/features/catalog/atributos";
 import { CampoPrecio } from "@/components/CampoPrecio";
 import { formatearPrecio } from "@/lib/precio";
 import {
@@ -33,6 +35,7 @@ export function PublishForm({
   );
   // D-15: el IMEI solo se pide en electrónica.
   const [category, setCategory] = useState(categories[0]?.slug ?? "");
+  const [esCelular, setEsCelular] = useState<"si" | "no" | null>(null);
   // Lo que le queda al vendedor, calculado mientras escribe el precio. Es el
   // dato que más le importa y nadie se lo decía (hallazgo de QA, 2026-09-13).
   const [price, setPrice] = useState<number | null>(null);
@@ -151,7 +154,43 @@ export function PublishForm({
         </select>
       </div>
 
+      {/* Corrección 38: talla en ropa, edad en artículos para niños. */}
+      {CAMPO_DE_CATEGORIA[category] && (
+        <CampoDeCategoria campo={CAMPO_DE_CATEGORIA[category]!} />
+      )}
+
+      {/* Corrección 40: el IMEI es de los celulares; un Xbox o un portátil no
+          tienen. Si el texto dice que es un celular, el servidor lo pide igual. */}
       {category === "tecnologia" && (
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 text-sm font-medium">¿Es un celular?</legend>
+          <div className="flex gap-4 text-sm">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="esCelular"
+                value="si"
+                required
+                checked={esCelular === "si"}
+                onChange={() => setEsCelular("si")}
+              />
+              Sí
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="esCelular"
+                value="no"
+                required
+                checked={esCelular === "no"}
+                onChange={() => setEsCelular("no")}
+              />
+              No
+            </label>
+          </div>
+        </fieldset>
+      )}
+      {category === "tecnologia" && esCelular === "si" && (
         <Field
           id="imei"
           name="imei"
@@ -159,7 +198,7 @@ export function PublishForm({
           inputMode="numeric"
           required
           placeholder="490154203237518"
-          hint="Márcalo en el teclado con *#06# y cópialo tal cual. Son 15 dígitos. Lo pedimos para que nadie venda equipos robados."
+          hint="Márcalo en el teclado con *#06# y cópialo tal cual. Son 15 dígitos."
         />
       )}
 
@@ -239,12 +278,6 @@ export function PublishForm({
               : "Graba el video para continuar"}
       </Button>
 
-      {category === "tecnologia" && (
-        <p className="text-xs text-muted">
-          La electrónica la revisa una persona antes de quedar visible. Suele
-          tardar pocas horas y te avisamos.
-        </p>
-      )}
     </form>
   );
 }

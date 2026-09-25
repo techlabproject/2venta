@@ -2,12 +2,13 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { currentUser } from "@/lib/session";
+import { usuarioSinConfirmar } from "@/lib/session";
+import { CELULAR_GUARDADO, normalizarCelular } from "@/lib/celular";
 import { query } from "@/lib/db";
 import { sendVerificationCode } from "@/lib/sms";
-import { assertCanSendCode, TOO_MANY_CODES } from "@/lib/otp-rate-limit";
+import { codigoCorrecto } from "./comprobar";
+import { assertCanSendCode, EsperaParaReenviar, TOO_MANY_CODES } from "@/lib/otp-rate-limit";
 import {
-  codeMatches,
   encryptCode,
   EXPIRY_MINUTES,
   generateCode,
@@ -15,7 +16,13 @@ import {
   normalize,
 } from "./otp";
 
-export type OtpResult = { error: string };
+export type OtpResult = {
+  error: string;
+  /** Segundos que faltan para poder pedir otro código (D-123, 30 s entre envíos). */
+  espera?: number;
+  /** El «cambio» de número fue al mismo: se reenvió el código. */
+  mismoNumero?: boolean;
+};
 
 /**
  * Manda el código al celular del usuario de la sesión.
@@ -24,14 +31,16 @@ export type OtpResult = { error: string };
  * cualquiera pediría códigos a números ajenos desde una sesión propia.
  */
 export async function sendCode(): Promise<OtpResult> {
-  const user = await currentUser();
+  // D-123: todavía sin confirmar; es justo lo que se está terminando.
+  const user = await usuarioSinConfirmar();
   if (!user) redirect("/ingresar");
   if (!user.phoneNumber) return { error: "Tu cuenta no tiene celular todavía." };
   if (user.phoneNumberVerified) return { error: "" };
 
   try {
     await assertCanSendCode(user.phoneNumber);
-  } catch {
+  } catch (err) {
+    if (err instanceof EsperaParaReenviar) return { error: err.message, espera: err.segundos };
     return { error: TOO_MANY_CODES };
   }
 
@@ -48,13 +57,18 @@ export async function sendCode(): Promise<OtpResult> {
   );
 
   try {
-    await sendVerificationCode(user.phoneNumber, code);
+    const quien = await sendVerificationCode(user.phoneNumber, code);
+    // D-120: si el código lo mandó Twilio Verify, se comprueba con Twilio.
+    await query(`update phone_codes set verificado_por = $2 where phone = $1`, [
+      user.phoneNumber,
+      quien === "twilio_verify" ? "twilio_verify" : null,
+    ]);
   } catch (err) {
     // Sin el número ni el código en el registro (D-117).
     console.error(`[codigo] no se pudo enviar: ${err instanceof Error ? err.message : err}`);
     return {
       error:
-        "¡Uy! No pudimos mandarte el código por WhatsApp. Revisa que ese número tenga WhatsApp y vuelve a intentarlo en un momento.",
+        "¡Uy! No pudimos mandarte el código. Revisa que el número esté bien escrito y vuelve a intentarlo en un momento.",
     };
   }
   return { error: "" };
@@ -64,7 +78,8 @@ export async function verifyCode(
   _prev: OtpResult | null,
   form: FormData
 ): Promise<OtpResult> {
-  const user = await currentUser();
+  // D-123: todavía sin confirmar; es justo lo que se está terminando.
+  const user = await usuarioSinConfirmar();
   if (!user) redirect("/ingresar");
   if (!user.phoneNumber) return { error: "Tu cuenta no tiene celular todavía." };
 
@@ -76,9 +91,10 @@ export async function verifyCode(
     attempts: number;
     expired: boolean;
     used: boolean;
+    verificado_por: string | null;
   }>(
     `select code_enc, attempts, (expires_at < now()) as expired,
-            (used_at is not null) as used
+            (used_at is not null) as used, verificado_por
        from phone_codes where phone = $1 for update`,
     [user.phoneNumber]
   );
@@ -93,7 +109,14 @@ export async function verifyCode(
     return { error: "Demasiados intentos. Pide un código nuevo." };
   }
 
-  if (!codeMatches(given, state.code_enc)) {
+  let acierta: boolean;
+  try {
+    acierta = await codigoCorrecto(user.phoneNumber, given, state);
+  } catch (err) {
+    console.error(`[codigo] no se pudo comprobar: ${err instanceof Error ? err.message : err}`);
+    return { error: "¡Uy! No pudimos comprobar el código. Intenta de nuevo en un momento." };
+  }
+  if (!acierta) {
     const bumped = await query<{ attempts: number }>(
       `update phone_codes set attempts = attempts + 1 where phone = $1 returning attempts`,
       [user.phoneNumber]
@@ -136,4 +159,58 @@ export async function verifyCode(
 
   revalidatePath("/");
   return { error: "" };
+}
+
+/** Tope de cambios de número antes de confirmar (D-123). */
+const MAX_CAMBIOS_DE_CELULAR = 3;
+
+/**
+ * «¿No es tu número?» (D-123): corrige el celular de un registro sin confirmar y
+ * manda el código al nuevo. Solo para la cuenta de la sesión y solo mientras no esté
+ * confirmada: una cuenta confirmada no cambia de número por aquí.
+ *
+ * El tope evita usar el cambio para mandar códigos a una lista de números ajenos; el
+ * límite por número de `sendCode` sigue valiendo para cada uno.
+ */
+export async function cambiarCelular(
+  _prev: OtpResult | null,
+  form: FormData,
+): Promise<OtpResult> {
+  const user = await usuarioSinConfirmar();
+  if (!user) redirect("/ingresar");
+  if (user.phoneNumberVerified) return { error: "Tu celular ya está confirmado." };
+
+  const phone = normalizarCelular(String(form.get("phone") ?? ""));
+  if (!phone || !CELULAR_GUARDADO.test(phone)) {
+    return { error: "Escribe un celular colombiano de 10 dígitos, por ejemplo 300 412 88 05." };
+  }
+  if (phone === user.phoneNumber) {
+    const res = await sendCode();
+    return res.error ? res : { error: "", mismoNumero: true };
+  }
+
+  const usado = await query(
+    `select 1 from "user" where "phoneNumber" = $1 and "phoneNumberVerified" limit 1`,
+    [phone],
+  );
+  if (usado.length) {
+    return { error: "¡Uy! Ese celular ya tiene una cuenta. Inicia sesión o recupera tu contraseña." };
+  }
+
+  const cambio = await query<{ id: string }>(
+    `update "user" set "phoneNumber" = $2, cambios_de_celular = cambios_de_celular + 1
+      where id = $1 and not "phoneNumberVerified" and cambios_de_celular < $3
+      returning id`,
+    [user.id, phone, MAX_CAMBIOS_DE_CELULAR],
+  );
+  if (!cambio.length) {
+    return {
+      error:
+        "Ya cambiaste el número varias veces. Si sigue sin llegarte el código, vuelve a crear la cuenta.",
+    };
+  }
+
+  const res = await sendCode();
+  revalidatePath("/verificar");
+  return res;
 }

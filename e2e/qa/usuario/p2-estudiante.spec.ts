@@ -81,6 +81,7 @@ async function publishRopa(page: Page, titulo: string, precio: number) {
   await expect(page.getByRole("status")).toContainText("Video listo", { timeout: 15_000 });
   await page.getByLabel("Título").fill(titulo);
   await page.getByLabel("Categoría").selectOption("ropa");
+  await page.getByLabel("Talla").selectOption("M");
   await page.getByLabel("Precio").fill(String(precio));
   await page.getByLabel("Descripción").fill("Prenda en buen estado, poco uso.");
   await page.getByRole("button", { name: "Publicar" }).click();

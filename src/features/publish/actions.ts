@@ -9,6 +9,8 @@ import { query } from "@/lib/db";
 import { MIN_PRICE_COP, parseCop } from "@/features/payments/money";
 import { isValidImei, normalizeImei } from "@/features/moderation/imei";
 import { initialStatus, moderateListing } from "@/features/moderation/rules";
+import { pareceCelular } from "@/features/moderation/pareceCelular";
+import { CAMPO_DE_CATEGORIA, EDADES, TALLAS } from "@/features/catalog/atributos";
 import { enqueueOrLog } from "@/lib/queue";
 
 export type PublishResult = { error: string } | { id: string };
@@ -55,11 +57,20 @@ export async function publishListing(
   const verdict = moderateListing({ title, description });
   if (!verdict.allowed) return { error: verdict.reason };
 
-  // D-15: IMEI solo en electrónica. El dígito verificador descarta al que escribe
-  // cualquier cosa por salir del paso, sin consultar nada externo.
+  // D-15, corrección 40: IMEI solo en celulares. Lo dice quien publica («¿Es un
+  // celular?»), y si el texto habla de un celular se pide igual: contestar «No»
+  // no es la forma de no poner el IMEI. El dígito verificador descarta al que
+  // escribe cualquier cosa por salir del paso, sin consultar nada externo.
   let imei: string | null = null;
-  if (category === "tecnologia") {
+  const dijoCelular = String(form.get("esCelular") ?? "") === "si";
+  if (category === "tecnologia" && (dijoCelular || pareceCelular(title, description))) {
     const raw = String(form.get("imei") ?? "");
+    if (!raw.trim() && !dijoCelular) {
+      return {
+        error:
+          "Parece un celular: para publicarlo necesitamos el IMEI. Marca «Sí» en «¿Es un celular?» y escríbelo.",
+      };
+    }
     if (!isValidImei(raw)) {
       return {
         error:
@@ -67,6 +78,16 @@ export async function publishListing(
       };
     }
     imei = normalizeImei(raw);
+  }
+
+  // Corrección 38: talla en ropa, edad en artículos para niños. De una lista
+  // cerrada: lo que no está en ella no se guarda.
+  const campo = CAMPO_DE_CATEGORIA[category];
+  const talla = campo === "talla" ? String(form.get("talla") ?? "") : null;
+  const edad = campo === "edad" ? String(form.get("edad") ?? "") : null;
+  if (talla !== null && !TALLAS.includes(talla)) return { error: "Elige la talla." };
+  if (edad !== null && !(EDADES as readonly string[]).includes(edad)) {
+    return { error: "Elige para qué edad es." };
   }
 
   // D-14: sin video no hay publicación, y esto se comprueba aquí y no solo en
@@ -99,12 +120,12 @@ export async function publishListing(
     rows = await query<{ id: string }>(
       `insert into listings
          (seller_id, title, description, category, condition, price_cop,
-          video_path, poster_path, imei, status)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          video_path, poster_path, imei, status, talla, edad)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        returning id`,
       [
         user.id, title, description, category, condition, price,
-        videoPath, posterPath, imei, initialStatus(category),
+        videoPath, posterPath, imei, initialStatus(), talla, edad,
       ]
     );
   } catch (err) {
@@ -125,7 +146,7 @@ export async function publishListing(
   // avisar de algo que está en revisión sería mandar a la gente a una pantalla que
   // no existe. Lo hace el worker (D-51): el vendedor no espera por un trabajo que
   // no le importa.
-  if (initialStatus(category) === "activa") {
+  if (initialStatus() === "activa") {
     await enqueueOrLog({ type: "avisar", listingId: rows[0].id });
   }
   // S-30: convertir el video a un formato que reproduzca cualquier teléfono.
@@ -171,10 +192,10 @@ export async function publishDraft(
   await query(
     `update listings set video_path = $2, poster_path = $3, status = $4
       where id = $1 and status = 'borrador'`,
-    [draft.id, videoPath, posterPath, initialStatus(draft.category)]
+    [draft.id, videoPath, posterPath, initialStatus()]
   );
 
-  if (initialStatus(draft.category) === "activa") {
+  if (initialStatus() === "activa") {
     await enqueueOrLog({ type: "avisar", listingId: draft.id });
   }
   await enqueueOrLog({ type: "transcodificar", key: videoPath });

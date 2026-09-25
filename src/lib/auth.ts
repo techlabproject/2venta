@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import { APIError, createAuthMiddleware } from "better-auth/api";
+import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { pool } from "./db";
 import { isProduction } from "./env";
@@ -76,7 +76,10 @@ export const auth = betterAuth({
       phoneNumber: { type: "string", required: false, input: true },
       phoneNumberVerified: { type: "boolean", required: false, input: false, defaultValue: false },
       alias: { type: "string", required: false, input: true },
-      zone: { type: "string", required: false, input: true },
+      // D-122: la zona sale de una lista cerrada y trae su punto aproximado; solo la
+      // escribe la acción del perfil. Escribible aquí, `/update-user` guardaba
+      // cualquier texto y se saltaba la lista.
+      zone: { type: "string", required: false, input: false },
       // El rol NO es escribible desde el cliente: si lo fuera, cualquiera se
       // haría administrador al registrarse.
       role: { type: "string", required: false, input: false, defaultValue: "usuario" },
@@ -89,6 +92,14 @@ export const auth = betterAuth({
       termsAcceptedAt: { type: "date", required: false, input: false, fieldName: "terms_accepted_at" },
       // Corrección 11: AAAA-MM-DD; se comprueba en el hook y no se cambia después.
       birthDate: { type: "string", required: false, input: true, fieldName: "birth_date" },
+      // D-123: la cuenta nace pendiente hasta confirmar el celular. La pone el
+      // servidor al crearla; la quita el disparador de la migración 0026.
+      registroPendienteDesde: {
+        type: "date",
+        required: false,
+        input: false,
+        fieldName: "registro_pendiente_desde",
+      },
     },
   },
 
@@ -98,7 +109,11 @@ export const auth = betterAuth({
         // La hora de aceptación no se le cree al cliente: la pone el servidor en el
         // mismo instante en que se crea la cuenta.
         before: async (user) => ({
-          data: { ...user, termsAcceptedAt: user.termsVersion ? new Date() : null },
+          data: {
+            ...user,
+            termsAcceptedAt: user.termsVersion ? new Date() : null,
+            registroPendienteDesde: new Date(),
+          },
         }),
       },
     },
@@ -160,6 +175,34 @@ export const auth = betterAuth({
         }
       }
 
+      // D-123 (Luna): sin el celular confirmado no hay cuenta todavía, y la sesión no
+      // sirve para cambiar datos. La única excepción es dar el celular por primera
+      // vez (quien entró con Google). Y un celular ya guardado no se cambia por aquí:
+      // en un registro pendiente se cambia con «¿No es tu número?», que tiene tope; en
+      // una cuenta confirmada, cambiarlo aquí dejaba confirmado un número que nadie
+      // confirmó.
+      if (ctx.path === "/update-user") {
+        const sesion = await getSessionFromCtx(ctx);
+        const quien = sesion?.user as
+          | { phoneNumber?: string | null; phoneNumberVerified?: boolean | null }
+          | undefined;
+        const campos = Object.keys(ctx.body ?? {});
+        const primerCelular =
+          !quien?.phoneNumber && campos.length === 1 && campos[0] === "phoneNumber";
+        if (quien && !quien.phoneNumberVerified && !primerCelular) {
+          throw new APIError("FORBIDDEN", {
+            code: "PHONE_UNCONFIRMED",
+            message: "Primero confirma tu celular.",
+          });
+        }
+        if (quien?.phoneNumber && ctx.body?.phoneNumber !== undefined) {
+          throw new APIError("BAD_REQUEST", {
+            code: "PHONE_READONLY",
+            message: "El celular no se cambia desde aquí.",
+          });
+        }
+      }
+
       // La versión aceptada se escribe una vez, al crear la cuenta. Cambiarla por
       // aquí reescribiría la prueba de consentimiento sin la fecha que la acompaña.
       if (ctx.path === "/update-user" && ctx.body?.termsVersion !== undefined) {
@@ -212,6 +255,16 @@ export const auth = betterAuth({
           code: "PASSWORD_TOO_WEAK",
           message: "La contraseña necesita al menos ocho caracteres que no sean espacios.",
         });
+      }
+      // D-123: todo en orden, así que un registro pendiente con este correo se
+      // reemplaza (si no, la biblioteca diría «ese correo ya existe»). Y de paso se
+      // barren los vencidos, por si el trabajo de cada hora no ha corrido.
+      if (typeof ctx.body?.email === "string") {
+        const { borrarPendientesVencidos, reemplazarPendiente } = await import(
+          "@/features/auth/pendientes"
+        );
+        await reemplazarPendiente(ctx.body.email);
+        await borrarPendientesVencidos();
       }
     }),
   },

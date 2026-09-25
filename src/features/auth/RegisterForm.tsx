@@ -87,7 +87,9 @@ export function RegisterForm() {
     // carrera: la pantalla de verificación puede aparecer antes de que el código
     // exista, y quien lo pide de inmediato no encuentra nada.
     const sent = await sendCode();
-    if (sent.error) {
+    // Si a ese número se le mandó un código hace menos de 30 segundos, se sigue igual:
+    // la pantalla del código cuenta lo que falta para pedir otro (D-123).
+    if (sent.error && !sent.espera) {
       setError(sent.error);
       setBusy(false);
       return;
@@ -124,7 +126,7 @@ export function RegisterForm() {
         autoComplete="name"
         required
         validar={(v) => (v.trim() ? null : "Escribe tu nombre.")}
-        placeholder="Catalina Ríos"
+        placeholder="Nombre y apellido"
       />
       <CampoCorreo
         id="email"
@@ -132,7 +134,7 @@ export function RegisterForm() {
         label="Correo"
         autoComplete="email"
         required
-        placeholder="catalina@correo.com"
+        placeholder="nombre@gmail.com"
       />
       <CampoCelular
         id="phone"

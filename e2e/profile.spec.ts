@@ -27,7 +27,7 @@ test("se edita el alias, la zona y la descripción, y se ve en el perfil públic
 
   await seller.page.goto("/cuenta/editar");
   await seller.page.getByLabel("Alias público").fill(`Camila ${marca}`);
-  await seller.page.getByLabel("Zona").fill("Teusaquillo");
+  await seller.page.getByLabel("Zona").selectOption("Teusaquillo");
   await seller.page.getByLabel("Sobre ti").fill("Vendo lo que ya no uso, respondo rápido.");
   await seller.page.getByRole("button", { name: "Guardar" }).click();
   await expect(seller.page.getByRole("status")).toContainText("Guardado");
@@ -326,4 +326,45 @@ test("dos cuentas no pueden tener el mismo alias, ni cambiando mayúsculas", asy
 
   await a.context.close();
   await b.context.close();
+});
+
+// Correcciones 43 y 51 (D-122): la zona sale de una lista cerrada (19 localidades
+// urbanas y 8 municipios vecinos) y guarda el centro aproximado de la zona. Lo que
+// no está en la lista se rechaza en el servidor, aunque se manipule el formulario.
+test("la zona se elige de la lista, guarda su centro y no acepta una inventada", async ({
+  browser,
+}) => {
+  const seller = await sellerWithListing(browser, `Zona ${Date.now()}`, 50_000, "ropa");
+  const page = seller.page;
+  await page.goto("/cuenta/editar");
+  const zona = page.getByLabel("Zona");
+  await expect(zona.locator("option")).toHaveCount(28); // «Elige tu zona» + 27
+  await expect(zona.locator("option", { hasText: "Sumapaz" })).toHaveCount(0);
+  await zona.selectOption("Soacha");
+  await page.getByRole("button", { name: "Guardar" }).click();
+  await expect(page.getByRole("status")).toContainText("Guardado");
+  const punto = async () =>
+    withDb(async (c) => {
+      const { rows } = await c.query(
+        `select u.zone, u.ubicacion_lat, u.ubicacion_lng from "user" u
+           join listings l on l.seller_id = u.id where l.id = $1`,
+        [seller.listingId],
+      );
+      return rows[0];
+    });
+  expect(await punto()).toEqual({ zone: "Soacha", ubicacion_lat: 4.58, ubicacion_lng: -74.22 });
+
+  await page.goto("/cuenta/editar");
+  await page.getByLabel("Zona").evaluate((el) => {
+    const o = document.createElement("option");
+    o.value = "Chapi";
+    o.textContent = "Chapi";
+    el.appendChild(o);
+    (el as HTMLSelectElement).value = "Chapi";
+  });
+  await page.getByRole("button", { name: "Guardar" }).click();
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("Elige tu zona de la lista");
+  expect((await punto()).zone).toBe("Soacha");
+
+  await seller.context.close();
 });

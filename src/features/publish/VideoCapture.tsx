@@ -44,7 +44,9 @@ export function VideoCapture({ onCaptured }: Props) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
-        audio: true,
+        // Sin micrófono (corrección 36): el video es público, y lo que se hable
+        // alrededor no tiene por qué quedar publicado.
+        audio: false,
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -67,7 +69,7 @@ export function VideoCapture({ onCaptured }: Props) {
     // 18.3 y Android entrega WebM. Se toma el primero que el navegador acepte, y
     // el servidor guarda lo que llegue.
     const mimeType = [
-      "video/webm;codecs=vp8,opus",
+      "video/webm;codecs=vp8",
       "video/webm",
       "video/mp4",
     ].find((t) => MediaRecorder.isTypeSupported(t));
@@ -158,20 +160,46 @@ export function VideoCapture({ onCaptured }: Props) {
       )}
 
       {state === "inicial" && (
-        <>
-          <Button type="button" variant="outline" onClick={openCamera}>
-            Abrir cámara
-          </Button>
-          <p className="text-xs text-muted">
-            El video se graba aquí, no se sube desde la galería. Es lo que le
-            permite al comprador ver que el artículo existe y está como dice.
-          </p>
-        </>
+        <Button type="button" variant="outline" onClick={openCamera}>
+          Abrir cámara
+        </Button>
       )}
       {state === "listo" && (
         <Button type="button" onClick={start}>
           Grabar (máximo {MAX_SECONDS} segundos)
         </Button>
+      )}
+      {/* Corrección 35 (Catalina; texto elegido por Nicolás): le dice al vendedor
+          qué hacer, no por qué existe la regla. Visible hasta tocar «Grabar»: con
+          la cámara ya abierta es cuando sirve. */}
+      {(state === "inicial" || state === "listo") && (
+        <section
+          aria-labelledby="antes-de-grabar"
+          data-testid="consejos-video"
+          className="rounded-2xl bg-white p-4 text-sm text-ink2 shadow-xs ring-1 ring-line"
+        >
+          <h3 id="antes-de-grabar" className="font-medium text-ink">
+            Antes de grabar
+          </h3>
+          <p className="mt-1">Tienes {MAX_SECONDS} segundos. Lo que más vende:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>Muéstralo por todos lados, con buena luz.</li>
+            <li>
+              Acércate a los detalles y a los rayones: lo que muestras no te lo
+              reclaman.
+            </li>
+            <li>Si prende, préndelo.</li>
+            <li>Si tiene caja o accesorios, que salgan.</li>
+            <li>
+              Que no salgan caras, documentos ni la dirección de tu casa: el video
+              lo ve todo el mundo.
+            </li>
+          </ul>
+          <p className="mt-2 text-xs text-muted">
+            Se graba aquí mismo, no desde la galería: así quien compra sabe que
+            es de hoy y tuyo.
+          </p>
+        </section>
       )}
       {state === "grabando" && (
         <Button

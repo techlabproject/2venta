@@ -105,6 +105,7 @@ async function sellerPublishesPhone(browser: import("@playwright/test").Browser)
   const titulo = `Samsung Galaxy A54 ${Date.now()}`;
   await page.getByLabel("Título").fill(titulo);
   await page.getByLabel("Categoría").selectOption("tecnologia");
+  await page.getByRole("radio", { name: "Sí" }).check();
   await page.getByLabel("IMEI del equipo").fill(freshImei());
   await page.getByLabel("Precio").fill("850000");
   await page

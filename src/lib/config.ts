@@ -90,28 +90,64 @@ export const REQUIREMENTS: Requirement[] = [
     purpose: "rol con el que MediaConvert lee y escribe el bucket; sin él, el video no se convierte",
     optional: true,
   },
-  // D-117: los códigos salen por WhatsApp Cloud. En desarrollo pueden faltar (el
-  // código sale por el registro); en producción, sin ellas nadie podría registrarse.
+  // Los códigos salen por WhatsApp (D-117) o por SMS con Inalambria (D-124) o Twilio
+  // (D-120). Cada canal
+  // es opcional; en producción tiene que haber al menos uno completo (se comprueba
+  // en `checkConfig`), o nadie podría registrarse.
   {
     name: "WHATSAPP_TOKEN",
     purpose: "token permanente del usuario de sistema de Meta para enviar los códigos por WhatsApp",
-    productionOnly: true,
+    optional: true,
   },
   {
     name: "WHATSAPP_PHONE_NUMBER_ID",
     purpose: "id del número de WhatsApp Business desde el que salen los códigos",
-    productionOnly: true,
+    optional: true,
   },
   {
     name: "WHATSAPP_APP_SECRET",
     purpose: "secreto de la app de Meta: firma de los avisos de entrega de WhatsApp",
-    productionOnly: true,
+    optional: true,
   },
   {
     name: "WHATSAPP_VERIFY_TOKEN",
     purpose: "clave con la que Meta verifica la dirección del webhook de WhatsApp",
-    productionOnly: true,
+    optional: true,
     check: secret,
+  },
+  {
+    name: "INALAMBRIA_TOKEN",
+    purpose: "clave de la API de Inalambria Express para enviar los códigos por SMS",
+    optional: true,
+  },
+  {
+    name: "CODIGOS_REALES_SOLO_A",
+    purpose:
+      "solo en desarrollo: celulares (+57…, separados por comas) a los que los códigos sí se mandan de verdad; al resto solo van al registro",
+    optional: true,
+  },
+  {
+    name: "TWILIO_ACCOUNT_SID",
+    purpose: "cuenta de Twilio desde la que salen los códigos por SMS",
+    optional: true,
+    check: (v) => (/^AC[0-9a-f]{32}$/.test(v) ? null : "tiene que empezar por AC y tener 34 caracteres"),
+  },
+  {
+    name: "TWILIO_AUTH_TOKEN",
+    purpose: "clave de la cuenta de Twilio: envía los SMS y firma sus avisos de entrega",
+    optional: true,
+  },
+  {
+    name: "TWILIO_FROM",
+    purpose: "número de Twilio desde el que salen los SMS, con + y código de país",
+    optional: true,
+    check: (v) => (/^\+\d{8,15}$/.test(v) ? null : "tiene que ser un número con + y código de país"),
+  },
+  {
+    name: "TWILIO_VERIFY_SERVICE_SID",
+    purpose: "servicio de Twilio Verify: Twilio genera y comprueba el código (sirve con la cuenta de prueba)",
+    optional: true,
+    check: (v) => (/^VA[0-9a-f]{32}$/.test(v) ? null : "tiene que empezar por VA y tener 34 caracteres"),
   },
 ];
 
@@ -151,6 +187,34 @@ export function checkConfig(
 
     const detail = req.check?.(value);
     if (detail) problems.push({ name: req.name, purpose: req.purpose, problem: detail });
+  }
+
+  // Un canal a medias es un canal que falla el día que se usa.
+  const hay = (n: string) => Boolean(env[n]?.trim());
+  // Twilio sirve con número propio (TWILIO_FROM) o con Verify
+  // (TWILIO_VERIFY_SERVICE_SID); cualquiera de los dos completa el canal.
+  const twilioSalida = hay("TWILIO_FROM") ? "TWILIO_FROM" : "TWILIO_VERIFY_SERVICE_SID";
+  const canales = {
+    WhatsApp: ["WHATSAPP_TOKEN", "WHATSAPP_PHONE_NUMBER_ID"],
+    Twilio: ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", twilioSalida],
+    Inalambria: ["INALAMBRIA_TOKEN"],
+  };
+  for (const [canal, nombres] of Object.entries(canales)) {
+    const faltan = nombres.filter((n) => !hay(n));
+    if (faltan.length > 0 && faltan.length < nombres.length) {
+      problems.push({
+        name: faltan.join(", "),
+        purpose: `enviar los códigos por ${canal}`,
+        problem: "el canal está a medias",
+      });
+    }
+  }
+  if (production && !Object.values(canales).some((ns) => ns.every(hay))) {
+    problems.push({
+      name: "INALAMBRIA_TOKEN, TWILIO_* o WHATSAPP_*",
+      purpose: "enviar los códigos de verificación (SMS por Inalambria o Twilio, o WhatsApp)",
+      problem: "falta al menos un canal completo",
+    });
   }
 
   return problems;

@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { revokeSession } from "./recovery";
+import { useFormStatus } from "react-dom";
+import { revokeOtherSessions, revokeSession } from "./recovery";
 import { Button } from "@/components/ui";
 
 export function RevokeButton({ sessionId }: { sessionId: string }) {
@@ -13,5 +14,26 @@ export function RevokeButton({ sessionId }: { sessionId: string }) {
         Cerrar
       </Button>
     </form>
+  );
+}
+
+/**
+ * Corrección 42: cierra todas las sesiones menos esta. Es un formulario, como
+ * «Cerrar», para que funcione aunque el JavaScript no haya terminado de cargar.
+ */
+export function RevokeOthersButton() {
+  return (
+    <form action={revokeOtherSessions}>
+      <CerrarLasDemas />
+    </form>
+  );
+}
+
+function CerrarLasDemas() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" variant="outline" size="sm" disabled={pending}>
+      Cerrar todas las demás
+    </Button>
   );
 }

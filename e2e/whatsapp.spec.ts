@@ -20,14 +20,14 @@ function aviso(wamid: string, status: string, errors?: { code: number; title: st
 
 async function envio(wamid: string) {
   await withDb((c) =>
-    c.query(`insert into envios_codigo (wamid, telefono, motivo) values ($1, '+573004128805', 'registro')`, [wamid]),
+    c.query(`insert into envios_codigo (mensaje_id, telefono, motivo) values ($1, '+573004128805', 'registro')`, [wamid]),
   );
 }
 
 async function estadoDe(wamid: string) {
   return withDb(async (c) => {
     const { rows } = await c.query<{ estado: string; error: string | null }>(
-      `select estado, error from envios_codigo where wamid = $1`,
+      `select estado, error from envios_codigo where mensaje_id = $1`,
       [wamid],
     );
     return rows[0];

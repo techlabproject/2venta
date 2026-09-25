@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { uploadBulk, type StoreResult } from "./actions";
-import { Button, ErrorNote, Field } from "@/components/ui";
+import { Button, ErrorNote } from "@/components/ui";
 import { COLUMNS, MAX_ROWS } from "./bulk";
 
 export function BulkUploadForm() {

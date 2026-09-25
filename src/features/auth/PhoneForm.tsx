@@ -59,7 +59,8 @@ export function PhoneForm() {
     }
 
     const sent = await sendCode();
-    if (sent.error) {
+    // Con la espera de 30 s entre códigos se sigue igual: la pantalla la cuenta.
+    if (sent.error && !sent.espera) {
       setError(sent.error);
       setBusy(false);
       return;

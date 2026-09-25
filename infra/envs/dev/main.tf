@@ -59,6 +59,22 @@ module "entorno" {
   # cuando Nicolás lo haya llenado: descomentar la línea del número.
   whatsapp_secreto = true
   # whatsapp_phone_number_id = "1043566368850714"
+
+  # SMS por Twilio (D-120), paso 1: crea el secreto `2venta-dev/twilio` vacío. Paso 2,
+  # cuando Nicolás le haya puesto TWILIO_AUTH_TOKEN: descomentar las líneas.
+  # Con la cuenta de prueba solo sirve Verify (el SMS con texto propio da 572006) y
+  # solo llega a números verificados en Twilio; `twilio_from` se agrega al pasar a pago.
+  twilio_secreto = true
+  # Los dos identificadores (AC… y VA…) salen de la consola de Twilio; no van en
+  # el repositorio (la protección de secretos de GitHub rechaza el AC…).
+  # twilio_account_sid        = "AC…"
+  # twilio_verify_service_sid = "VA…"
+
+  # SMS por Inalambria Express (D-124), paso 1: crea el secreto `2venta-dev/inalambria`
+  # vacío. Paso 2, después de ponerle INALAMBRIA_TOKEN a mano (infra/LEEME.md):
+  # descomentar `inalambria_activo`.
+  inalambria_secreto = true
+  # inalambria_activo = true
 }
 
 output "url" { value = module.entorno.url }

@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { activeUser } from "@/lib/session";
 import { getListing } from "@/features/catalog/queries";
-import { listZones } from "@/features/catalog/search";
+import { ZONAS } from "@/features/ubicacion/zonas";
 import { shippingProvider } from "@/features/shipping/provider";
 import { AddressForm } from "@/features/shipping/AddressForm";
 import { AppHeader } from "@/components/AppHeader";
@@ -58,20 +58,9 @@ export default async function Comprar({
         ? offer.price_cop
         : listing.price_cop;
 
-  const [quote, zones] = await Promise.all([
-    shippingProvider.quote({ zone: listing.seller_zone, priceCop }),
-    listZones(),
-  ]);
-
-  const zoneNames = Array.from(
-    new Set([
-      ...zones.map((z) => z.zone),
-      "Chapinero",
-      "Usaquén",
-      "Teusaquillo",
-      "Suba",
-    ]),
-  ).sort();
+  const quote = await shippingProvider.quote({ zone: listing.seller_zone, priceCop });
+  // D-122: la misma lista cerrada de zonas que el perfil y los filtros.
+  const zoneNames = ZONAS.map((z) => z.nombre);
 
   return (
     <>
