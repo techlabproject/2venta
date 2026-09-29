@@ -1,5 +1,5 @@
 import { test, expect, type Browser } from "@playwright/test";
-import { alertIn, makeAdmin, sellerWithListing, signUpVerified, withDb } from "./helpers";
+import { alertIn, hidratado, makeAdmin, sellerWithListing, signUpVerified, withDb } from "./helpers";
 
 // La prueba de punta a punta de la rebanada S-21.
 // Ver slices/21-perfil-reportes-suspension.md
@@ -340,6 +340,7 @@ test("la zona se elige de la lista, guarda su centro y no acepta una inventada",
   const zona = page.getByLabel("Zona");
   await expect(zona.locator("option")).toHaveCount(28); // «Elige tu zona» + 27
   await expect(zona.locator("option", { hasText: "Sumapaz" })).toHaveCount(0);
+  await hidratado(zona);
   await zona.selectOption("Soacha");
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("status")).toContainText("Guardado");
@@ -355,6 +356,7 @@ test("la zona se elige de la lista, guarda su centro y no acepta una inventada",
   expect(await punto()).toEqual({ zone: "Soacha", ubicacion_lat: 4.58, ubicacion_lng: -74.22 });
 
   await page.goto("/cuenta/editar");
+  await hidratado(page.getByLabel("Zona"));
   await page.getByLabel("Zona").evaluate((el) => {
     const o = document.createElement("option");
     o.value = "Chapi";
