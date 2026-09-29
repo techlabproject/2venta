@@ -1,4 +1,4 @@
-import { expect, type Browser, type Page } from "@playwright/test";
+import { expect, type Browser, type Locator, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { Client } from "pg";
 import { config } from "dotenv";
@@ -237,6 +237,21 @@ export async function preciosVisibles(page: Page): Promise<number[]> {
     const m = t.match(/\$\s?([\d.]+)/);
     return m ? Number(m[1].replaceAll(".", "")) : NaN;
   });
+}
+
+/**
+ * Espera a que React haya hidratado el elemento. Hasta entonces la pantalla se ve
+ * pero no responde como la app: el enlace «Filtros» navega a la versión sin
+ * JavaScript, una zona elegida vuelve al valor del servidor y un campo agregado a
+ * mano al formulario desaparece. Contra la imagen hidrata casi al instante; en CI
+ * (`next dev`, compilando) no, y la prueba falla una vez sí y otra no.
+ */
+export async function hidratado(locator: Locator): Promise<void> {
+  await expect
+    .poll(() => locator.evaluate((el) => Object.keys(el).some((k) => k.startsWith("__reactProps"))), {
+      message: "el elemento no terminó de hidratarse",
+    })
+    .toBe(true);
 }
 
 /**

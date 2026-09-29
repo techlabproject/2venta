@@ -1,5 +1,5 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
-import { sellerWithListing, withDb } from "./helpers";
+import { hidratado, sellerWithListing, withDb } from "./helpers";
 
 // Correcciones 43, 44, 45 y 51 (D-122, decisión de Nicolás): como Marketplace, cada
 // artículo dice a cuántos km está, y se filtra por radio. Solo Bogotá y sus
@@ -165,6 +165,7 @@ test("el vendedor guarda su punto del celular, redondeado, y lo conserva al guar
     });
 
   await page.goto("/cuenta/editar");
+  await hidratado(page.getByRole("button", { name: "Usar mi ubicación" }));
   await page.getByRole("button", { name: "Usar mi ubicación" }).click();
   await expect(page.getByRole("status").first()).toContainText("cerca de Teusaquillo");
   await expect(page.getByLabel("Zona")).toHaveValue("Teusaquillo");
@@ -182,6 +183,7 @@ test("el vendedor guarda su punto del celular, redondeado, y lo conserva al guar
 
   // Otra zona a mano: el centro de esa zona.
   await page.goto("/cuenta/editar");
+  await hidratado(page.getByLabel("Zona"));
   await page.getByLabel("Zona").selectOption("Chapinero");
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByText("Guardado.")).toBeVisible();
@@ -206,6 +208,7 @@ test("un punto que no queda en la zona elegida se rechaza", async ({ browser }) 
   const seller = await sellerWithListing(browser, `Falso ${Date.now()}`, 60_000, "ropa");
   const page = seller.page;
   await page.goto("/cuenta/editar");
+  await hidratado(page.getByLabel("Zona"));
   await page.getByLabel("Zona").selectOption("Chapinero");
   await page.getByLabel("Zona").evaluate((el) => {
     for (const [name, value] of [["lat", "4.71"], ["lng", "-74.03"]]) {

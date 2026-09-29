@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { soloDe } from "./helpers";
+import { hidratado, soloDe } from "./helpers";
 
 // Corrección 3 (Catalina, 2026-09-22): en la búsqueda los filtros eran un bloque
 // plegable encima de los resultados que, abierto, se comía la pantalla. Ahora en
@@ -22,6 +22,7 @@ test.describe("en el teléfono", () => {
     await expect(page.getByRole("main").getByRole("listitem").first()).toBeInViewport();
     await expect(botonFiltros(page)).toContainText("1");
 
+    await hidratado(botonFiltros(page));
     await botonFiltros(page).click();
     const panel = page.getByRole("dialog", { name: "Filtros" });
     await expect(panel.getByLabel("Ropa")).toBeChecked();
@@ -34,6 +35,7 @@ test.describe("en el teléfono", () => {
 
   test("el panel conserva la palabra buscada", async ({ page }) => {
     await page.goto("/buscar?q=chaqueta");
+    await hidratado(botonFiltros(page));
     await botonFiltros(page).click();
     const panel = page.getByRole("dialog", { name: "Filtros" });
     await panel.getByLabel("Ropa").check();
