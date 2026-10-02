@@ -10,31 +10,22 @@ function enviarSinBorrar(e: React.FormEvent<HTMLFormElement>, submit: (datos: Fo
   startTransition(() => submit(datos));
 }
 
-/** Dirección y teléfono: los pide el art. 53 a toda persona que vende. */
-function DatosDeContacto({ telefonoInicial }: { telefonoInicial?: string }) {
+/**
+ * La dirección de notificaciones: la pide el art. 53 a toda persona que vende. El
+ * teléfono para quejas es el celular confirmado de la cuenta (filas 64 y 65,
+ * D-129): ya no se pide otro.
+ */
+function DatosDeContacto() {
   return (
-    <>
-      <Field
-        id="direccion"
-        name="direccion"
-        label="Dirección de notificaciones"
-        autoComplete="street-address"
-        required
-        placeholder="Calle 72 # 10-34, apto 501"
-        hint="No se muestra en tu perfil. La ley pide tenerla por si un comprador presenta una queja."
-      />
-      <Field
-        id="telefono"
-        name="telefono"
-        label="Teléfono de contacto"
-        type="tel"
-        autoComplete="tel"
-        required
-        defaultValue={telefonoInicial}
-        placeholder="300 412 8805"
-        hint="Celular o fijo con indicativo. Tampoco se muestra."
-      />
-    </>
+    <Field
+      id="direccion"
+      name="direccion"
+      label="Dirección de notificaciones"
+      autoComplete="street-address"
+      required
+      placeholder="Calle 72 # 10-34, apto 501"
+      hint="No se muestra en tu perfil. La ley pide tenerla por si un comprador presenta una queja."
+    />
   );
 }
 
@@ -64,13 +55,7 @@ function Autorizacion() {
  * Los datos para empezar a vender, según el tipo (corrección 15). Al enviar se
  * guardan y se abre la verificación de identidad.
  */
-export function FormularioVendedor({
-  tipo,
-  telefonoInicial,
-}: {
-  tipo: "natural" | "juridica";
-  telefonoInicial?: string;
-}) {
+export function FormularioVendedor({ tipo }: { tipo: "natural" | "juridica" }) {
   const [result, submit, pending] = useActionState<VendedorResult | null, FormData>(
     empezarComoVendedor,
     null,
@@ -85,7 +70,7 @@ export function FormularioVendedor({
 
       {tipo === "juridica" && (
         <>
-          <Field id="legalName" name="legalName" label="Razón social" required placeholder="Cambalache El Centro S.A.S." />
+          <Field id="legalName" name="legalName" label="Razón social" required placeholder="Tienda Ejemplo S.A.S." />
           <Field id="nit" name="nit" label="NIT" required inputMode="numeric" placeholder="900.123.456-7" hint="Con o sin el dígito de verificación." />
           <Field id="repNombre" name="repNombre" label="Nombre del representante legal" required autoComplete="name" />
           <Field
@@ -116,7 +101,7 @@ export function FormularioVendedor({
         </>
       )}
 
-      <DatosDeContacto telefonoInicial={telefonoInicial} />
+      <DatosDeContacto />
       <Autorizacion />
 
       <Button type="submit" disabled={pending}>
@@ -127,7 +112,7 @@ export function FormularioVendedor({
 }
 
 /** Para quien ya vendía antes de la corrección 15: dirección y teléfono (art. 53). */
-export function CompletarDatosForm({ telefonoInicial }: { telefonoInicial?: string }) {
+export function CompletarDatosForm() {
   const [result, submit, pending] = useActionState<VendedorResult | null, FormData>(
     completarDatosVendedor,
     null,
@@ -142,7 +127,7 @@ export function CompletarDatosForm({ telefonoInicial }: { telefonoInicial?: stri
   return (
     <form onSubmit={(e) => enviarSinBorrar(e, submit)} className="mt-4 flex flex-col gap-4">
       {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
-      <DatosDeContacto telefonoInicial={telefonoInicial} />
+      <DatosDeContacto />
       <Button type="submit" disabled={pending} variant="outline">
         {pending ? "Guardando…" : "Guardar mis datos"}
       </Button>

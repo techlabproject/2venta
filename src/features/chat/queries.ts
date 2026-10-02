@@ -214,6 +214,8 @@ export type ConversationSummary = {
   last_at: Date;
   /** Hay algo de la contraparte posterior a la última vez que esta persona leyó. */
   unread: boolean;
+  /** Cuántos mensajes de la contraparte hay sin leer (fila 27, D-129). */
+  unread_count: number;
 };
 
 /**
@@ -244,13 +246,8 @@ export function listConversations(
             -- No leído es: existe algo de la OTRA persona posterior a mi última
             -- lectura. Sin fila de lectura, cualquier mensaje suyo cuenta, que es
             -- el estado correcto de una conversación que nunca se abrió.
-            exists (
-              select 1 from messages m
-               where m.conversation_id = c.id
-                 and m.sender_id <> $1
-                 and m.created_at > coalesce(r.last_read_at, 'epoch'::timestamptz)
-                 and not ${oculto("m", "sender_id", "$1")}
-            ) as unread
+            coalesce(nuevos.n, 0) > 0 as unread,
+            coalesce(nuevos.n, 0) as unread_count
        from conversations c
        join listings l on l.id = c.listing_id
        join "user" u on u.id = case when c.buyer_id = $1 then c.seller_id else c.buyer_id end
@@ -264,6 +261,13 @@ export function listConversations(
           order by m.created_at desc
           limit 1
        ) ultimo on true
+       left join lateral (
+         select count(*)::int as n from messages m
+          where m.conversation_id = c.id
+            and m.sender_id <> $1
+            and m.created_at > coalesce(r.last_read_at, 'epoch'::timestamptz)
+            and not ${oculto("m", "sender_id", "$1")}
+       ) nuevos on true
       where c.buyer_id = $1 or c.seller_id = $1
       order by last_at desc limit 30`,
     [userId],

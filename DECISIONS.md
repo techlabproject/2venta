@@ -1515,3 +1515,60 @@ equipo; cada acción lo vuelve a comprobar en el servidor):
 - **Historial** (`cambios_config`): quién, cuándo, qué había antes y qué quedó.
 Formularios de servidor (funcionan sin JavaScript); un error vuelve con un código en
 la dirección, nunca con datos de nadie. Fuera por ahora: los textos de la portada.
+
+### D-129 — Versión 3 de las correcciones de Catalina: lo que se decidió (2026-10-01)
+Catalina revisó las filas 1 a 40, reabrió cuatro y agregó las filas 53 a 72. Nicolás
+decidió:
+- **Llaves (filas 12 y 64):** se confirma D-109. La llave de una cuenta es su id
+  interno; correo y celular confirmado son únicos pero se pueden cambiar (el celular,
+  con código). El celular no es la llave.
+- **Precio en filtros (4):** deslizador de dos puntas en lugar de las etiquetas de
+  rango y las casillas. Sustituye la parte de etiquetas de D-102.
+- **Sin resultados (5):** el texto de Catalina corregido. Sustituye el de D-103.
+- **Fotos en el chat (21):** se quitan. Lo que se enseña va en las fotos y el video del
+  artículo. Las fotos ya enviadas se siguen viendo; las del reclamo se quedan.
+  Sustituye «en evaluación» (D-114).
+- **Mensajes sin leer (27):** en «Conversaciones», «N sin leer» junto al título y cada
+  conversación con mensajes nuevos en negrita con punto y número.
+- **Paginación (33, 34):** 40 artículos de demostración más en la nube.
+- **Excel de reportes (54):** archivo .xlsx con hojas y formato, en lugar del CSV.
+- **Configuración (57, 58, 59):** se pueden crear categorías; «Borrar» solo en lo que
+  ninguna publicación ni pedido usa (lo usado se desactiva y la pantalla dice por
+  qué); el historial muestra 10 y «Ver 10 más».
+- **Teléfono de contacto del vendedor (64, 65):** se quita el campo. Para las quejas
+  (art. 53 del Estatuto del Consumidor) se usa el celular confirmado de la cuenta.
+- **Verificación simulada (66):** se oculta la referencia y se avisa que es una
+  simulación.
+- **Comisión (68):** sin cambios (5 %, mínimo $2.500, máximo $120.000); el texto al
+  publicar dice la regla.
+- **Destacar (70):** se deja en $8.000 por 7 días, pagado por la misma pasarela a la
+  cuenta de 2venta; se documenta.
+- **Chat (71):** se quita la frase fija «Cierra el trato aquí…»; el aviso que sale al
+  ocultar un dato se queda.
+- **Retención de datos (56):** propuesta documentada para el abogado; no se borra nada
+  automáticamente todavía.
+- **Prueba de punta a punta (72):** Luna recorre la nube como persona y Catalina recibe
+  un guion para hacerlo ella.
+- **Documentación:** un solo documento para Catalina, monocromático, simple y sin
+  términos técnicos, publicado como enlace privado.
+
+### D-130 — Lo que sigue después de la revisión de la noche (2026-10-02)
+Tras los informes de diseño, textos y exploración (`qa/correcciones/v3/`), Nicolás
+decidió:
+1. **Textos que suenan a IA:** no se aplican las propuestas de Codex. Las 38 frases van
+   en el PDF «Respuestas a la revisión 3» con tres opciones escritas a mano cada una;
+   el equipo marca y después se aplican. La 9 (sin resultados) ya es el texto de
+   Catalina.
+2. **Barra de abajo:** se esconde en comprar, pagar, publicar, editar, chat y pedido.
+3. **Filtros en el celular:** panel de pantalla completa y, arriba de los resultados,
+   los filtros puestos como etiquetas que se quitan con X. «Zona del vendedor» se queda,
+   aclarando que no es tu ubicación.
+4. **Datos de la nube:** limpiar lo de prueba y cargar los artículos de paginación con
+   títulos naturales (`npm run demo -- --paginacion`, ya con títulos naturales).
+5. **Foto o video que no carga:** recuadro «Sin foto» y aviso «El video no cargó».
+6. **Términos al registrarse:** se queda el panel, con instrucción arriba, «Aceptar»
+   siempre visible y «Aceptaste los términos» junto a la casilla.
+7. **Configuración** por pestañas con buscador en Lugares; **sesiones** agrupadas
+   («Este dispositivo» aparte, 5 más recientes y «Ver todas»).
+8. **Despliegue:** lo de la revisión 3 ahora; los puntos 2 a 7 y las frases en una
+   segunda tanda.

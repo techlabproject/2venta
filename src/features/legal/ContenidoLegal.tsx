@@ -160,8 +160,8 @@ export function ContenidoLegal() {
         <ul>
           <li>
             Al empezar a vender eliges si vendes como persona o como empresa
-            (persona jurídica), y nos das una dirección de notificaciones y un
-            teléfono, que no se publican. Verificas tu identidad a través de un
+            (persona jurídica), y nos das una dirección de notificaciones, que no se
+            publica; como teléfono de contacto usamos el celular que confirmaste. Verificas tu identidad a través de un
             proveedor especializado; en una empresa, lo hace su representante legal.
             La empresa además registra su NIT, su razón social y su RUT, que revisa el
             equipo de 2venta antes de mostrarla como empresa.
@@ -413,8 +413,8 @@ export function ContenidoLegal() {
           </li>
           <li>
             <strong>Vendedores:</strong> si vendes como persona o empresa, tu dirección
-            de notificaciones y un teléfono de contacto (la ley los exige y no se
-            publican). La verificación de identidad la hace un proveedor
+            de notificaciones y, como teléfono de contacto, tu celular confirmado (la
+            ley los exige y no se publican). La verificación de identidad la hace un proveedor
             especializado; 2venta guarda el resultado y la referencia. De las
             empresas, el NIT, la razón social, el nombre y la cédula del representante
             legal y el RUT, que solo ve el equipo.

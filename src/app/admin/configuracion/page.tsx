@@ -13,10 +13,15 @@ import {
 } from "@/features/configuracion/queries";
 import {
   agregarAtributo,
+  agregarCategoria,
   agregarLugar,
   agregarPalabra,
   alternarAtributo,
   alternarPalabra,
+  borrarAtributo,
+  borrarCategoria,
+  borrarLugar,
+  borrarPalabra,
   guardarCategoria,
   guardarLugar,
 } from "@/features/configuracion/acciones";
@@ -36,6 +41,7 @@ const ERRORES: Record<string, string> = {
   valor: "Escribe el valor, sin teléfonos ni enlaces.",
   frase: "La frase necesita al menos 3 letras.",
   motivo: "Explica el motivo en una frase: es lo que verá quien publica.",
+  "en-uso": "Eso ya lo usan publicaciones o pedidos: no se puede borrar, solo desactivar.",
   largo: "Es demasiado largo. Los nombres de categoría van hasta 40 letras; los de lugar, hasta 80; las tallas, hasta 30; las frases, hasta 60, y los motivos, hasta 200.",
 };
 
@@ -51,6 +57,42 @@ const CAMPO =
 const BOTON =
   "rounded-xl bg-brand px-3 py-2 text-sm font-medium text-cream transition duration-200 ease-salida hover:bg-brand-l";
 const TARJETA = "rounded-2xl bg-white p-4 shadow-xs ring-1 ring-line";
+
+/**
+ * «Borrar» con confirmación (fila 58, D-129). Solo se dibuja en lo que nadie usa, y el
+ * servidor lo vuelve a comprobar. Es un `details` para que funcione sin JavaScript.
+ */
+function Borrar({
+  nombre,
+  accion,
+  campos,
+}: {
+  nombre: string;
+  accion: (form: FormData) => Promise<void>;
+  campos: Record<string, string>;
+}) {
+  return (
+    <details className="text-sm">
+      <summary className="cursor-pointer text-danger underline">Borrar</summary>
+      <form action={accion} data-borrar className="mt-2 flex flex-wrap items-center gap-2">
+        {Object.entries(campos).map(([k, v]) => (
+          <input key={k} type="hidden" name={k} value={v} />
+        ))}
+        <span className="text-ink2">¿Seguro? No se puede deshacer.</span>
+        <button
+          type="submit"
+          aria-label={`Sí, borrar ${nombre}`}
+          className="rounded-xl bg-danger px-3 py-1.5 text-sm font-medium text-white"
+        >
+          Sí, borrar
+        </button>
+      </form>
+    </details>
+  );
+}
+
+const enUso = (n: number) =>
+  `La ${n === 1 ? "usa 1 publicación o pedido" : `usan ${n} publicaciones o pedidos`}: solo se puede desactivar.`;
 
 // El historial en palabras (Luna, fila 52): antes eran objetos JSON.
 const ENTIDADES: Record<string, string> = {
@@ -101,18 +143,21 @@ const fecha = new Intl.DateTimeFormat("es-CO", {
 export default async function Configuracion({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; listo?: string }>;
+  searchParams: Promise<{ error?: string; listo?: string; historial?: string }>;
 }) {
   const admin = await currentAdmin();
   if (!admin) notFound();
-  const { error, listo } = await searchParams;
+  const { error, listo, historial } = await searchParams;
+  // El historial va de 10 en 10 (fila 59). Lo que llegue raro en la dirección vuelve a 10.
+  const pedidos = Number(historial);
+  const limite = Number.isInteger(pedidos) && pedidos >= 10 && pedidos <= 500 ? pedidos : 10;
 
   const [categorias, lugares, atributos, palabras, cambios] = await Promise.all([
     todasLasCategorias(),
     todosLosLugares(),
     todosLosAtributos(),
     todasLasPalabras(),
-    ultimosCambios(),
+    ultimosCambios(limite),
   ]);
   const porConfirmar = lugares.filter((l) => l.activo && !l.confirmado).length;
 
@@ -154,6 +199,17 @@ export default async function Configuracion({
             ejemplo <code>?categoria=ninos</code>) no cambia, para no romper enlaces
             compartidos. Una categoría inactiva no recibe publicaciones nuevas.
           </p>
+          <form action={agregarCategoria} className={`mt-3 flex flex-wrap items-end gap-3 ${TARJETA}`}>
+            <div className="flex min-w-48 flex-1 flex-col gap-1">
+              <label htmlFor="nueva-categoria" className="text-xs text-muted">
+                Nombre de la categoría nueva
+              </label>
+              <input id="nueva-categoria" name="label" required maxLength={40} placeholder="Hogar" className={CAMPO} />
+            </div>
+            <button type="submit" className={BOTON}>
+              Agregar categoría
+            </button>
+          </form>
           <ul className="mt-3 grid gap-3 md:grid-cols-2">
             {categorias.map((c) => (
               <li key={c.slug} className={TARJETA}>
@@ -187,6 +243,13 @@ export default async function Configuracion({
                     Guardar
                   </button>
                 </form>
+                <div className="mt-3 border-t border-line pt-2">
+                  {c.usos > 0 ? (
+                    <p className="text-xs text-muted">{enUso(c.usos)}</p>
+                  ) : (
+                    <Borrar nombre={c.label} accion={borrarCategoria} campos={{ slug: c.slug }} />
+                  )}
+                </div>
               </li>
             ))}
           </ul>
@@ -275,6 +338,13 @@ export default async function Configuracion({
                     Guardar
                   </button>
                 </form>
+                <div className="mt-3 border-t border-line pt-2">
+                  {l.usos > 0 ? (
+                    <p className="text-xs text-muted">{enUso(l.usos)}</p>
+                  ) : (
+                    <Borrar nombre={l.nombre} accion={borrarLugar} campos={{ id: l.id }} />
+                  )}
+                </div>
               </li>
             ))}
           </ul>
@@ -315,7 +385,7 @@ export default async function Configuracion({
                 {atributos
                   .filter((a) => a.tipo === tipo)
                   .map((a) => (
-                    <li key={a.valor}>
+                    <li key={a.valor} className="flex items-start gap-2">
                       <form action={alternarAtributo}>
                         <input type="hidden" name="tipo" value={tipo} />
                         <input type="hidden" name="valor" value={a.valor} />
@@ -332,12 +402,18 @@ export default async function Configuracion({
                           {a.valor}
                         </button>
                       </form>
+                      {a.usos === 0 && (
+                        <Borrar nombre={a.valor} accion={borrarAtributo} campos={{ tipo, valor: a.valor }} />
+                      )}
                     </li>
                   ))}
               </ul>
             </div>
           ))}
-          <p className="mt-2 text-xs text-muted">Toca una opción para activarla o desactivarla.</p>
+          <p className="mt-2 text-xs text-muted">
+            Toca una opción para activarla o desactivarla. «Borrar» aparece solo en las que
+            ninguna publicación usa.
+          </p>
         </section>
 
         {/* ---- Palabras prohibidas ---- */}
@@ -373,13 +449,16 @@ export default async function Configuracion({
                     <span className="font-medium">{p.frase}</span>
                     <span className="block text-xs text-muted">{p.motivo}</span>
                   </span>
-                  <form action={alternarPalabra}>
-                    <input type="hidden" name="id" value={p.id} />
-                    <input type="hidden" name="activo" value={p.activo ? "0" : "1"} />
-                    <button type="submit" className="text-sm text-brand underline">
-                      {p.activo ? "Desactivar" : "Activar"}
-                    </button>
-                  </form>
+                  <div className="flex items-start gap-4">
+                    <form action={alternarPalabra}>
+                      <input type="hidden" name="id" value={p.id} />
+                      <input type="hidden" name="activo" value={p.activo ? "0" : "1"} />
+                      <button type="submit" className="text-sm text-brand underline">
+                        {p.activo ? "Desactivar" : "Activar"}
+                      </button>
+                    </form>
+                    <Borrar nombre={p.frase} accion={borrarPalabra} campos={{ id: p.id }} />
+                  </div>
                 </li>
               ))}
             </ul>
@@ -420,11 +499,19 @@ export default async function Configuracion({
                       <td className="py-2 pr-3">{c.quien}</td>
                       <td className="py-2 pr-3">{queCambio(c)}</td>
                       <td className="py-2 pr-3 text-muted">{c.antes ? enPalabras(c.antes) : "Nuevo"}</td>
-                      <td className="py-2">{enPalabras(c.despues)}</td>
+                      <td className="py-2">{c.despues ? enPalabras(c.despues) : "Borrado"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              {cambios.length === limite && (
+                <a
+                  href={`?historial=${limite + 10}#historial`}
+                  className="mt-3 inline-block text-sm text-brand underline"
+                >
+                  Ver 10 más
+                </a>
+              )}
             </div>
           )}
         </section>

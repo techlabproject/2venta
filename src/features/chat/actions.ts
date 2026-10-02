@@ -8,7 +8,6 @@ import { conVolver } from "@/lib/destino";
 import { query } from "@/lib/db";
 import { getListing } from "@/features/catalog/queries";
 import { redact } from "./redact";
-import { claim } from "@/features/publish/claim";
 import {
   ESTADOS_PARA_ESCRIBIR,
   findConversation,
@@ -104,26 +103,15 @@ export async function sendMessage(_prev: ChatResult | null, form: FormData) {
     .trim()
     .slice(0, 2000);
 
-  // Una foto adjunta (S-37, D-92). Solo el vendedor del artículo puede mandarla:
-  // es el lado que tiene algo que enseñar, y es lo que se pidió.
-  //
-  // IMPORTANT: la clave se comprueba contra el bucket con `claim()`. El cliente
-  // manda una cadena, no un archivo, y creerle sería dejar que cualquiera con
-  // sesión clave en la conversación la clave de otra persona.
-  const keyCruda = form.get("imageKey");
-  let imagePath: string | null = null;
-  if (keyCruda && String(keyCruda)) {
-    if (ctx.conversation.seller_id !== ctx.user.id) {
-      return { error: "Solo quien vende puede mandar fotos en el chat." };
-    }
-    const claimed = await claim(keyCruda, ctx.user.id, "image");
-    if ("error" in claimed) return { error: claimed.error };
-    imagePath = claimed.key;
+  // Las fotos del chat se quitaron (fila 21, D-129). Una clave de imagen metida a
+  // mano en el formulario se rechaza: esconder el botón no es control de nada.
+  if (form.get("imageKey")) {
+    return {
+      error:
+        "En el chat no se mandan fotos. Lo que quieras enseñar va en las fotos y el video del artículo.",
+    };
   }
-
-  // Un mensaje vacío del todo no existe; uno con foto y sin texto, sí. La base lo
-  // vuelve a exigir con una restricción, porque esto es solo el primer filtro.
-  if (!raw && !imagePath) return { error: "Escribe algo antes de enviar." };
+  if (!raw) return { error: "Escribe algo antes de enviar." };
 
   // D-22. Se guarda el texto ya filtrado, nunca el original: dejar el número
   // tachado en la base sería dejarlo disponible para quien tenga acceso a ella.
@@ -132,7 +120,7 @@ export async function sendMessage(_prev: ChatResult | null, form: FormData) {
   await query(
     `insert into messages (conversation_id, sender_id, body, redactions, image_path)
      values ($1, $2, $3, $4, $5)`,
-    [conversationId, ctx.user.id, text || null, redactions, imagePath],
+    [conversationId, ctx.user.id, text || null, redactions, null],
   );
 
   // Al otro se le avisa. Agrupado por minuto para que una conversación viva no

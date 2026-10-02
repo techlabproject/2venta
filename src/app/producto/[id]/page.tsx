@@ -4,7 +4,7 @@ import Link from "next/link";
 import { getListing } from "@/features/catalog/queries";
 import { CONDITION_LABEL } from "@/features/catalog/labels";
 import { formatCop } from "@/lib/money";
-import { commissionCop, sellerPayoutCop } from "@/features/payments/money";
+import { commissionCop, reglaDeComision, sellerPayoutCop } from "@/features/payments/money";
 import { AppHeader } from "@/components/AppHeader";
 import { Price } from "@/components/Price";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -35,10 +35,13 @@ export const dynamic = "force-dynamic";
 
 export default async function ListingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ recien?: string }>;
 }) {
   const { id } = await params;
+  const { recien } = await searchParams;
   const [listing, user] = await Promise.all([getListing(id), currentUser()]);
 
   // Un id inexistente o con formato inválido termina en 404, no en una
@@ -99,7 +102,20 @@ export default async function ListingPage({
     <>
       <AppHeader zone={listing.seller_zone} />
       <main className="mx-auto max-w-6xl px-5 py-6">
-        <Volver href="/" />
+        {/* Fila 69 (D-129): recién publicado o editado, «Volver» regresaba al
+            formulario. Ahí la salida es «Ver mis productos». */}
+        {isSeller && (recien === "publicado" || recien === "editado") ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-brand/10 px-4 py-3">
+            <p data-testid="recien" className="text-sm font-medium text-brand">
+              {recien === "publicado" ? "Publicado." : "Cambios guardados."}
+            </p>
+            <Link href="/vender/metricas" className="text-sm font-medium text-brand underline">
+              Ver mis productos
+            </Link>
+          </div>
+        ) : (
+          <Volver href="/" />
+        )}
 
         {/* En escritorio, el medio a la izquierda y la decisión de compra a la
             derecha: antes todo iba apilado en una columna estrecha y el botón de
@@ -400,8 +416,8 @@ export default async function ListingPage({
                 Si se vende por {formatCop(listing.price_cop)}, te llegan{" "}
                 <b className="text-ink">
                   {formatCop(sellerPayoutCop(listing.price_cop))}
-                </b>{" "}
-                después de la comisión de 2venta (
+                </b>
+                . Comisión de 2venta: {reglaDeComision(listing.price_cop)} (
                 {formatCop(commissionCop(listing.price_cop))}).
               </p>
 

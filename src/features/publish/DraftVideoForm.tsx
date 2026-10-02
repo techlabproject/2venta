@@ -38,7 +38,9 @@ export function DraftVideoForm({ draftId }: { draftId: string }) {
     }
     const res = await publishDraft(prev, form);
     if ("id" in res) {
-      router.push(`/producto/${res.id}`);
+      // Fila 69 (D-129): `replace` y no `push`, para que el atrás del navegador no
+      // regrese al formulario lleno; la ficha llega sin «Volver».
+      router.replace(`/producto/${res.id}?recien=publicado`);
       router.refresh();
     }
     return res;
@@ -50,6 +52,7 @@ export function DraftVideoForm({ draftId }: { draftId: string }) {
       <input type="hidden" name="draftId" value={draftId} />
       <VideoCapture
         onCaptured={(video, poster) => setMedia({ video, poster })}
+          onDescartado={() => setMedia(null)}
       />
       <Button type="submit" disabled={pending || !media}>
         {uploading

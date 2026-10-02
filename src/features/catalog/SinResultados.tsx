@@ -12,7 +12,8 @@ import { conVolver } from "@/lib/destino";
  * da las salidas como botones. La tercera salida es el aviso: es la respuesta
  * honesta a «no hay», y antes quedaba arriba de la pantalla, lejos de aquí.
  *
- * Tono cálido y juguetón (D-103, decisión de Nicolás).
+ * Versión 3 (D-129): el texto que propuso Catalina, corregido. Sustituye el «¡Uy!…» de
+ * D-103, que le seguía pareciendo poco amable.
  */
 export function SinResultados({
   q,
@@ -41,8 +42,9 @@ export function SinResultados({
   sugerencia: string;
 }) {
   const titulo = q
-    ? `¡Uy! Por ahora no hay «${q}»${conFiltros ? " con esos filtros" : ""}`
-    : "¡Uy! Esta combinación no dio con nada";
+    ? `Ups, en este momento no tenemos «${q}»${conFiltros ? " con esos filtros" : ""}`
+    : "Ups, en este momento no tenemos la combinación que buscas";
+  const prueba = conFiltros ? "Prueba quitando algún filtro" : "Prueba con otra palabra";
 
   return (
     <div
@@ -53,9 +55,11 @@ export function SinResultados({
         {titulo}
       </p>
       <p className="mt-1.5 text-sm text-ink2">
-        En segunda mano todo se mueve rápido: lo que hoy no está puede aparecer
-        mañana. {conFiltros ? "Prueba quitando algún filtro" : "Prueba con otra palabra"}, o
-        date una vuelta por todo lo publicado.
+        {prueba} o date una vuelta por{" "}
+        <Link href={verTodo} className="font-medium text-brand underline">
+          todo lo publicado
+        </Link>
+        .
       </p>
 
       <div className="mt-5 flex flex-wrap items-center gap-2">

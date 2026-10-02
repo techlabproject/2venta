@@ -30,6 +30,19 @@ export function commissionCop(subtotalCop: number): number {
   return clamp(raw, COMMISSION_MIN_COP, COMMISSION_MAX_COP);
 }
 
+/**
+ * La regla de la comisión en palabras, para quien publica (fila 68, D-129): «5 % del
+ * precio, mínimo $ 2.500». El máximo solo se nombra cuando aplica, para no alargar
+ * el texto en el caso de siempre.
+ */
+export function reglaDeComision(subtotalCop: number): string {
+  const pesos = (n: number) => `$ ${n.toLocaleString("es-CO")}`;
+  const base = `${Math.round(COMMISSION_RATE * 100)} % del precio`;
+  return Math.round(subtotalCop * COMMISSION_RATE) > COMMISSION_MAX_COP
+    ? `${base}, máximo ${pesos(COMMISSION_MAX_COP)}`
+    : `${base}, mínimo ${pesos(COMMISSION_MIN_COP)}`;
+}
+
 /** Lo que recibe el vendedor: el subtotal menos la comisión. */
 export function sellerPayoutCop(subtotalCop: number): number {
   return subtotalCop - commissionCop(subtotalCop);

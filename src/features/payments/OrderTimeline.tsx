@@ -15,8 +15,11 @@ type Evento = { to_status: string; created_at: Date };
 type Paso = {
   /** El estado que marca este paso como cumplido. */
   estado: OrderStatus;
+  /** Ya pasó: en pasado. */
   titulo: string;
-  /** Qué pasa aquí, para quien nunca ha usado un pago retenido. */
+  /** Es el que sigue: lo que se espera ahora. */
+  espera: string;
+  /** Todavía no pasa: qué va a pasar. Nunca en pasado (Luna y diseño, D-129). */
   detalle: string;
 };
 
@@ -24,23 +27,26 @@ const CON_ENVIO: Paso[] = [
   {
     estado: "pagado",
     titulo: "Pago recibido y guardado",
-    detalle: "Tu plata está en 2venta, no con el vendedor.",
+    espera: "Pago",
+    detalle: "Tu plata queda en 2venta, no con el vendedor.",
   },
   {
     estado: "despachado",
     titulo: "El vendedor despachó",
-    detalle: "Ya lo entregó a la transportadora.",
+    espera: "Esperando el despacho",
+    detalle: "El vendedor lo lleva a la transportadora.",
   },
   {
     estado: "entregado",
     titulo: "Entregado",
-    detalle: "La transportadora reportó la entrega.",
+    espera: "En camino",
+    detalle: "La transportadora avisa cuando lo entregue.",
   },
   {
     estado: "liberado",
     titulo: "Le pagamos al vendedor",
-    detalle:
-      "Cuando confirmas que recibiste, o a los siete días de la entrega.",
+    espera: "Revisa y confirma",
+    detalle: "Cuando confirmes que lo recibiste, o a los siete días de la entrega.",
   },
 ];
 
@@ -48,15 +54,23 @@ const EN_PERSONA: Paso[] = [
   {
     estado: "pagado",
     titulo: "Pago recibido y guardado",
-    detalle: "Tu plata está en 2venta, no con el vendedor.",
+    espera: "Pago",
+    detalle: "Tu plata queda en 2venta, no con el vendedor.",
   },
   {
     estado: "liberado",
-    titulo: "Le dictas el código y le pagamos al vendedor",
-    detalle:
-      "Revisa el producto antes de dictarlo: el código libera el dinero.",
+    titulo: "Le dictaste el código y le pagamos al vendedor",
+    espera: "Encuentro y código",
+    detalle: "Revisa el producto antes de dictar el código: el código libera el dinero.",
   },
 ];
+
+// El nombre de un paso que todavía está lejos: un sustantivo, sin decir que pasó.
+const FUTURO: Partial<Record<OrderStatus, string>> = {
+  despachado: "Despacho",
+  entregado: "Entrega",
+  liberado: "Pago al vendedor",
+};
 
 const hora = new Intl.DateTimeFormat("es-CO", {
   day: "numeric",
@@ -148,7 +162,7 @@ export function OrderTimeline({
                   cumplido ? "text-ink" : actual ? "text-ink" : "text-muted"
                 }`}
               >
-                {paso.titulo}
+                {cumplido ? paso.titulo : actual ? paso.espera : FUTURO[paso.estado] ?? paso.espera}
               </p>
               {fecha ? (
                 <time className="mt-0.5 block text-xs text-muted">

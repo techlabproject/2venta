@@ -1,5 +1,6 @@
+import ExcelJS from "exceljs";
 import { test, expect, type Browser } from "@playwright/test";
-import { makeAdmin, sellerWithListing, signUpVerified, withDb } from "./helpers";
+import { makeAdmin, sellerWithListing, signUpVerified, withDb, liberarPago } from "./helpers";
 
 // La prueba de punta a punta de la rebanada S-25, parte 2 (RF-42).
 // Ver slices/25-configuracion-y-reportes.md
@@ -28,7 +29,7 @@ async function completedSale(browser: Browser, price: number) {
   await expect(buyer).toHaveURL(/\/dev\/pago\//);
   await buyer.getByRole("button", { name: "Simular pago aprobado" }).click();
   await expect(buyer).toHaveURL(/\/pedido\//);
-  await buyer.getByRole("button", { name: "Ya lo recibí, liberar pago" }).click();
+  await liberarPago(buyer);
   await expect(buyer.getByTestId("estado")).toHaveText("Pago liberado al vendedor");
 
   return { seller, ctx, buyer };
@@ -92,19 +93,58 @@ test("fechas al revés o inválidas no rompen la pantalla", async ({ browser }) 
   await admin.ctx.close();
 });
 
-test("el archivo se descarga y trae las mismas cifras", async ({ browser }) => {
+// Catalina (fila 54, D-129): el CSV se abría en Excel con todo en una columna y las
+// tildes dañadas. Ahora es un Excel de verdad, con hojas, encabezados y formato.
+async function libro(res: import("@playwright/test").APIResponse) {
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(Buffer.from(await res.body()) as unknown as ArrayBuffer);
+  return wb;
+}
+
+test("el archivo es un Excel con resumen y categorías, ordenado y con las mismas cifras", async ({ browser }) => {
   const venta = await completedSale(browser, 300_000);
   const admin = await adminPage(browser);
 
-  const res = await admin.page.request.get("/api/admin/reportes.csv");
-  expect(res.status()).toBe(200);
-  expect(res.headers()["content-type"]).toContain("text/csv");
-  expect(res.headers()["content-disposition"]).toContain("attachment");
+  await admin.page.goto("/admin/reportes");
+  const enlace = admin.page.getByRole("link", { name: "Descargar Excel" });
+  await expect(enlace).toHaveAttribute("href", /\/api\/admin\/reportes\.xlsx/);
 
-  const csv = await res.text();
-  expect(csv).toContain("Ventas completadas");
-  expect(csv).toContain("Tasa de disputa");
-  expect(csv).toContain("Categoría,Ventas");
+  const res = await admin.page.request.get("/api/admin/reportes.xlsx");
+  expect(res.status()).toBe(200);
+  expect(res.headers()["content-type"]).toContain(
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  );
+  expect(res.headers()["content-disposition"]).toMatch(/attachment; filename="2venta-reporte-.*\.xlsx"/);
+
+  const wb = await libro(res);
+  expect(wb.worksheets.map((h) => h.name)).toEqual(["Resumen", "Por categoría"]);
+  const resumen = wb.getWorksheet("Resumen")!;
+  const valores = new Map<string, unknown>();
+  resumen.eachRow((fila) => valores.set(String(fila.getCell(1).value), fila.getCell(2).value));
+  expect(valores.get("Métrica")).toBe("Valor");
+  // Números de verdad, no texto: Excel puede sumarlos.
+  expect(typeof valores.get("Ventas completadas")).toBe("number");
+  expect(typeof valores.get("Volumen transado")).toBe("number");
+  // Los pesos llevan formato de moneda.
+  const filaVolumen = [...Array(resumen.rowCount).keys()].map((i) => resumen.getRow(i + 1)).find((f) => f.getCell(1).value === "Volumen transado")!;
+  expect(filaVolumen.getCell(2).numFmt).toContain("$");
+  // El encabezado va en negrita.
+  const encabezado = [...Array(resumen.rowCount).keys()].map((i) => resumen.getRow(i + 1)).find((f) => f.getCell(1).value === "Métrica")!;
+  expect(encabezado.getCell(1).font?.bold).toBe(true);
+
+  // Las mismas fechas y las mismas ventas que la pantalla (Luna, fila 54).
+  const desde = await admin.page.getByLabel("Desde").inputValue();
+  const hasta = await admin.page.getByLabel("Hasta").inputValue();
+  expect(res.headers()["content-disposition"]).toContain(`2venta-reporte-${desde}-a-${hasta}.xlsx`);
+  const larga = (d: string) =>
+    new Intl.DateTimeFormat("es-CO", { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" }).format(new Date(`${d}T12:00:00Z`));
+  expect(resumen.getCell("A2").value).toBe(`Del ${larga(desde)} al ${larga(hasta)}`);
+  const ventasPantalla = (await admin.page.getByTestId("ventas").textContent())!.match(/\d+/g)!.map(Number);
+  expect(valores.get("Ventas completadas")).toBe(ventasPantalla[0]);
+  expect(valores.get("Pedidos cerrados (con reembolsos)")).toBe(ventasPantalla.at(-1));
+
+  const categorias = wb.getWorksheet("Por categoría")!;
+  expect(categorias.getRow(1).values).toEqual([undefined, "Categoría", "Ventas", "Volumen", "Comisiones"]);
 
   await venta.seller.context.close();
   await venta.ctx.close();
@@ -120,14 +160,14 @@ test("quien no es administrador no ve la pantalla ni el archivo", async ({ brows
   const pantalla = await page.goto("/admin/reportes");
   expect(pantalla?.status()).toBe(404);
 
-  const archivo = await page.request.get("/api/admin/reportes.csv");
+  const archivo = await page.request.get("/api/admin/reportes.xlsx");
   expect(archivo.status()).toBe(404);
 
   await ctx.close();
 });
 
 test("sin sesión tampoco", async ({ request }) => {
-  const res = await request.get("/api/admin/reportes.csv");
+  const res = await request.get("/api/admin/reportes.xlsx");
   expect(res.status()).toBe(404);
 });
 
@@ -144,10 +184,13 @@ test("la comisión reportada coincide con la de los pedidos", async ({ browser }
     return Number(rows[0].total);
   });
 
-  const res = await admin.page.request.get("/api/admin/reportes.csv");
-  const csv = await res.text();
-  const linea = csv.split("\n").find((l) => l.startsWith("Comisiones cobradas"))!;
-  expect(Number(linea.split(",")[1])).toBe(suma);
+  const res = await admin.page.request.get("/api/admin/reportes.xlsx");
+  const resumen = (await libro(res)).getWorksheet("Resumen")!;
+  let comision: unknown;
+  resumen.eachRow((fila) => {
+    if (fila.getCell(1).value === "Comisiones cobradas") comision = fila.getCell(2).value;
+  });
+  expect(comision).toBe(suma);
 
   await venta.seller.context.close();
   await venta.ctx.close();

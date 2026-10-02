@@ -52,6 +52,11 @@ export default async function Actividad() {
   // Corrección 17: una sección vacía que no es de la persona sobra. Quien solo
   // compra no ve «Ventas» y quien vende sin haber comprado no ve «Compras». Si las
   // dos están vacías queda la que corresponde a lo que hace: vender si ya empezó.
+  // Lo que espera respuesta va primero, aunque no sea lo más reciente: si quedara
+  // cuarta, el contador diría «3 sin leer» y no se vería cuál (fila 27).
+  const sinLeer = chats.reduce((n, c) => n + c.unread_count, 0);
+  const recientes = [...chats.filter((c) => c.unread), ...chats.filter((c) => !c.unread)].slice(0, 3);
+
   const vende = Boolean(vendedor) || verification?.status === "aprobado";
   const mostrarCompras = purchases.length > 0 || (sales.length === 0 && !vende);
   const mostrarVentas = sales.length > 0 || (purchases.length === 0 && vende);
@@ -111,12 +116,24 @@ export default async function Actividad() {
         {chats.length > 0 && (
           <section className="mt-8">
             <div className="flex items-baseline justify-between gap-3">
-              <h2 className="font-title text-lg font-semibold">Conversaciones</h2>
+              <h2 className="flex items-center gap-2 font-title text-lg font-semibold">
+                Conversaciones
+                {/* Cuántos mensajes esperan respuesta, sin entrar a la bandeja
+                    (fila 27, versión 3; D-129). */}
+                {sinLeer > 0 && (
+                  <span
+                    data-testid="sin-leer"
+                    className="rounded-full bg-accent px-2 py-0.5 font-sans text-xs font-semibold text-on-accent ring-1 ring-accent-edge/60"
+                  >
+                    {sinLeer} sin leer
+                  </span>
+                )}
+              </h2>
               <Link href="/chats" className="text-sm text-brand underline">
                 Ver todas
               </Link>
             </div>
-            <ListaDeChats conversations={chats.slice(0, 3)} testId="chats-recientes" />
+            <ListaDeChats conversations={recientes} testId="chats-recientes" />
           </section>
         )}
       </main>

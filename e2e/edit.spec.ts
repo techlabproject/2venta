@@ -307,7 +307,7 @@ test("el precio solo acepta dígitos, separa los miles y dice que es en pesos", 
   await expect(precio).toHaveValue("1.250.000");
 
   await seller.page.getByRole("button", { name: "Guardar cambios" }).click();
-  await expect(seller.page).toHaveURL(new RegExp(`/producto/${seller.listingId}$`));
+  await expect(seller.page).toHaveURL(new RegExp(`/producto/${seller.listingId}\\?recien=editado$`));
   await expect(seller.page.getByRole("main")).toContainText("$ 1.250.000");
 
   await seller.context.close();
@@ -342,7 +342,7 @@ test("el aviso nombra el IMEI solo si el artículo lo tiene, y el IMEI no se pue
   });
   await tec.page.getByLabel("Título").fill(`Celular editado ${Date.now()}`);
   await tec.page.getByRole("button", { name: "Guardar cambios" }).click();
-  await expect(tec.page).toHaveURL(new RegExp(`/producto/${tec.listingId}$`));
+  await expect(tec.page).toHaveURL(new RegExp(`/producto/${tec.listingId}\\?recien=editado$`));
   const fila = await withDb(async (c) => {
     const { rows } = await c.query<{ imei: string; category: string }>(
       `select imei, category from listings where id = $1`,

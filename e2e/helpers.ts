@@ -279,3 +279,12 @@ export async function permitirReenvio(page: Page, phone: string): Promise<void> 
   );
   await page.clock.fastForward(31_000);
 }
+
+/**
+ * «Ya lo recibí, liberar pago» con su confirmación (D-129): liberar no tiene vuelta
+ * atrás y por eso pide un segundo toque.
+ */
+export async function liberarPago(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Ya lo recibí, liberar pago" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Sí, liberar el pago" }).click();
+}

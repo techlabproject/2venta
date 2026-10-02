@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
@@ -84,7 +84,8 @@ export async function editListing(
 
   revalidatePath(`/producto/${id}`);
   revalidatePath("/");
-  redirect(`/producto/${id}`);
+  // Fila 69 (D-129): sin volver al formulario.
+  redirect(`/producto/${id}?recien=editado`, RedirectType.replace);
 }
 
 /**

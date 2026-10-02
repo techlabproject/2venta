@@ -8,7 +8,6 @@ import { Volver } from "@/components/Volver";
 // RF-42. El último requisito funcional que quedaba.
 export const dynamic = "force-dynamic";
 
-const dia = (d: Date) => d.toISOString().slice(0, 10);
 
 export default async function Reportes({
   searchParams,
@@ -46,7 +45,7 @@ export default async function Reportes({
             <input
               type="date"
               name="desde"
-              defaultValue={dia(period.from)}
+              defaultValue={period.desde}
               className="rounded-xl border border-line bg-white px-3 py-2 outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
             />
           </label>
@@ -55,7 +54,7 @@ export default async function Reportes({
             <input
               type="date"
               name="hasta"
-              defaultValue={dia(period.to)}
+              defaultValue={period.hasta}
               className="rounded-xl border border-line bg-white px-3 py-2 outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15"
             />
           </label>
@@ -66,10 +65,10 @@ export default async function Reportes({
             Ver
           </button>
           <a
-            href={`/api/admin/reportes.csv?${params.toString()}`}
+            href={`/api/admin/reportes.xlsx?${params.toString()}`}
             className="rounded-xl border border-brand/25 bg-white px-4 py-2 text-sm font-medium"
           >
-            Descargar
+            Descargar Excel
           </a>
         </form>
 

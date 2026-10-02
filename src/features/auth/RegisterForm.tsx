@@ -142,7 +142,7 @@ export function RegisterForm() {
         label="Celular"
         autoComplete="tel"
         required
-        hint="Te mandamos un código para confirmarlo. Sin celular confirmado no puedes comprar ni escribirle a nadie."
+        hint="Te mandamos un código para confirmarlo."
       />
       {/* Corrección 11 (art. 52 de la Ley 1480): la «medida posible» para no
           dejar entrar a menores de edad. Decisión de Nicolás. */}

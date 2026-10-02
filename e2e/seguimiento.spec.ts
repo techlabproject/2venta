@@ -37,13 +37,19 @@ test("un pedido con envío muestra los cuatro pasos y dónde va", async ({ brows
 
   await expect(pasos(buyer)).toHaveCount(4);
   await expect(seguimiento(buyer)).toContainText("Pago recibido y guardado");
-  await expect(seguimiento(buyer)).toContainText("El vendedor despachó");
-  await expect(seguimiento(buyer)).toContainText("Entregado");
-  await expect(seguimiento(buyer)).toContainText("Le pagamos al vendedor");
+  // Luna y la revisión de diseño (D-129): recién pagado, los pasos que faltan no
+  // pueden sonar a hechos («Ya lo entregó a la transportadora», «Entregado»). El
+  // que sigue dice que se espera; los demás, qué va a pasar.
+  await expect(pasos(buyer).nth(1)).toContainText("Esperando el despacho");
+  await expect(pasos(buyer).nth(1)).toContainText("El vendedor lo lleva a la transportadora.");
+  await expect(pasos(buyer).nth(2)).toContainText("Entrega");
+  await expect(pasos(buyer).nth(2)).toContainText("La transportadora avisa cuando lo entregue.");
+  await expect(pasos(buyer).nth(3)).toContainText("Pago al vendedor");
+  await expect(seguimiento(buyer)).not.toContainText("Ya lo entregó");
+  await expect(seguimiento(buyer)).not.toContainText("El vendedor despachó");
 
-  // El paso cumplido trae su hora; el que falta, la explicación de qué pasará.
+  // El paso cumplido trae su hora y su título en pasado.
   await expect(pasos(buyer).first().getByRole("time")).toBeVisible();
-  await expect(pasos(buyer).nth(1)).toContainText("Ya lo entregó a la transportadora");
 
   // Al despachar, el segundo paso queda cumplido y aparece su hora.
   await seller.page.goto(`/pedido/${orderId}`);
@@ -52,6 +58,8 @@ test("un pedido con envío muestra los cuatro pasos y dónde va", async ({ brows
 
   await buyer.reload();
   await expect(pasos(buyer).nth(1).getByRole("time")).toBeVisible();
+  await expect(pasos(buyer).nth(1)).toContainText("El vendedor despachó");
+  await expect(pasos(buyer).nth(2)).toContainText("En camino");
 
   await ctx.close();
   await seller.context.close();
@@ -68,7 +76,8 @@ test("un pedido en persona no inventa pasos de envío", async ({ browser }) => {
   // reporte una entrega.
   await expect(pasos(buyer)).toHaveCount(2);
   await expect(seguimiento(buyer)).not.toContainText("transportadora");
-  await expect(seguimiento(buyer)).toContainText("Le dictas el código");
+  // El paso que sigue dice lo que se espera, no que ya pasó (D-129).
+  await expect(seguimiento(buyer)).toContainText("Encuentro y código");
 
   await ctx.close();
   await seller.context.close();

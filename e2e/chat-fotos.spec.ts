@@ -1,5 +1,6 @@
-import { expect, test, type Browser, type Page } from "@playwright/test";
+import { expect, test, type Browser } from "@playwright/test";
 import {
+  hidratado,
   makeAdmin,
   sellerWithListing,
   signUpVerified,
@@ -29,56 +30,86 @@ async function conversacion(browser: Browser, titulo: string) {
   return { seller, ctx, buyer, chatId };
 }
 
-/** Un PNG de 1×1 real, para que el bucket reciba bytes de imagen de verdad. */
-const PNG_1X1 = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-  "base64",
-);
+// Corrección 21, versión 3 (D-129): Catalina insistió y Nicolás decidió quitar las
+// fotos del chat. Lo que se enseña va en las fotos y el video del artículo, que sí
+// pasan por la publicación. Las fotos que ya se mandaron se siguen viendo.
 
-async function adjuntar(page: Page) {
-  await page.setInputFiles('input[type="file"]', {
-    name: "camiseta.png",
-    mimeType: "image/png",
-    buffer: PNG_1X1,
-  });
-}
+test("nadie tiene el control de adjuntar fotos en el chat", async ({ browser }) => {
+  const titulo = `Buzo sin foto ${Date.now()}`;
+  const { seller, ctx, buyer } = await conversacion(browser, titulo);
 
-test("el vendedor manda una foto y las dos partes la ven", async ({
-  browser,
-}) => {
-  // El disparador fue literal: en la captura de Nicolás el comprador escribe
-  // «puedo ver mas fotos» y no había forma de contestar con una.
-  const titulo = `Camiseta con foto ${Date.now()}`;
-  const { seller, ctx, buyer, chatId } = await conversacion(browser, titulo);
-
-  await seller.page.goto(`/chat/${chatId}`);
-  await adjuntar(seller.page);
-  await seller.page.getByLabel("Mensaje").fill("Aquí la tienes de cerca");
-  await seller.page.getByRole("button", { name: "Enviar" }).click();
-
-  const foto = seller.page
-    .getByTestId("mensajes")
-    .getByRole("img", { name: /Foto que mandó/ });
-  await expect(foto).toBeVisible();
-
-  // Y el comprador la ve, que es el punto.
-  await buyer.reload();
-  await expect(
-    buyer.getByTestId("mensajes").getByRole("img", { name: /Foto que mandó/ }),
-  ).toBeVisible();
+  await expect(buyer.getByLabel("Mensaje")).toBeVisible();
+  await expect(buyer.getByLabel("Adjuntar una foto")).toHaveCount(0);
+  await expect(buyer.locator('input[type="file"]')).toHaveCount(0);
+  await seller.page.goto(buyer.url());
+  await expect(seller.page.getByLabel("Mensaje")).toBeVisible();
+  await expect(seller.page.getByLabel("Adjuntar una foto")).toHaveCount(0);
+  await expect(seller.page.locator('input[type="file"]')).toHaveCount(0);
 
   await ctx.close();
   await seller.context.close();
 });
 
-test("el comprador no tiene el control de adjuntar", async ({ browser }) => {
-  const titulo = `Buzo sin foto ${Date.now()}`;
-  const { seller, ctx, buyer } = await conversacion(browser, titulo);
+test("una foto metida a mano en el formulario se rechaza", async ({ browser }) => {
+  const titulo = `Camiseta forzada ${Date.now()}`;
+  const { seller, ctx, chatId } = await conversacion(browser, titulo);
 
-  await expect(buyer.getByLabel("Adjuntar una foto")).toHaveCount(0);
-  // Y el vendedor sí lo tiene, para que la prueba distinga «no está» de «no existe».
-  await seller.page.goto(buyer.url());
-  await expect(seller.page.getByLabel("Adjuntar una foto")).toBeVisible();
+  await seller.page.goto(`/chat/${chatId}`);
+  const mensaje = seller.page.getByLabel("Mensaje");
+  await hidratado(mensaje);
+  await mensaje.evaluate((el) => {
+    const i = document.createElement("input");
+    i.type = "hidden";
+    i.name = "imageKey";
+    i.value = "uploads/cualquiera/foto.png";
+    el.closest("form")!.appendChild(i);
+  });
+  await mensaje.fill("Aquí la tienes de cerca");
+  await seller.page.getByRole("button", { name: "Enviar" }).click();
+  await expect(seller.page.getByRole("main").getByRole("alert")).toContainText(
+    "En el chat no se mandan fotos",
+  );
+  const [fila] = await withDb(async (c) =>
+    (await c.query(`select count(*)::int as n from messages where conversation_id = $1`, [chatId])).rows,
+  );
+  expect(fila.n).toBe(0);
+
+  await ctx.close();
+  await seller.context.close();
+});
+
+test("las fotos que ya se habían mandado se siguen viendo", async ({ browser }) => {
+  const titulo = `Foto vieja ${Date.now()}`;
+  const { seller, ctx, buyer, chatId } = await conversacion(browser, titulo);
+  await withDb(async (c) => {
+    const { rows } = await c.query<{ seller_id: string }>(
+      `select seller_id from conversations where id = $1`,
+      [chatId],
+    );
+    await c.query(
+      `insert into messages (conversation_id, sender_id, body, image_path)
+       values ($1, $2, 'Aquí la tienes de cerca', 'uploads/vieja/foto.png')`,
+      [chatId, rows[0].seller_id],
+    );
+  });
+  await buyer.reload();
+  await expect(buyer.getByTestId("mensajes").getByRole("img", { name: /Foto que mandó/ })).toHaveCount(1);
+
+  await ctx.close();
+  await seller.context.close();
+});
+
+// Corrección 71 (D-129): la frase fija «Cierra el trato aquí…» se quita. El aviso que
+// sale cuando alguien intenta pasar un teléfono se queda: ahí sí explica algo.
+test("el chat ya no tiene la frase fija, y el aviso al ocultar un dato sigue", async ({ browser }) => {
+  const titulo = `Sin frase ${Date.now()}`;
+  const { seller, ctx, buyer } = await conversacion(browser, titulo);
+  await expect(buyer.getByLabel("Mensaje")).toBeVisible();
+  await expect(buyer.getByRole("main")).not.toContainText("Cierra el trato aquí");
+
+  await buyer.getByLabel("Mensaje").fill("Mi cel es 3004128805");
+  await buyer.getByRole("button", { name: "Enviar" }).click();
+  await expect(buyer.getByRole("main")).toContainText("Ocultamos ese dato");
 
   await ctx.close();
   await seller.context.close();

@@ -126,6 +126,17 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
   un pedido («Gracias: es lo que le permite al…»), `/publicar/[id]` («Solo falta el
   video. Es lo que le permite…») y la pista del alias en editar perfil. (Fila 14.)
 
+- **Versión 3 (2026-10-01), pruebas que dependen del orden o de la base:**
+  `reportes.spec.ts` «el ticket promedio no se diluye…» falla en paralelo (toma el
+  último pedido de toda la base, que puede ser de otra prueba; sola pasa) y
+  `kyc.spec.ts` «el distintivo…» y «el perfil público…» buscan lo sembrado («Camila R.»),
+  que `npm run demo -- --limpiar-pruebas` retira. Las dos ya existían antes de la v3.
+- **Versión 3, pendiente para la nube:** correr `node demo.cjs --paginacion` como tarea
+  de ECS después del despliegue (filas 33 y 34), y `exceljs` entra como dependencia
+  nueva (fila 54).
+- **Versión 3, falta definir (fila 55):** guía de devolución del artículo cuando se
+  devuelve el dinero, quién paga ese envío, devoluciones parciales.
+
 ## Técnico
 
 - Escribir en el celular de `/registro` apenas carga la página (antes de que termine de

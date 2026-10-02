@@ -1,6 +1,6 @@
 # Estado de las correcciones de Catalina — leer esto primero al retomar
 
-Última actualización: 2026-09-25. Registro fila por fila: `2026-09-22.md` (52 filas).
+Última actualización: 2026-10-01. Registro fila por fila: `2026-09-22.md` (52 filas).
 Lista de problemas y pendientes para el documento final: `pendientes.md`.
 
 ## Cómo se trabaja (acordado con Nicolás)
@@ -95,6 +95,24 @@ Lista de problemas y pendientes para el documento final: `pendientes.md`.
   comprador va en una cookie, nunca en la URL ni en la base. La zona deja de ser texto
   libre (19 localidades urbanas + 8 municipios); `zone` deja de ser escribible por
   `/api/auth/update-user`.
+- **Desplegado 2026-09-29** (2f8a762, 76b54d0, 27fc452; CI 455/455): filas 43–52
+  completas en `dev`. Las pruebas esperan la hidratación (`hidratado()` en
+  `e2e/helpers.ts`) antes de tocar filtros y zona: en CI (`next dev`) fallaban por eso.
+- **Versión 3 de Catalina (2026-10-01):** reabre 4, 5, 21, 27 (y «falta probar» 33–34),
+  pide documentación y agrega las filas 53–72. Decisiones de Nicolás en **D-129**; la
+  tabla con cada fila al final de `2026-09-22.md`. Orden de trabajo: catálogo (4, 5, 60,
+  33–34) → chat (21, 27, 71) → admin (54, 57–59, 61) → vendedor (62–69) → documento
+  para Catalina (monocromático, sin términos técnicos) → Luna en la nube (72) y guion.
+  **Construido y probado (2026-10-02), sin commit:** filas 4, 5, 21, 27, 33–34, 54,
+  57–69, 71; documento para Catalina publicado (https://claude.ai/artifact/Ka3agTo8DdC5a3bQk57SDf).
+  Luna: catálogo/chat/vendedor PASA; panel del equipo NO PASA en vuelta 1 (Excel: fechas
+  UTC y «Hasta» excluía su día) → arreglado, vuelta 2 PASA CON OBSERVACIONES (datos de
+  prueba sin artículos). Fila 72: Luna en la nube PASA CON OBSERVACIONES. Revisores de
+  diseño, textos y exploradora: informes en `qa/correcciones/v3/`; arreglado de ellos:
+  confirmar al liberar el pago, reclamo al lado, seguimiento en futuro, regla de
+  comisión en el pedido. Decisiones de Nicolás sobre lo demás: **D-130** (segunda tanda:
+  barra de abajo, filtros, «Sin foto», términos, pestañas, sesiones; textos cuando el
+  equipo marque las opciones del PDF). La revisión 3 se despliega el 2026-10-02.
 
 ## Fila 11 (términos y condiciones) — cerrada; se deja el detalle como referencia
 

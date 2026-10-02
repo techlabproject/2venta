@@ -88,3 +88,16 @@ test("tampoco pide avisos ni pregunta como compradora", async ({ browser }) => {
   await seller.context.close();
   await ctx.close();
 });
+
+// Catalina (fila 61, D-129): con muchas publicaciones por revisar había que bajar
+// mucho para llegar a «Empresas por confirmar». Ahora hay un enlace arriba.
+test("arriba de moderación hay un enlace a «Empresas por confirmar»", async ({ page }) => {
+  const { email } = await signUpVerified(page, "equipo", "Diana Equipo");
+  await makeAdmin(email);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/admin");
+  const enlace = page.getByRole("link", { name: /^Empresas por confirmar/ });
+  await expect(enlace).toHaveAttribute("href", "#empresas");
+  await enlace.click();
+  await expect(page.getByRole("heading", { name: "Empresas por confirmar" })).toBeInViewport();
+});

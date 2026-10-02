@@ -82,11 +82,20 @@ export function ListaDeChats({
                 el estado ya está dicho también con el peso del texto: el color
                 solo no basta. */}
             {c.unread && (
-              <span
-                aria-label="Sin leer"
-                role="img"
-                className="h-2.5 w-2.5 shrink-0 rounded-full bg-accent ring-2 ring-accent/25"
-              />
+              <span className="flex shrink-0 items-center gap-1.5">
+                <span
+                  aria-label="Sin leer"
+                  role="img"
+                  className="h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-accent/25"
+                />
+                <span
+                  data-testid="mensajes-nuevos"
+                  aria-label={`${c.unread_count} ${c.unread_count === 1 ? "mensaje nuevo" : "mensajes nuevos"}`}
+                  className="text-xs font-semibold tabular-nums text-ink"
+                >
+                  {c.unread_count}
+                </span>
+              </span>
             )}
 
             {/* La portada del artículo, al final: ayuda a reconocer de qué se

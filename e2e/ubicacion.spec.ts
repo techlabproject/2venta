@@ -232,3 +232,29 @@ test("los filtros vacíos no se quedan en la dirección", async ({ page }) => {
   await page.goto("/?min=&max=&categoria=ropa&orden=recientes");
   await expect(page).toHaveURL(/\/\?categoria=ropa$/);
 });
+
+// Catalina (fila 60, D-129): al tocar «Cambiar» el formulario salía como una tarjeta
+// blanca suelta al lado del texto, desalineada. Ahora la barra es una sola tarjeta y
+// el formulario se abre debajo, dentro de ella, alineado a su borde.
+test("al cambiar la ubicación, el formulario se abre debajo y dentro de la barra", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+  await elegirZona(page, "San Cristóbal");
+  const barra = page.getByTestId("barra-ubicacion");
+  await hidratado(barra.getByText("Cambiar"));
+  await barra.getByText("Cambiar").click();
+  const zona = barra.getByLabel("O elige tu zona");
+  await expect(zona).toBeVisible();
+
+  const cajaBarra = (await barra.boundingBox())!;
+  const cajaTexto = (await barra.getByText("Distancias desde").boundingBox())!;
+  const cajaUsar = (await barra.getByRole("button", { name: "Usar mi ubicación" }).boundingBox())!;
+  // Debajo de la línea de «Distancias desde…», no a su lado.
+  expect(cajaUsar.y).toBeGreaterThan(cajaTexto.y + cajaTexto.height);
+  // Alineado al borde de la barra (solo su margen interior), no corrido a la derecha.
+  expect(cajaUsar.x - cajaBarra.x).toBeLessThan(40);
+  // Y dentro de ella.
+  expect(cajaUsar.y + cajaUsar.height).toBeLessThanOrEqual(cajaBarra.y + cajaBarra.height);
+  // Quitar sigue a mano sin abrir nada.
+  await expect(barra.getByRole("button", { name: "Quitar" })).toBeVisible();
+});

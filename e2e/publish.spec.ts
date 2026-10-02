@@ -215,7 +215,7 @@ test("la ropa pide talla, se ve en la ficha y se corrige al editar", async ({ pa
   await expect(page.getByLabel("Talla")).toHaveValue("L");
   await page.getByLabel("Talla").selectOption("32");
   await page.getByRole("button", { name: "Guardar cambios" }).click();
-  await expect(page).toHaveURL(new RegExp(`/producto/${id}$`));
+  await expect(page).toHaveURL(new RegExp(`/producto/${id}\\?recien=editado$`));
   await expect(page.getByTestId("atributos")).toContainText("Talla 32");
 });
 
@@ -242,4 +242,81 @@ test("la cámara se abre sin micrófono y el vendedor ve el consejo de privacida
   const pedidos = await page.evaluate(() => (window as unknown as { pedidos: MediaStreamConstraints[] }).pedidos);
   expect(pedidos.length).toBeGreaterThan(0);
   expect(pedidos.every((c) => !c.audio)).toBe(true);
+});
+
+// Catalina (fila 67, D-129): al terminar de grabar el recuadro quedaba negro y no se
+// sabía si el video había quedado bien. El mismo <video> tenía la cámara apagada
+// como `srcObject`, que manda sobre `src`. Ahora se ve lo grabado, con su portada,
+// y se puede grabar otro sin recargar.
+test("después de grabar se ve el video grabado y se puede grabar otro", async ({ page }) => {
+  await signUpVerified(page, "vendedor", "Andrés Molina");
+  await approveKyc(page);
+  await page.goto("/publicar");
+  await page.getByRole("button", { name: "Abrir cámara" }).click();
+  await page.getByRole("button", { name: /^Grabar/ }).click();
+  await page.waitForTimeout(1500);
+  await page.getByRole("button", { name: "Terminar" }).click();
+  await expect(page.getByRole("status")).toContainText("Video listo");
+
+  const video = page.getByTestId("camara");
+  await expect
+    .poll(() =>
+      video.evaluate((v: HTMLVideoElement) => ({
+        camara: v.srcObject !== null,
+        grabado: v.currentSrc.startsWith("blob:"),
+        cargado: v.readyState >= 1,
+        portada: (v.getAttribute("poster") ?? "").startsWith("blob:"),
+      })),
+    )
+    .toEqual({ camara: false, grabado: true, cargado: true, portada: true });
+  await expect(page.getByRole("main")).not.toContainText("recarga la página");
+
+  await page.getByRole("button", { name: "Grabar otro" }).click();
+  await expect(page.getByRole("button", { name: /^Grabar \(/ })).toBeVisible();
+  // El video descartado ya no sirve para publicar.
+  await expect(page.getByRole("button", { name: "Graba el video para continuar" })).toBeVisible();
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.srcObject !== null)).toBe(true);
+});
+
+// Catalina (fila 69, D-129): justo después de publicar, «Volver» llevaba de nuevo al
+// formulario. Al venir de publicar o editar no hay «Volver»: hay «Ver mis
+// productos», y el atrás del navegador tampoco regresa al formulario.
+test("después de publicar no se vuelve al formulario: «Ver mis productos»", async ({ page }) => {
+  await signUpVerified(page, "vendedor", "Andrés Molina");
+  await approveKyc(page);
+  await page.goto("/vender");
+  await page.goto("/publicar");
+  await recordVideo(page);
+  const titulo = `Recién publicado ${Date.now()}`;
+  await page.getByLabel("Título").fill(titulo);
+  await page.getByLabel("Categoría").selectOption("ninos");
+  await page.getByLabel("Para qué edad").selectOption("3 a 4 años");
+  await page.getByLabel("Precio").fill("45000");
+  await page.getByLabel("Descripción").fill("Usado, en buen estado.");
+  await page.getByRole("button", { name: "Publicar" }).click();
+  await expect(page.getByRole("heading", { name: titulo })).toBeVisible();
+
+  await expect(page.getByRole("link", { name: "Volver" })).toHaveCount(0);
+  await expect(page.getByTestId("recien")).toHaveText("Publicado.");
+  const mis = page.getByRole("link", { name: "Ver mis productos" });
+  await expect(mis).toHaveAttribute("href", "/vender/metricas");
+
+  // El atrás del navegador no vuelve al formulario lleno.
+  await page.goBack();
+  await expect(page).not.toHaveURL(/\/publicar/);
+
+  // Después de editar, igual.
+  await page.goto("/vender/metricas");
+  const id = await withDb(async (c) => (await c.query<{ id: string }>(`select id from listings where title = $1`, [titulo])).rows[0].id);
+  await page.goto(`/producto/${id}/editar`);
+  await page.getByLabel("Descripción").fill("Usado, en muy buen estado.");
+  await page.getByRole("button", { name: /Guardar/ }).first().click();
+  await expect(page).toHaveURL(new RegExp(`/producto/${id}`));
+  await expect(page.getByTestId("recien")).toHaveText("Cambios guardados.");
+  await expect(page.getByRole("link", { name: "Volver" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Ver mis productos" })).toBeVisible();
+
+  // Entrando normal a la ficha, «Volver» sigue ahí.
+  await page.goto(`/producto/${id}`);
+  await expect(page.getByRole("link", { name: "Volver" })).toBeVisible();
 });

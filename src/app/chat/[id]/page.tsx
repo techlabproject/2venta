@@ -181,10 +181,7 @@ export default async function Chat({
         )}
 
         <div className="shrink-0 border-t border-line bg-cream pt-3 pb-4">
-          <MessageForm
-            conversationId={conversation.id}
-            puedeAdjuntar={conversation.seller_id === user.id}
-          />
+          <MessageForm conversationId={conversation.id} />
 
           <div className="mt-2 flex items-center justify-between gap-3">
             {/* Ofertar es excepcional, así que es un enlace y no un campo
@@ -217,9 +214,6 @@ export default async function Chat({
               <ReportChatForm conversationId={conversation.id} />
             )}
           </div>
-          <p className="mt-2 text-[11px] text-muted">
-            Cierra el trato aquí: si pagas por fuera pierdes el pago protegido.
-          </p>
         </div>
       </main>
     </>

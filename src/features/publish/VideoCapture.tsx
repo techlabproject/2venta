@@ -7,6 +7,8 @@ const MAX_SECONDS = 30;
 
 type Props = {
   onCaptured: (video: Blob, poster: Blob) => void;
+  /** «Grabar otro»: el video anterior deja de valer hasta que haya uno nuevo. */
+  onDescartado?: () => void;
 };
 
 // Respuesta a R-01, el riesgo número uno del proyecto.
@@ -19,7 +21,7 @@ type Props = {
 //
 // Requiere HTTPS (o localhost) y que la grabación arranque desde un gesto del
 // usuario: las dos cosas son condiciones del navegador, no decisiones nuestras.
-export function VideoCapture({ onCaptured }: Props) {
+export function VideoCapture({ onCaptured, onDescartado }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -31,13 +33,41 @@ export function VideoCapture({ onCaptured }: Props) {
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [portada, setPortada] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       if (preview) URL.revokeObjectURL(preview);
+      if (portada) URL.revokeObjectURL(portada);
     };
-  }, [preview]);
+  }, [preview, portada]);
+
+  // Fila 67 (D-129): después de grabar se tiene que ver lo grabado. El mismo <video>
+  // tenía la cámara (ya apagada) en `srcObject`, que manda sobre `src`, y el
+  // recuadro quedaba negro. Se suelta la cámara y se carga el archivo.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (state !== "grabado" || !v || !preview) return;
+    v.srcObject = null;
+    v.src = preview;
+    v.load();
+  }, [state, preview]);
+
+  /** «Grabar otro»: vuelve a abrir la cámara sin recargar la página. */
+  async function grabarOtro() {
+    const v = videoRef.current;
+    if (v) {
+      v.pause();
+      v.removeAttribute("src");
+      v.load();
+    }
+    setPreview(null);
+    setPortada(null);
+    onDescartado?.();
+    setState("inicial");
+    await openCamera();
+  }
 
   async function openCamera() {
     setError(null);
@@ -125,6 +155,7 @@ export function VideoCapture({ onCaptured }: Props) {
 
     const url = URL.createObjectURL(blob);
     setPreview(url);
+    setPortada(URL.createObjectURL(poster));
     setState("grabado");
     streamRef.current?.getTracks().forEach((t) => t.stop());
 
@@ -139,9 +170,9 @@ export function VideoCapture({ onCaptured }: Props) {
           data-testid="camara"
           className="aspect-[4/3] w-full object-cover"
           playsInline
-          muted={state !== "grabado"}
+          muted
           controls={state === "grabado"}
-          src={state === "grabado" ? (preview ?? undefined) : undefined}
+          poster={state === "grabado" ? (portada ?? undefined) : undefined}
         />
         {state === "grabando" && (
           <span className="absolute top-3 left-3 rounded-full bg-danger px-3 py-1 text-xs font-medium text-white">
@@ -211,12 +242,14 @@ export function VideoCapture({ onCaptured }: Props) {
         </Button>
       )}
       {state === "grabado" && (
-        <p
-          role="status"
-          className="rounded-xl bg-brand/10 px-4 py-3 text-sm text-brand"
-        >
-          Video listo. Si no te gustó, recarga la página y graba otro.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-brand/10 px-4 py-3">
+          <p role="status" className="text-sm text-brand">
+            Video listo. Dale play para revisarlo.
+          </p>
+          <button type="button" onClick={grabarOtro} className="text-sm font-medium text-brand underline">
+            Grabar otro
+          </button>
+        </div>
       )}
     </div>
   );

@@ -170,8 +170,9 @@ export function OpenClaimForm({ orderId }: { orderId: string }) {
   }, null);
 
   return (
-    <details className="mt-4">
-      <summary className="cursor-pointer text-sm text-ink2 underline">
+    <details className="group mt-3">
+      {/* Se ve como botón, no como un enlace suelto (D-129). */}
+      <summary className="flex cursor-pointer list-none items-center justify-center rounded-xl border border-line bg-white px-4 py-3 text-sm font-medium text-ink transition duration-200 ease-salida hover:border-brand/30 hover:bg-ph [&::-webkit-details-marker]:hidden">
         Tengo un problema con el pedido
       </summary>
       <form action={submit} className="mt-3 flex flex-col gap-3">

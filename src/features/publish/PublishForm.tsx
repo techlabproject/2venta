@@ -21,6 +21,7 @@ import {
   commissionCop,
   MIN_PRICE_COP,
   parseCop,
+  reglaDeComision,
   sellerPayoutCop,
 } from "@/features/payments/money";
 
@@ -81,7 +82,9 @@ export function PublishForm({
     }
     const res = await publishListing(prev, form);
     if ("id" in res) {
-      router.push(`/producto/${res.id}`);
+      // Fila 69 (D-129): `replace` y no `push`, para que el atrás del navegador no
+      // regrese al formulario lleno; la ficha llega sin «Volver».
+      router.replace(`/producto/${res.id}?recien=publicado`);
       router.refresh();
     }
     return res;
@@ -98,6 +101,7 @@ export function PublishForm({
         </p>
         <VideoCapture
           onCaptured={(video, poster) => setMedia({ video, poster })}
+          onDescartado={() => setMedia(null)}
         />
       </div>
 
@@ -218,9 +222,9 @@ export function PublishForm({
       />
       {price !== null && price >= MIN_PRICE_COP && (
         <p data-testid="te-llegan" className="-mt-2 text-xs text-ink2">
-          Te llegan <b>{formatCop(sellerPayoutCop(price))}</b> después de la
-          comisión de 2venta ({formatCop(commissionCop(price))}). El comprador
-          paga {formatCop(price)} más el envío.
+          Comisión de 2venta: {formatCop(commissionCop(price))} ({reglaDeComision(price)}). Te llegan{" "}
+          <b>{formatCop(sellerPayoutCop(price))}</b>. Quien compra paga {formatCop(price)} más
+          el envío.
         </p>
       )}
 

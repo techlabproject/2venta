@@ -1,8 +1,14 @@
 import { test, expect, type Page } from "@playwright/test";
-import { preciosVisibles, sellerWithListing } from "./helpers";
+import { hidratado, preciosVisibles, sellerWithListing } from "./helpers";
 
-// Corrección 4 (Catalina, 2026-09-22): «Desde» y «Hasta» admitían letras. Ahora
-// solo aceptan dígitos, se formatean en pesos y hay cuatro rangos rápidos.
+// Corrección 4 (Catalina, 2026-09-22): «Desde» y «Hasta» admitían letras. En la
+// versión 3 (2026-10-01) Catalina pidió quitar las etiquetas de rango; Nicolás eligió
+// un deslizador de dos puntas, como en otros sitios (D-129). Sin JavaScript quedan
+// las dos casillas, que funcionan como formulario normal.
+//
+// Escalones: sin mínimo, 10.000, 20.000, 30.000, 50.000, 80.000, 100.000, 150.000,
+// 200.000, 300.000, 500.000, 800.000, 1.000.000, 1.500.000, 2.000.000, 3.000.000,
+// 5.000.000, sin máximo.
 //
 // Sembrados: Chaqueta de jean ($95.000), Coche Chicco ($260.000), iPhone 13
 // ($1.850.000).
@@ -10,55 +16,65 @@ import { preciosVisibles, sellerWithListing } from "./helpers";
 const tarjeta = (page: Page, texto: string) =>
   page.getByRole("main").getByRole("listitem").filter({ hasText: texto });
 
-async function abrirPanel(page: Page) {
-  await page.goto("/");
-  await page.getByRole("navigation", { name: "Atajos" }).getByRole("link", { name: /^Filtros/ }).click();
+async function abrirPanel(page: Page, url = "/") {
+  await page.goto(url);
+  const boton = page.getByRole("navigation", { name: "Atajos" }).getByRole("link", { name: /^Filtros/ });
+  await hidratado(boton);
+  await boton.click();
   return page.getByRole("dialog", { name: "Filtros" });
 }
 
-test("los campos de precio solo aceptan dígitos y ponen los puntos de miles", async ({ page }) => {
+test("el precio es un deslizador de dos puntas, sin etiquetas de rango", async ({ page }) => {
   const panel = await abrirPanel(page);
-  const desde = panel.getByLabel("Precio mínimo");
-  await desde.pressSequentially("12abc3-,.x4");
-  await expect(desde).toHaveValue("1.234");
-  await desde.fill("");
-  await desde.pressSequentially("150000");
-  await expect(desde).toHaveValue("150.000");
+  await expect(panel.getByRole("slider", { name: "Precio mínimo" })).toBeVisible();
+  await expect(panel.getByRole("slider", { name: "Precio máximo" })).toBeVisible();
+  await expect(panel.getByRole("button", { name: /Menos de|Más de|\$50\.000 a/ })).toHaveCount(0);
+  await expect(panel.getByTestId("rango-precio")).toHaveText("Cualquier precio");
 });
 
-test("un rango rápido llena los dos campos, cuenta y filtra", async ({ page }) => {
+test("mover las dos puntas cuenta, filtra y deja el rango en la dirección", async ({ page }) => {
   const panel = await abrirPanel(page);
-  const rango = panel.getByRole("button", { name: "$50.000 a $200.000" });
-  await rango.click();
-  await expect(rango).toHaveAttribute("aria-pressed", "true");
-  await expect(panel.getByLabel("Precio mínimo")).toHaveValue("50.000");
-  await expect(panel.getByLabel("Precio máximo")).toHaveValue("200.000");
+  const minimo = panel.getByRole("slider", { name: "Precio mínimo" });
+  const maximo = panel.getByRole("slider", { name: "Precio máximo" });
+  await minimo.focus();
+  for (let i = 0; i < 4; i++) await page.keyboard.press("ArrowRight");
+  await expect(minimo).toHaveAttribute("aria-valuetext", "$ 50.000");
+  await maximo.focus();
+  for (let i = 0; i < 9; i++) await page.keyboard.press("ArrowLeft");
+  await expect(maximo).toHaveAttribute("aria-valuetext", "$ 200.000");
+  await expect(panel.getByTestId("rango-precio")).toHaveText("$ 50.000 – $ 200.000");
 
   await panel.getByRole("button", { name: /^Ver \d+ resultados?$/ }).click();
-  await expect(page).toHaveURL(/min=50\.000&max=200\.000/);
+  await expect(page).toHaveURL(/min=50000&max=200000/);
   for (const p of await preciosVisibles(page)) {
     expect(p).toBeGreaterThanOrEqual(50_000);
     expect(p).toBeLessThanOrEqual(200_000);
   }
 });
 
-test("tocar el rango puesto lo quita, y los abiertos dejan un lado vacío", async ({ page }) => {
+test("las puntas no se cruzan y en los extremos quedan sin límite", async ({ page }) => {
   const panel = await abrirPanel(page);
-  const mas = panel.getByRole("button", { name: "Más de $1.000.000" });
-  await mas.click();
-  await expect(panel.getByLabel("Precio mínimo")).toHaveValue("1.000.000");
-  await expect(panel.getByLabel("Precio máximo")).toHaveValue("");
-
-  await mas.click();
-  await expect(mas).toHaveAttribute("aria-pressed", "false");
-  await expect(panel.getByLabel("Precio mínimo")).toHaveValue("");
+  const minimo = panel.getByRole("slider", { name: "Precio mínimo" });
+  const maximo = panel.getByRole("slider", { name: "Precio máximo" });
+  await minimo.focus();
+  await page.keyboard.press("End");
+  // La punta de abajo se detiene un escalón antes de la de arriba.
+  await expect(minimo).toHaveAttribute("aria-valuetext", "$ 5.000.000");
+  await expect(maximo).toHaveAttribute("aria-valuetext", "Sin máximo");
+  await expect(panel.getByTestId("rango-precio")).toHaveText("Desde $ 5.000.000");
+  await page.keyboard.press("Home");
+  await expect(minimo).toHaveAttribute("aria-valuetext", "Sin mínimo");
+  await maximo.focus();
+  await page.keyboard.press("Home");
+  await expect(maximo).toHaveAttribute("aria-valuetext", "$ 10.000");
+  await expect(panel.getByTestId("rango-precio")).toHaveText("Hasta $ 10.000");
 });
 
-test("avisa cuando el mínimo queda mayor que el máximo", async ({ page }) => {
-  const panel = await abrirPanel(page);
-  await panel.getByLabel("Precio mínimo").pressSequentially("300000");
-  await panel.getByLabel("Precio máximo").pressSequentially("100000");
-  await expect(panel.getByRole("status")).toContainText("mayor que el máximo");
+test("un precio de la dirección que no es un escalón se respeta tal cual", async ({ page }) => {
+  const panel = await abrirPanel(page, "/?min=95000");
+  await expect(panel.getByTestId("rango-precio")).toHaveText("Desde $ 95.000");
+  await panel.getByRole("button", { name: /^Ver \d+ resultados?$/ }).click();
+  await expect(page).toHaveURL(/min=95000/);
 });
 
 test("en la dirección, un precio con letras o negativo se ignora", async ({ page }) => {
@@ -112,7 +128,7 @@ test("un precio enorme no tumba la página", async ({ page, request }) => {
 test("un decimal en la dirección se ignora en vez de leerse como otro número", async ({ page }) => {
   await page.goto("/buscar?q=chaqueta&max=1.5");
   await expect(tarjeta(page, "Chaqueta de jean")).toHaveCount(1);
-  await expect(page.getByRole("main").getByLabel("Precio máximo").first()).toHaveValue("");
+  await expect(page.getByTestId("rango-precio").first()).toHaveText("Cualquier precio");
 });
 
 test("los límites de los rangos incluyen el precio exacto", async ({ browser, request }) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useRef } from "react";
 import {
   makeOffer,
   reportConversation,
@@ -8,7 +8,6 @@ import {
   sendMessage,
   type ChatResult,
 } from "./actions";
-import { uploadBlob, UploadError } from "@/features/publish/useUpload";
 import { Button, ErrorNote } from "@/components/ui";
 import { CampoPrecio } from "@/components/CampoPrecio";
 import { formatearPrecio } from "@/lib/precio";
@@ -17,137 +16,42 @@ import { MIN_PRICE_COP } from "@/features/payments/money";
 const inputClass =
   "flex-1 rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15";
 
-export function MessageForm({
-  conversationId,
-  puedeAdjuntar = false,
-}: {
-  conversationId: string;
-  /** Solo quien vende manda fotos (D-92). */
-  puedeAdjuntar?: boolean;
-}) {
+/**
+ * Escribir en el chat. Solo texto: las fotos se quitaron en la versión 3 de las
+ * correcciones (fila 21, D-129); lo que se enseña va en las fotos y el video del
+ * artículo.
+ */
+export function MessageForm({ conversationId }: { conversationId: string }) {
   const ref = useRef<HTMLFormElement>(null);
-  const [foto, setFoto] = useState<{ archivo: File; url: string } | null>(null);
-  const [subiendo, setSubiendo] = useState(false);
-  const [errorFoto, setErrorFoto] = useState<string | null>(null);
 
   const [result, submit, pending] = useActionState<ChatResult | null, FormData>(
     async (prev, form) => {
-      // La foto sube DIRECTO al bucket desde el navegador (D-50) y al servidor
-      // solo le llega la clave, que él comprueba. Subirla aquí y no antes evita
-      // dejar archivos huérfanos cada vez que alguien escoge una y se arrepiente.
-      if (foto) {
-        setSubiendo(true);
-        try {
-          form.set("imageKey", await uploadBlob(foto.archivo, "image"));
-        } catch (e) {
-          setSubiendo(false);
-          return {
-            error:
-              e instanceof UploadError
-                ? e.message
-                : "No se pudo subir la foto. Intenta otra vez.",
-          };
-        }
-        setSubiendo(false);
-      }
-
       const res = await sendMessage(prev, form);
-      if (!res.error) {
-        ref.current?.reset();
-        quitarFoto();
-      }
+      if (!res.error) ref.current?.reset();
       return res;
     },
     null,
   );
-
-  function quitarFoto() {
-    setFoto((f) => {
-      if (f) URL.revokeObjectURL(f.url);
-      return null;
-    });
-    setErrorFoto(null);
-  }
-
-  function escoger(e: React.ChangeEvent<HTMLInputElement>) {
-    const archivo = e.target.files?.[0];
-    e.target.value = "";
-    if (!archivo) return;
-    if (!archivo.type.startsWith("image/")) {
-      setErrorFoto("Eso no es una imagen.");
-      return;
-    }
-    quitarFoto();
-    setFoto({ archivo, url: URL.createObjectURL(archivo) });
-  }
 
   return (
     <form ref={ref} action={submit} className="flex flex-col gap-2">
       {result?.error ? <ErrorNote>{result.error}</ErrorNote> : null}
       <input type="hidden" name="conversationId" value={conversationId} />
 
-      {errorFoto ? <ErrorNote>{errorFoto}</ErrorNote> : null}
-
-      {foto && (
-        <div className="flex items-center gap-3 rounded-xl bg-white p-2 ring-1 ring-line">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={foto.url}
-            alt=""
-            aria-hidden
-            className="h-14 w-14 rounded-lg bg-ph object-cover"
-          />
-          <span className="flex-1 text-xs text-muted">
-            {subiendo ? "Subiendo la foto…" : "Se manda con el mensaje"}
-          </span>
-          <button
-            type="button"
-            onClick={quitarFoto}
-            className="rounded-lg px-2 py-1 text-xs text-danger underline"
-          >
-            Quitar
-          </button>
-        </div>
-      )}
-
       <div className="flex items-end gap-2">
-        {puedeAdjuntar && (
-          // El control nativo no se puede traducir ni dar forma, así que va oculto
-          // y lo dispara la etiqueta, que sí. `peer-focus-visible` le devuelve el
-          // contorno a quien navega con teclado.
-          <label className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line bg-white text-ink2 shadow-xs transition duration-200 ease-salida hover:border-brand/30 hover:bg-ph active:scale-90 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-            <span className="sr-only">Adjuntar una foto</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={escoger}
-              className="sr-only"
-            />
-            <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
-              <path
-                d="M21 12.5l-8.4 8.4a5 5 0 01-7.1-7.1l9-9a3.4 3.4 0 014.8 4.8l-9 9a1.8 1.8 0 01-2.5-2.5l8.3-8.3"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </label>
-        )}
         <input
           name="body"
           aria-label="Mensaje"
           placeholder="Escribe tu mensaje"
           className={`${inputClass} rounded-full`}
-          required={!foto}
+          required
         />
         {/* Redondo y con el icono, como en cualquier chat: el botón de enviar es
             el mismo gesto en todas partes y no necesita que lo lean. La palabra
             sigue ahí para quien usa lector de pantalla. */}
         <button
           type="submit"
-          disabled={pending || subiendo}
+          disabled={pending}
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-accent-edge/70 bg-accent text-on-accent shadow-sm transition duration-200 ease-salida hover:brightness-[0.97] active:scale-90 disabled:opacity-60 disabled:active:scale-100"
         >
           <span className="sr-only">Enviar</span>

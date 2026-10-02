@@ -17,16 +17,14 @@ export default async function DevKyc({
 
   return (
     <main className="mx-auto max-w-md px-5 py-10">
+      {/* Fila 66 (D-129): la referencia interna confundía; se explica qué es esto. */}
       <p className="rounded-xl bg-warn/10 px-4 py-3 text-sm text-warn">
-        Proveedor de verificación de prueba. Ocupa el lugar del proveedor real
-        mientras se decide cuál será (R-02). No existe en producción.
+        Esta pantalla es una simulación. Cuando 2venta tenga proveedor de
+        identidad, aquí vas a tomarte la selfie y la foto de la cédula.
       </p>
       <h1 className="mt-6 font-title text-2xl font-semibold">
         Verificación de identidad
       </h1>
-      <p className="mt-2 text-sm text-ink2">
-        Referencia <code>{ref}</code>
-      </p>
       <DevKycControls reference={ref} />
     </main>
   );

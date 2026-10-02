@@ -137,6 +137,110 @@ async function main() {
     console.log(`artículo ${a.title}`);
   }
 
+  // Filas 33 y 34 (D-129): con 12 artículos y 24 por página nunca se ve la página 2.
+  // `--paginacion` suma 40 más, 20 por vendedor. Decisión 4 de Nicolás (D-130): con
+  // títulos naturales, no «demostración N». Cada uno reutiliza el video y las fotos de
+  // un artículo de la demo, así que el título describe lo mismo que se ve. Idempotente:
+  // cada título es único.
+  if (process.argv.includes("--paginacion")) {
+    const VARIANTES: Record<string, Array<[string, string, number]>> = {
+      "Atrapasueños": [
+        ["Atrapasueños tejido a mano, blanco", "Decoración para cuarto de niños. Plumas completas, sin manchas.", 30_000],
+        ["Móvil de cuna estilo atrapasueños", "Lo usamos poco. Se cuelga fácil del techo.", 28_000],
+        ["Atrapasueños grande con plumas", "Mide unos 60 cm de largo. Bien cuidado.", 45_000],
+      ],
+      "Bicicleta infantil": [
+        ["Bicicleta para niño rin 16, azul", "Con rueditas de apoyo. Frenos funcionando.", 230_000],
+        ["Bicicleta infantil con canasta", "Para niños de 4 a 6 años. Llantas en buen estado.", 210_000],
+        ["Bici de niño rin 16 con timbre", "Poco uso, la cadena está nueva.", 260_000],
+        ["Bicicleta para aprender a montar", "Trae las rueditas. Se la entrego ajustada.", 190_000],
+      ],
+      "Bolso de cuero": [
+        ["Bolso de cuero marrón para portátil", "Cabe un portátil de 13 pulgadas. Cierre bueno.", 170_000],
+        ["Maletín de cuero hecho en Colombia", "Tiene marcas de uso en las esquinas, se ven en el video.", 150_000],
+        ["Bolso cruzado de cuero café", "Correa ajustable. Muy buen estado.", 160_000],
+        ["Cartera grande de cuero", "Amplia, con bolsillo interno.", 140_000],
+      ],
+      "Control DualShock": [
+        ["Control de PS4 negro, original", "Funciona perfecto. Sin cable.", 130_000],
+        ["Control inalámbrico para PlayStation 4", "Batería dura bien. Botones firmes.", 120_000],
+        ["Control PS4 usado, buen estado", "Lo pruebo en el video con la consola.", 110_000],
+        ["Mando DualShock 4", "Sticks sin drift. Original.", 135_000],
+      ],
+      "Gafas de sol": [
+        ["Gafas de sol tipo aviador", "Lentes sin rayones. Incluyo estuche.", 75_000],
+        ["Lentes de sol marco dorado", "Usados pocas veces.", 70_000],
+        ["Gafas aviador unisex", "Marco firme, sin golpes.", 80_000],
+      ],
+      "Guante de béisbol": [
+        ["Guante de béisbol para niño", "Cuero suave, ya está amoldado.", 65_000],
+        ["Guante de softbol juvenil", "Mano derecha. Buen estado.", 60_000],
+        ["Manilla de béisbol en cuero", "Para niños de 8 a 12 años.", 75_000],
+      ],
+      "MacBook Air": [
+        ["MacBook Air 2020 plateado", "Batería al 89 %. Con cargador original.", 2_700_000],
+        ["Portátil Apple 13 pulgadas, 256 GB", "Lo usé para estudiar. Sin golpes.", 2_650_000],
+        ["MacBook Air M1, 8 GB de RAM", "Funciona perfecto. Teclado en español.", 2_900_000],
+        ["Portátil MacBook para trabajo", "Pantalla sin rayones. Se entrega formateado.", 2_600_000],
+      ],
+      "Tacones blancos": [
+        ["Tacones blancos talla 36", "Usados una sola vez en un matrimonio.", 90_000],
+        ["Zapatos de tacón blancos", "Tacón de 9 cm. Con caja.", 85_000],
+        ["Tacones de novia talla 37", "Como nuevos.", 110_000],
+      ],
+      "Tenis Converse": [
+        ["Tenis Converse blancos talla 41", "Originales. Lavados.", 115_000],
+        ["Converse clásicos de lona", "Un año de uso. Suela buena.", 100_000],
+        ["Tenis de bota Converse talla 42", "En buen estado, se ve la etiqueta.", 125_000],
+        ["Tenis Chuck Taylor usados", "Talla 42. Cordones nuevos.", 95_000],
+      ],
+      "Tornamesa": [
+        ["Tornamesa para vinilos con cápsula nueva", "Suena limpia. Trae cable RCA.", 600_000],
+        ["Tocadiscos Audio-Technica", "Automático. Muy buen estado.", 650_000],
+        ["Tornamesa automática para LP", "Solo entrega en persona por el tamaño.", 580_000],
+      ],
+      "Triciclo": [
+        ["Triciclo rojo de metal", "Para niños de 2 a 4 años. Llantas de caucho.", 100_000],
+        ["Triciclo infantil con canasta", "Limpio y sin piezas sueltas.", 95_000],
+        ["Triciclo para niño pequeño", "Mi hijo ya no lo usa.", 90_000],
+        ["Triciclo clásico rojo", "Pedales firmes. Buen estado.", 105_000],
+      ],
+    };
+    let creados = 0;
+    let n = 0;
+    for (const [prefijo, lista] of Object.entries(VARIANTES)) {
+      const base = await pool.query<{
+        id: string; category: string; condition: string; video_path: string; poster_path: string;
+        talla: string | null; edad: string | null;
+      }>(
+        `select id, category, condition, video_path, poster_path, talla, edad
+           from listings where seller_id = any($1) and title like $2 order by created_at limit 1`,
+        [[ids.camila, ids.andres], `${prefijo}%`],
+      );
+      const b = base.rows[0];
+      if (!b) continue;
+      for (const [title, description, precio] of lista) {
+        n++;
+        const exists = await pool.query(`select 1 from listings where title = $1`, [title]);
+        if (exists.rows.length) continue;
+        const sellerId = n % 2 === 0 ? ids.camila : ids.andres;
+        const { rows } = await pool.query<{ id: string }>(
+          `insert into listings (seller_id, title, description, category, condition, price_cop,
+                                 video_path, poster_path, status, talla, edad)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, 'activa', $9, $10) returning id`,
+          [sellerId, title, description, b.category, b.condition, precio, b.video_path, b.poster_path, b.talla, b.edad],
+        );
+        await pool.query(
+          `insert into listing_photos (listing_id, path, position)
+           select $1, path, position from listing_photos where listing_id = $2`,
+          [rows[0].id, b.id],
+        );
+        creados++;
+      }
+    }
+    console.log(`paginación: ${creados} artículos nuevos (de ${n})`);
+  }
+
   console.log(`\nListo. Cuentas de prueba (contraseña ${PASSWORD}):`);
   for (const c of CUENTAS) console.log(`  ${c.email}  ${c.kyc ? "vendedor verificado" : c.role ?? "comprador"}`);
   await pool.end();

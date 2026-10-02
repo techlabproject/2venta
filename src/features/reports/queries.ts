@@ -1,6 +1,9 @@
 import { query } from "@/lib/db";
 
-export type Period = { from: Date; to: Date };
+import type { Period } from "./periodo";
+
+export type { Period } from "./periodo";
+export { parsePeriod } from "./periodo";
 
 export type BusinessReport = {
   /** Pedidos que llegaron a un final: liberados y reembolsados. */
@@ -106,43 +109,4 @@ export async function businessReport(period: Period): Promise<BusinessReport> {
       commissionCop: Number(c.commission),
     })),
   };
-}
-
-/** Lee el periodo de la dirección; por defecto, los últimos 30 días. */
-export function parsePeriod(params: URLSearchParams): Period {
-  const parse = (raw: string | null): Date | null => {
-    if (!raw) return null;
-    const d = new Date(`${raw}T00:00:00-05:00`);
-    return Number.isNaN(d.getTime()) ? null : d;
-  };
-
-  const to = parse(params.get("hasta")) ?? new Date();
-  const from = parse(params.get("desde")) ?? new Date(to.getTime() - 30 * 86_400_000);
-
-  // Fechas al revés se ordenan solas en vez de devolver un periodo vacío.
-  return from <= to ? { from, to } : { from: to, to: from };
-}
-
-export function toCsv(report: BusinessReport, period: Period): string {
-  const f = (d: Date) => d.toISOString().slice(0, 10);
-  const lines = [
-    `2venta — reporte de negocio`,
-    `Desde,${f(period.from)}`,
-    `Hasta,${f(period.to)}`,
-    "",
-    "Métrica,Valor",
-    `Ventas completadas,${report.sales}`,
-    `Volumen transado (COP),${report.gmvCop}`,
-    `Comisiones cobradas (COP),${report.commissionCop}`,
-    `Ticket promedio (COP),${report.averageTicketCop}`,
-    `Reembolsos,${report.refunded}`,
-    `Disputas,${report.disputes}`,
-    `Tasa de disputa (%),${report.disputeRate ?? ""}`,
-    "",
-    "Categoría,Ventas,Volumen (COP),Comisiones (COP)",
-    ...report.byCategory.map(
-      (c) => `${c.label},${c.sales},${c.gmvCop},${c.commissionCop}`
-    ),
-  ];
-  return lines.join("\n");
 }

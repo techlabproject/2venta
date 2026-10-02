@@ -2,15 +2,17 @@ import { test, expect } from "@playwright/test";
 import { signUpVerified, uniqueAccount } from "./helpers";
 
 // Corrección 5 (Catalina, 2026-09-22): «No encontramos nada con eso.» sonaba seco
-// justo cuando alguien decide si se va. Ahora nombra lo buscado, consuela y da
-// salidas como botones, incluido el aviso de cuando aparezca.
+// justo cuando alguien decide si se va. Ahora nombra lo buscado y da salidas como
+// botones, incluido el aviso de cuando aparezca. Versión 3 (D-129): el texto es el que
+// propuso Catalina, corregido.
 
 const vacio = (page: import("@playwright/test").Page) => page.getByTestId("sin-resultados");
 
 test("sin resultados nombra lo buscado y da salidas", async ({ page }) => {
   await page.goto("/buscar?q=submarino");
-  await expect(vacio(page)).toContainText("¡Uy! Por ahora no hay «submarino»");
-  await expect(vacio(page)).toContainText("lo que hoy no está puede aparecer mañana");
+  await expect(vacio(page)).toContainText("Ups, en este momento no tenemos «submarino»");
+  await expect(vacio(page)).toContainText("Prueba con otra palabra o date una vuelta por todo lo publicado.");
+  await expect(vacio(page)).not.toContainText("¡Uy!");
   // Sin filtros no hay nada que quitar.
   await expect(vacio(page).getByRole("link", { name: "Quitar filtros" })).toHaveCount(0);
 
@@ -29,7 +31,14 @@ test("con palabra y filtros, «Quitar filtros» conserva la palabra", async ({ p
 
 test("en la portada, una combinación vacía también lo explica", async ({ page }) => {
   await page.goto("/?categoria=tecnologia&max=999");
-  await expect(vacio(page)).toContainText("¡Uy! Esta combinación no dio con nada");
+  await expect(vacio(page).getByRole("paragraph").first()).toHaveText(
+    "Ups, en este momento no tenemos la combinación que buscas",
+  );
+  await expect(vacio(page)).toContainText(
+    "Prueba quitando algún filtro o date una vuelta por todo lo publicado.",
+  );
+  // «todo lo publicado» es enlace dentro de la frase, además del botón.
+  await expect(vacio(page).getByRole("link", { name: "todo lo publicado", exact: true })).toHaveAttribute("href", "/");
   await expect(vacio(page).getByRole("link", { name: "Ver todo lo publicado" })).toHaveAttribute("href", "/");
 });
 
@@ -71,10 +80,12 @@ test("desde el panel se puede aplicar una combinación sin resultados", async ({
   await page.getByRole("navigation", { name: "Atajos" }).getByRole("link", { name: /^Filtros/ }).click();
   const panel = page.getByRole("dialog", { name: "Filtros" });
   await panel.getByLabel("Tecnología").check();
-  await panel.getByLabel("Precio máximo").fill("1");
+  // Lo más barato que deja el deslizador (D-129): tecnología de hasta $10.000.
+  await panel.getByRole("slider", { name: "Precio máximo" }).focus();
+  await page.keyboard.press("Home");
   await panel.getByRole("button", { name: "Aplicar igual (0 resultados)" }).click();
-  await expect(page).toHaveURL(/max=1/);
-  await expect(vacio(page)).toContainText("¡Uy! Esta combinación no dio con nada");
+  await expect(page).toHaveURL(/max=10000/);
+  await expect(vacio(page)).toContainText("Ups, en este momento no tenemos la combinación que buscas");
 });
 
 test("una palabra larguísima no desborda la página", async ({ page }) => {

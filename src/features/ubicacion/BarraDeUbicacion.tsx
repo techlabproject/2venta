@@ -79,25 +79,33 @@ export function BarraDeUbicacion({
     );
   }
 
+  // Con ubicación: una sola tarjeta, como la de arriba. «Cambiar» abre el formulario
+  // debajo, dentro de la misma tarjeta y alineado a su borde; antes salía como otra
+  // tarjeta blanca suelta al lado del texto (Catalina, fila 60, D-129).
   return (
     <section
       aria-label="Tu ubicación"
       data-testid="barra-ubicacion"
-      className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm"
+      className="mt-4 flex items-start gap-3 rounded-2xl bg-white px-4 py-3 text-sm shadow-xs ring-1 ring-line"
     >
-      <p className="text-ink2">
-        Distancias desde{" "}
-        <span className="font-medium text-ink">
-          {punto.origen === "dispositivo" ? "tu ubicación" : punto.origen}
-        </span>
-      </p>
-      <details className="group">
-        <summary className="cursor-pointer text-brand underline">Cambiar</summary>
-        <div className="mt-3 rounded-2xl bg-white p-4 shadow-xs ring-1 ring-line">
-          {formulario}
-        </div>
+      <details className="group min-w-0 flex-1">
+        <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 [&::-webkit-details-marker]:hidden">
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 shrink-0 text-brand" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z" />
+            <circle cx="12" cy="10" r="2.5" />
+          </svg>
+          <span className="text-ink2">
+            Distancias desde{" "}
+            <span className="font-medium text-ink">
+              {punto.origen === "dispositivo" ? "tu ubicación" : punto.origen}
+            </span>
+          </span>
+          <span className="text-brand underline group-open:hidden">Cambiar</span>
+          <span className="hidden text-brand underline group-open:inline">Cerrar</span>
+        </summary>
+        <div className="mt-3 border-t border-line pt-3">{formulario}</div>
       </details>
-      <form action={quitarUbicacion}>
+      <form action={quitarUbicacion} className="shrink-0">
         <input type="hidden" name="volver" value={volver} />
         <button type="submit" className="text-muted underline">
           Quitar

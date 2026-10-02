@@ -8,7 +8,7 @@ import { ConfirmReceiptButton } from "@/features/payments/ConfirmReceiptButton";
 import { AppHeader } from "@/components/AppHeader";
 import { ShipButton } from "@/features/shipping/ShipButton";
 import { getAddress } from "@/features/shipping/queries";
-import { breakdown } from "@/features/payments/money";
+import { breakdown, reglaDeComision } from "@/features/payments/money";
 import { issueCode, getCodeState } from "@/features/pickup/queries";
 import { RedeemForm } from "@/features/pickup/RedeemForm";
 import {
@@ -186,7 +186,12 @@ export default async function Pedido({
           )}
           {!isBuyer && (
             <>
-              <dt className="text-muted">Comisión 2venta</dt>
+              {/* La regla al lado, para que el tope o el mínimo no parezcan un
+                  error (Luna, fila 72). */}
+              <dt className="text-muted">
+                Comisión 2venta
+                <span className="block text-xs">{reglaDeComision(order.subtotal_cop)}</span>
+              </dt>
               <dd data-testid="comision">{formatCop(order.commission_cop)}</dd>
               <dt className="text-muted">Recibes</dt>
               <dd data-testid="recibe" className="font-medium">
@@ -314,7 +319,7 @@ export default async function Pedido({
           (order.status === "pagado" ||
             order.status === "despachado" ||
             order.status === "entregado") && (
-            <div className="mt-6 rounded-2xl bg-brand/10 p-4">
+            <div data-testid="dinero-guardado" className="mt-6 rounded-2xl bg-brand/10 p-4">
               <p className="text-sm font-medium text-brand">
                 Tenemos guardados {formatCop(money.buyerTotalCop)}
               </p>
@@ -323,6 +328,9 @@ export default async function Pedido({
                 producto, o solo a los siete días de la entrega si no confirmas.
               </p>
               <ConfirmReceiptButton orderId={order.id} />
+              {/* El reclamo va al lado de liberar, al mismo nivel: quien recibió algo
+                  mal tiene que ver su salida antes de soltar la plata (D-129). */}
+              {!claim && <OpenClaimForm orderId={order.id} />}
             </div>
           )}
 
@@ -404,11 +412,7 @@ export default async function Pedido({
         )}
 
         {/* La D-12 no cubre arrepentimiento: solo lo que no coincide o no llegó. */}
-        {isBuyer &&
-          !claim &&
-          ["pagado", "despachado", "entregado"].includes(order.status) && (
-            <OpenClaimForm orderId={order.id} />
-          )}
+
 
         {completed && !alreadyRated && (
           <RateForm

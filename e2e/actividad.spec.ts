@@ -190,3 +190,64 @@ test("un pedido de dos artículos sale una sola vez y con el total una sola vez"
   await seller.context.close();
   await ctx.close();
 });
+
+// Catalina (fila 27, versión 3; D-129): no se notaba si había mensajes pendientes
+// sin entrar a la bandeja. Ahora «Conversaciones» dice cuántos hay sin leer y cada
+// conversación con mensajes nuevos va en negrita con su número; las que tienen algo
+// pendiente van primero, aunque no sean las más recientes.
+test("«Conversaciones» dice cuántos mensajes hay sin leer y los pone primero", async ({ browser }) => {
+  const marca = Date.now();
+  const seller = await sellerWithListing(browser, `Pendiente ${marca}`, 200_000, "ropa");
+  const ctx = await browser.newContext();
+  const buyer = await ctx.newPage();
+  await signUpVerified(buyer, "comprador", "Comprador Atento");
+
+  await buyer.goto(`/producto/${seller.listingId}`);
+  await buyer.getByRole("button", { name: "Escribirle al vendedor" }).click();
+  await expect(buyer).toHaveURL(/\/chat\//);
+  const chatId = new URL(buyer.url()).pathname.split("/").pop()!;
+  for (const texto of ["¿Sigue disponible?", "¿Tiene manchas?", "¿Lo puedo ver el sábado?"]) {
+    await buyer.getByLabel("Mensaje").fill(texto);
+    await buyer.getByRole("button", { name: "Enviar" }).click();
+    await expect(buyer.getByRole("main")).toContainText(texto);
+  }
+
+  // Tres conversaciones más recientes del vendedor, ya leídas: la pendiente quedaría
+  // cuarta si solo contara la fecha.
+  await withDb(async (c) => {
+    const { rows } = await c.query<{ seller_id: string }>(`select seller_id from conversations where id = $1`, [chatId]);
+    for (let i = 0; i < 3; i++) {
+      const { rows: l } = await c.query<{ id: string }>(
+        `insert into listings (seller_id, title, description, category, condition, price_cop, video_path, poster_path, talla)
+         values ($1, $2, 'x', 'ropa', 'usado_bueno', 50000, 'seed/demo.webm', 'seed/demo.jpg', 'M') returning id`,
+        [rows[0].seller_id, `Leída ${marca} ${i}`],
+      );
+      const { rows: conv } = await c.query<{ id: string }>(
+        `insert into conversations (listing_id, buyer_id, seller_id, created_at)
+         select $1, buyer_id, seller_id, now() + interval '1 minute' from conversations where id = $2 returning id`,
+        [l[0].id, chatId],
+      );
+      await c.query(
+        `insert into conversation_reads (conversation_id, user_id, last_read_at) values ($1, $2, now() + interval '1 hour')`,
+        [conv[0].id, rows[0].seller_id],
+      );
+    }
+  });
+
+  await seller.page.goto("/actividad");
+  const seccion = seller.page.getByTestId("chats-recientes");
+  await expect(seller.page.getByTestId("sin-leer")).toHaveText("3 sin leer");
+  const primera = seccion.getByRole("listitem").first();
+  await expect(primera).toContainText(`Pendiente ${marca}`);
+  await expect(primera.getByTestId("mensajes-nuevos")).toHaveText("3");
+
+  // Al leerla, el contador desaparece.
+  await primera.getByRole("link").click();
+  await expect(seller.page).toHaveURL(/\/chat\//);
+  await seller.page.goto("/actividad");
+  await expect(seller.page.getByTestId("sin-leer")).toHaveCount(0);
+  await expect(seccion.getByTestId("mensajes-nuevos")).toHaveCount(0);
+
+  await seller.context.close();
+  await ctx.close();
+});

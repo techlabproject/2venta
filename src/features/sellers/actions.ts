@@ -8,7 +8,7 @@ import { kycProvider } from "@/features/kyc/provider";
 import { startVerification } from "@/features/kyc/queries";
 import { formatNit, isValidNit } from "@/features/store/nit";
 import { CONTACT_REJECTED, hasContact } from "@/features/chat/redact";
-import { problemaDeDireccion, RUT_MAX_BYTES, telefonoValido } from "./reglas";
+import { problemaDeDireccion, RUT_MAX_BYTES } from "./reglas";
 
 export type VendedorResult = { error: string };
 
@@ -35,10 +35,10 @@ export async function empezarComoVendedor(
   const direccion = String(form.get("direccion") ?? "").trim().slice(0, 200);
   const problema = problemaDeDireccion(direccion);
   if (problema) return { error: problema };
-  const telefono = telefonoValido(String(form.get("telefono") ?? ""));
-  if (!telefono) {
-    return { error: "El teléfono de contacto debe ser un celular (300 412 8805) o un fijo con indicativo (601 234 5678)." };
-  }
+  // Filas 64 y 65 (D-129): el teléfono para quejas es el celular confirmado de la
+  // cuenta. Lo que venga en el formulario se ignora.
+  const telefono = user.phoneNumber;
+  if (!telefono) redirect("/verificar");
 
   let juridica: {
     legalName: string;
@@ -140,10 +140,10 @@ export async function completarDatosVendedor(
   const direccion = String(form.get("direccion") ?? "").trim().slice(0, 200);
   const problema = problemaDeDireccion(direccion);
   if (problema) return { error: problema };
-  const telefono = telefonoValido(String(form.get("telefono") ?? ""));
-  if (!telefono) {
-    return { error: "El teléfono de contacto debe ser un celular (300 412 8805) o un fijo con indicativo (601 234 5678)." };
-  }
+  // Filas 64 y 65 (D-129): el teléfono para quejas es el celular confirmado de la
+  // cuenta. Lo que venga en el formulario se ignora.
+  const telefono = user.phoneNumber;
+  if (!telefono) redirect("/verificar");
   await query(
     `insert into vendedores (user_id, tipo, direccion_notificaciones, telefono)
      values ($1, 'natural', $2, $3)

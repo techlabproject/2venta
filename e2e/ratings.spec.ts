@@ -1,5 +1,5 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
-import { alertIn, sellerWithListing, signUpVerified, withDb } from "./helpers";
+import { alertIn, sellerWithListing, signUpVerified, withDb, liberarPago } from "./helpers";
 
 // La prueba de punta a punta de la rebanada S-12.
 // Ver slices/12-calificaciones.md
@@ -22,7 +22,7 @@ async function completedOrder(browser: Browser, title: string, price = 200_000) 
   await expect(buyer).toHaveURL(/\/pedido\//);
   const orderId = new URL(buyer.url()).pathname.split("/").pop()!;
 
-  await buyer.getByRole("button", { name: "Ya lo recibí, liberar pago" }).click();
+  await liberarPago(buyer);
   await expect(buyer.getByTestId("estado")).toHaveText("Pago liberado al vendedor");
 
   const sellerId = await withDb(async (c) => {
@@ -128,7 +128,7 @@ test("el promedio se calcula sobre varias calificaciones", async ({ browser }) =
   await otro.getByRole("button", { name: "Ir a pagar" }).click();
   await otro.getByRole("button", { name: "Simular pago aprobado" }).click();
   await expect(otro).toHaveURL(/\/pedido\//);
-  await otro.getByRole("button", { name: "Ya lo recibí, liberar pago" }).click();
+  await liberarPago(otro);
   await expect(otro.getByTestId("estado")).toHaveText("Pago liberado al vendedor");
   await rate(otro, 3);
   await expect(otro.getByTestId("ya-calificado")).toBeVisible();

@@ -48,9 +48,14 @@ export function frasesProhibidas(): Promise<FraseProhibida[]> {
 
 // ---- Solo para el panel ----------------------------------------------------------
 
+// `usos`: cuántas publicaciones o pedidos lo usan. Solo lo que nadie usa se puede
+// borrar (filas 57 y 58, D-129); lo demás se desactiva.
+
 export function todasLasCategorias() {
-  return query<{ slug: string; label: string; position: number; active: boolean }>(
-    `select slug, label, position, active from categories order by position, slug`,
+  return query<{ slug: string; label: string; position: number; active: boolean; usos: number }>(
+    `select c.slug, c.label, c.position, c.active,
+            (select count(*) from listings l where l.category = c.slug)::int as usos
+       from categories c order by c.position, c.slug`,
   );
 }
 
@@ -62,12 +67,20 @@ export function todosLosLugares() {
     tipo: string;
     activo: boolean;
     confirmado: boolean;
-  }>(`select id, zona, nombre, tipo, activo, confirmado from lugares_encuentro order by zona, nombre`);
+    usos: number;
+  }>(
+    `select l.id, l.zona, l.nombre, l.tipo, l.activo, l.confirmado,
+            (select count(*) from orders o where o.meeting_place_id = l.id)::int as usos
+       from lugares_encuentro l order by l.zona, l.nombre`,
+  );
 }
 
 export function todosLosAtributos() {
-  return query<{ tipo: string; valor: string; grupo: string | null; orden: number; activo: boolean }>(
-    `select tipo, valor, grupo, orden, activo from atributos order by tipo, orden, valor`,
+  return query<{ tipo: string; valor: string; grupo: string | null; orden: number; activo: boolean; usos: number }>(
+    `select a.tipo, a.valor, a.grupo, a.orden, a.activo,
+            (select count(*) from listings l
+              where (a.tipo = 'talla' and l.talla = a.valor) or (a.tipo = 'edad' and l.edad = a.valor))::int as usos
+       from atributos a order by a.tipo, a.orden, a.valor`,
   );
 }
 
@@ -77,7 +90,8 @@ export function todasLasPalabras() {
   );
 }
 
-export function ultimosCambios(limite = 50) {
+/** Los últimos cambios, de 10 en 10 (fila 59). */
+export function ultimosCambios(limite = 10) {
   return query<{
     entidad: string;
     clave: string;

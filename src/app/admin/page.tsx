@@ -98,6 +98,16 @@ export default async function Admin() {
             <Link href="/admin/reportes" className="text-brand underline">
               Reportes
             </Link>
+            {/* Fila 61 (D-129): con una cola larga, la sección de empresas quedaba
+                muy abajo. */}
+            <a href="#empresas" className="text-brand underline">
+              Empresas por confirmar
+              {empresas.length > 0 && (
+                <span className="ml-1 rounded-full bg-accent px-1.5 text-xs font-bold text-on-accent">
+                  {empresas.length}
+                </span>
+              )}
+            </a>
           </span>
         </div>
         <p data-testid="cola" className="mt-1 text-sm text-muted">
@@ -145,7 +155,7 @@ export default async function Admin() {
             </li>
           ))}
         </ul>
-        <section data-testid="empresas-por-confirmar" className="mt-10">
+        <section id="empresas" data-testid="empresas-por-confirmar" className="mt-10 scroll-mt-4">
           <h2 className="font-title text-lg font-semibold">Empresas por confirmar</h2>
           <p className="mt-1 text-sm text-muted">
             Revisa que el RUT corresponda al NIT y a la razón social. Al confirmar se

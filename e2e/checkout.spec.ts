@@ -6,6 +6,7 @@ import {
   sellerWithListing,
   signUpVerified,
   withDb,
+  liberarPago,
 } from "./helpers";
 
 // La prueba de punta a punta de la rebanada S-05.
@@ -74,7 +75,7 @@ test("el comprador confirma y el dinero se libera con la comisión correcta", as
   await expect(buyer).toHaveURL(/\/pedido\//);
   const orderUrl = buyer.url();
 
-  await buyer.getByRole("button", { name: "Ya lo recibí, liberar pago" }).click();
+  await liberarPago(buyer);
   await expect(buyer.getByTestId("estado")).toHaveText("Pago liberado al vendedor");
 
   // El vendedor ve el desglose: 800.000 menos 40.000 de comisión.
@@ -295,7 +296,7 @@ test("un webhook fuera de orden no retrocede un estado más avanzado", async ({
   await expect(buyer).toHaveURL(/\/pedido\//);
   const orderId = new URL(buyer.url()).pathname.split("/").pop()!;
 
-  await buyer.getByRole("button", { name: "Ya lo recibí, liberar pago" }).click();
+  await liberarPago(buyer);
   await expect(buyer.getByTestId("estado")).toHaveText("Pago liberado al vendedor");
 
   const ref = await withDb(async (c) => {
@@ -415,4 +416,37 @@ test("comprar sin sesión explica por qué y devuelve al artículo", async ({ br
 
   await ctx.close();
   await seller.context.close();
+});
+
+// La exploradora y la revisión de diseño (D-129): «Ya lo recibí, liberar pago»
+// soltaba la plata con un toque, y «Tengo un problema» quedaba escondido más abajo.
+test("liberar el pago pide confirmar, y el reclamo está al lado", async ({ browser }) => {
+  const seller = await sellerWithListing(browser, `Confirmar ${Date.now()}`, 90_000);
+  const ctx = await browser.newContext();
+  const buyer = await ctx.newPage();
+  await signUpVerified(buyer, "comprador", "Comprador Cuidadoso");
+  await buyer.goto(`/comprar/${seller.listingId}`);
+  await buyer.getByLabel("Quién recibe").fill("Nombre Apellido");
+  await buyer.getByLabel("Celular de quien recibe").fill("300 412 88 05");
+  await buyer.getByLabel("Dirección").fill("Calle 72 #10-34");
+  await buyer.getByLabel("Zona").selectOption("Chapinero");
+  await buyer.getByRole("button", { name: "Ir a pagar" }).click();
+  await buyer.getByRole("button", { name: "Simular pago aprobado" }).click();
+  await expect(buyer).toHaveURL(/\/pedido\//);
+
+  const caja = buyer.getByTestId("dinero-guardado");
+  await expect(caja.getByText("Tengo un problema con el pedido")).toBeVisible();
+
+  await caja.getByRole("button", { name: "Ya lo recibí, liberar pago" }).click();
+  const dialogo = buyer.getByRole("dialog");
+  await expect(dialogo).toContainText("ya no puedes abrir un reclamo");
+  await dialogo.getByRole("button", { name: "Cancelar" }).click();
+  await expect(buyer.getByTestId("estado")).not.toHaveText("Pago liberado al vendedor");
+
+  await caja.getByRole("button", { name: "Ya lo recibí, liberar pago" }).click();
+  await buyer.getByRole("dialog").getByRole("button", { name: "Sí, liberar el pago" }).click();
+  await expect(buyer.getByTestId("estado")).toHaveText("Pago liberado al vendedor");
+
+  await seller.context.close();
+  await ctx.close();
 });

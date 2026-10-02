@@ -34,7 +34,6 @@ export default async function Vender({
     getVendedor(user.id),
     getJuridica(user.id),
   ]);
-  const telefonoInicial = user.phoneNumber?.replace(/^\+57/, "") ?? undefined;
   const aprobado = v?.status === "aprobado";
   // Las cifras de la portada del panel salen de las mismas publicaciones que se
   // gestionan un clic más adentro: no hay una segunda fuente que pueda mentir.
@@ -143,7 +142,7 @@ export default async function Vender({
                   La ley pide que tengamos una dirección y un teléfono de quien vende,
                   por si un comprador presenta una queja. No se muestran a nadie.
                 </p>
-                <CompletarDatosForm telefonoInicial={telefonoInicial} />
+                <CompletarDatosForm />
               </section>
             )}
           </>
@@ -158,9 +157,6 @@ export default async function Vender({
               Tu verificación está en curso. Suele tardar unos minutos y te
               avisamos apenas haya respuesta. Puedes seguir explorando mientras
               tanto.
-            </p>
-            <p className="mt-4 text-sm text-muted">
-              Referencia <code>{v.reference}</code>
             </p>
           </>
         ) : (
@@ -247,7 +243,7 @@ export default async function Vender({
                     Cambiar
                   </Link>
                 </p>
-                <FormularioVendedor tipo={tipoElegido} telefonoInicial={telefonoInicial} />
+                <FormularioVendedor tipo={tipoElegido} />
               </>
             ) : (
               // Corrección 15 (decisión de Nicolás): persona natural o jurídica se
@@ -269,7 +265,7 @@ export default async function Vender({
                 >
                   <span className="block font-medium">Como empresa (persona jurídica)</span>
                   <span className="mt-0.5 block text-sm text-ink2">
-                    Tienda, cambalache o negocio con NIT. Puedes cargar varios artículos
+                    Tienda o negocio con NIT. Puedes cargar varios artículos
                     de una vez.
                   </span>
                 </Link>

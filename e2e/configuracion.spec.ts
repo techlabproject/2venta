@@ -212,3 +212,122 @@ test("un valor demasiado largo se rechaza en vez de recortarse", async ({ page }
     await withDb((c) => c.query(`delete from categories where slug = $1`, [slug]));
   }
 });
+
+// Catalina (filas 57 y 58, versión 3; D-129): no se podían crear categorías ni borrar
+// nada. Ahora se crean, y «Borrar» aparece solo en lo que ninguna publicación ni
+// pedido usa; lo usado se desactiva y la pantalla dice por qué. El servidor lo vuelve
+// a comprobar.
+test("el equipo crea una categoría, que aparece en la portada, y la borra mientras nadie la usa", async ({ page }) => {
+  const nombre = `Hogar ${Date.now() % 100000}`;
+  try {
+    await comoEquipo(page);
+    await page.getByLabel("Nombre de la categoría nueva").fill(nombre);
+    await page.getByRole("button", { name: "Agregar categoría" }).click();
+    await expect(page.getByRole("status")).toContainText("Guardado");
+    const tarjeta = page.locator("#categorias li").filter({ has: page.locator(`input[value="${nombre}"]`) });
+    await expect(tarjeta).toHaveCount(1);
+
+    await page.goto("/");
+    await expect(page.getByRole("navigation", { name: "Atajos" })).toContainText(nombre);
+
+    await page.goto("/admin/configuracion");
+    await tarjeta.getByText("Borrar", { exact: true }).click();
+    await tarjeta.getByRole("button", { name: `Sí, borrar ${nombre}` }).click();
+    await expect(page.getByRole("status")).toContainText("Guardado");
+    await expect(tarjeta).toHaveCount(0);
+    await expect(page.getByTestId("historial")).toContainText("Borrado");
+  } finally {
+    await withDb((c) => c.query(`delete from categories where label = $1`, [nombre]));
+  }
+});
+
+test("lo que ya usan publicaciones no se puede borrar, ni forzando el formulario", async ({ page }) => {
+  const nombre = `Sin uso ${Date.now() % 100000}`;
+  try {
+    await comoEquipo(page);
+    // «Ropa» la usan publicaciones: sin «Borrar», y dice por qué.
+    const ropa = page.locator("#categorias li").filter({ has: page.locator('input[value="ropa"]') });
+    await expect(ropa.getByText("Borrar", { exact: true })).toHaveCount(0);
+    await expect(ropa).toContainText("solo se puede desactivar");
+
+    // Una sin uso, con su formulario de borrar apuntando a «ropa».
+    await page.getByLabel("Nombre de la categoría nueva").fill(nombre);
+    await page.getByRole("button", { name: "Agregar categoría" }).click();
+    const tarjeta = page.locator("#categorias li").filter({ has: page.locator(`input[value="${nombre}"]`) });
+    await tarjeta.getByText("Borrar", { exact: true }).click();
+    await tarjeta.locator('form[data-borrar] input[name="slug"]').evaluate((el) => ((el as HTMLInputElement).value = "ropa"));
+    await tarjeta.getByRole("button", { name: `Sí, borrar ${nombre}` }).click();
+    await expect(page.getByRole("main").getByRole("alert")).toContainText("no se puede borrar");
+    const [fila] = await withDb(async (c) => (await c.query(`select count(*)::int as n from categories where slug = 'ropa'`)).rows);
+    expect(fila.n).toBe(1);
+  } finally {
+    await withDb((c) => c.query(`delete from categories where label = $1`, [nombre]));
+  }
+});
+
+test("se borran una talla, un lugar y una palabra que nadie usa", async ({ page }) => {
+  const talla = `B${Date.now() % 100000}`;
+  const lugar = `Biblioteca borrable ${Date.now()}`;
+  const frase = `borrable${Date.now() % 100000}`;
+  try {
+    await comoEquipo(page);
+    await page.getByLabel("Lista").selectOption("talla");
+    await page.getByLabel("Valor (como se verá)").fill(talla);
+    await page.getByRole("button", { name: "Agregar", exact: true }).first().click();
+    await expect(page.getByTestId("atributos-talla")).toContainText(talla);
+    await page.getByTestId("atributos-talla").getByRole("listitem").filter({ hasText: talla }).getByText("Borrar", { exact: true }).click();
+    await page.getByRole("button", { name: `Sí, borrar ${talla}` }).click();
+    await expect(page.getByTestId("atributos-talla")).not.toContainText(talla);
+
+    await page.getByLabel("Zona", { exact: true }).selectOption("La Calera");
+    await page.getByLabel("Nombre del lugar").fill(lugar);
+    await page.getByRole("button", { name: "Agregar lugar" }).click();
+    const tarjetaLugar = page.getByTestId("lugares").getByRole("listitem").filter({ has: page.locator(`input[value="${lugar}"]`) });
+    await tarjetaLugar.getByText("Borrar", { exact: true }).click();
+    await tarjetaLugar.getByRole("button", { name: `Sí, borrar ${lugar}` }).click();
+    await expect(page.getByTestId("lugares")).not.toContainText(lugar);
+    await expect(page).toHaveURL(/listo=1#lugares/);
+    // La palabra se agrega justo después, a la misma dirección (`?listo=1`): antes la
+    // pantalla mostraba la versión vieja y la palabra no aparecía.
+
+    await page.getByLabel("Frase").fill(frase);
+    await page.getByLabel("Motivo (lo ve quien publica)").fill("Motivo de prueba para borrar.");
+    await page.locator("#palabras").getByRole("button", { name: "Agregar" }).click();
+    await expect(page.getByTestId("palabras")).toContainText(frase);
+    const tarjetaPalabra = page.getByTestId("palabras").getByRole("listitem").filter({ hasText: frase });
+    await tarjetaPalabra.getByText("Borrar", { exact: true }).click();
+    await tarjetaPalabra.getByRole("button", { name: `Sí, borrar ${frase}` }).click();
+    await expect(page.locator("#palabras")).not.toContainText(frase);
+  } finally {
+    await withDb(async (c) => {
+      await c.query(`delete from atributos where valor = $1`, [talla]);
+      await c.query(`delete from lugares_encuentro where nombre = $1`, [lugar]);
+      await c.query(`delete from palabras_prohibidas where frase = $1`, [frase]);
+    });
+  }
+});
+
+// Catalina (fila 59): el historial mostraba 50 cambios de una vez.
+test("el historial muestra 10 cambios y «Ver 10 más» trae los siguientes", async ({ page }) => {
+  const marca = `hist${Date.now()}`;
+  await withDb(async (c) => {
+    const { rows } = await c.query<{ id: string }>(`select id from "user" limit 1`);
+    for (let i = 0; i < 25; i++) {
+      await c.query(
+        `insert into cambios_config (admin_id, entidad, clave, antes, despues, creado)
+         values ($1, 'palabra', $2, null, '{"activo": true}', now() + interval '1 day' + ($3 || ' seconds')::interval)`,
+        [rows[0].id, `${marca}-${i}`, i],
+      );
+    }
+  });
+  try {
+    await comoEquipo(page);
+    const filas = page.getByTestId("historial").locator("tbody tr");
+    await expect(filas).toHaveCount(10);
+    await page.getByRole("link", { name: "Ver 10 más" }).click();
+    await expect(filas).toHaveCount(20);
+    await expect(page).toHaveURL(/historial=20/);
+  } finally {
+    await withDb((c) => c.query(`delete from cambios_config where clave like $1`, [`${marca}-%`]));
+  }
+});
