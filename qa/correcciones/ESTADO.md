@@ -112,7 +112,15 @@ Lista de problemas y pendientes para el documento final: `pendientes.md`.
   confirmar al liberar el pago, reclamo al lado, seguimiento en futuro, regla de
   comisión en el pedido. Decisiones de Nicolás sobre lo demás: **D-130** (segunda tanda:
   barra de abajo, filtros, «Sin foto», términos, pestañas, sesiones; textos cuando el
-  equipo marque las opciones del PDF). La revisión 3 se despliega el 2026-10-02.
+  equipo marque las opciones del PDF). La revisión 3 se despliega el 2026-10-02 (commit 2f7b7b2).
+- **Segunda tanda (D-130), 2026-10-02:** barra de abajo escondida
+  en tareas (`BottomNav`), filtros a pantalla completa con «Filtros puestos»
+  (`FiltrosPuestos.tsx`), «Sin foto» y aviso de video (`Portada.tsx`,
+  `VideoDelArticulo.tsx`), términos con instrucción y «Aceptar» fijo, Configuración por
+  pestañas (`?seccion=`) con buscador de lugares, sesiones agrupadas. Luna `tanda2`:
+  PASA CON OBSERVACIONES (pago de prueba sin salida → «Volver»); vuelta 2 PASA. Suite
+  contra la imagen 481/481. Desplegada 2026-10-02.
+  Las 38 frases esperan las opciones que marque el equipo (PDF).
 
 ## Fila 11 (términos y condiciones) — cerrada; se deja el detalle como referencia
 

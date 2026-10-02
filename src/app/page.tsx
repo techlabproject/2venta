@@ -22,6 +22,7 @@ import { BarraDeUbicacion } from "@/features/ubicacion/BarraDeUbicacion";
 import { CamposDeFiltro } from "@/features/catalog/CamposDeFiltro";
 import { PanelDeFiltros } from "@/features/catalog/PanelDeFiltros";
 import { SinResultados } from "@/features/catalog/SinResultados";
+import { FiltrosPuestos } from "@/features/catalog/FiltrosPuestos";
 import { currentUser } from "@/lib/session";
 
 // Pantalla 1d del mockup. Renderizado en servidor y sin caché: la lista y la ficha
@@ -159,16 +160,18 @@ export default async function Home({
 
       <main className="mx-auto max-w-6xl px-5 py-8">
         {filtrando ? (
+          <>
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <div>
               <h2 data-testid="conteo" className="font-title text-xl font-semibold">
                 {total === 1 ? "1 resultado" : `${total} resultados`}
               </h2>
             </div>
-            <Link href="/" scroll={false} className="text-sm text-brand underline">
-              Quitar filtros
-            </Link>
           </div>
+          {/* Los filtros puestos, con su X (D-130, decisión 3). «Quitar todo» hace lo
+              que antes hacía «Quitar filtros». */}
+          <FiltrosPuestos base="/" params={params} filters={filtros} categories={categories} />
+          </>
         ) : (
           <>
             <h2 className="font-title text-xl font-semibold">Cerca de ti</h2>

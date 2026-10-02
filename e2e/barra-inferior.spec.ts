@@ -90,10 +90,16 @@ test("la barra no tapa el final de la página", async ({ browser }) => {
 
   // El hueco reservado en el flujo es lo que evita que el último artículo del
   // catálogo quede debajo de la barra y no se pueda tocar.
-  await page.keyboard.press("End");
+  // Se mide cuando la página ya no se mueve: antes medía mientras cargaban las
+  // imágenes, el final se corría y la prueba fallaba una vez sí y otra no.
+  await page.waitForLoadState("networkidle");
+  await page.evaluate(async () => {
+    await Promise.all([...document.images].map((i) => (i.complete ? null : i.decode().catch(() => null))));
+    window.scrollTo(0, document.documentElement.scrollHeight);
+  });
   const ultimo = page.getByRole("main").getByRole("listitem").last();
   await expect(ultimo).toBeVisible();
-  await ultimo.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(200);
   const tapado = await ultimo.evaluate((el) => {
     const nav = document
       .querySelector('nav[aria-label="Navegación principal"]')!
@@ -104,4 +110,45 @@ test("la barra no tapa el final de la página", async ({ browser }) => {
   expect(tapado).toBe(false);
 
   await context.close();
+});
+
+// Revisión de diseño (D-130, decisión 2 de Nicolás): en las pantallas de una tarea
+// —comprar, pagar, publicar, editar, chat, pedido— la barra tapaba campos y botones.
+// Ahí no aparece; en las de explorar sigue.
+test("la barra se esconde en las tareas y sigue en las pantallas de explorar", async ({ browser }) => {
+  const seller = await sellerWithListing(browser, `Tarea ${Date.now()}`, 70_000, "ropa");
+  const ctx = await browser.newContext({ viewport: MOVIL });
+  const page = await ctx.newPage();
+  await signUpVerified(page, "comprador", "Comprador Atento");
+
+  for (const ruta of ["/", "/buscar", "/chats", "/cuenta", "/favoritos", `/producto/${seller.listingId}`]) {
+    await page.goto(ruta);
+    await expect(barra(page), ruta).toBeVisible();
+  }
+  await page.goto(`/comprar/${seller.listingId}`);
+  await expect(page.getByLabel("Quién recibe")).toBeVisible();
+  await expect(barra(page)).toHaveCount(0);
+
+  await page.getByLabel("Quién recibe").fill("Nombre Apellido");
+  await page.getByLabel("Celular de quien recibe").fill("300 412 88 05");
+  await page.getByLabel("Dirección").fill("Calle 72 #10-34");
+  await page.getByLabel("Zona").selectOption("Chapinero");
+  await page.getByRole("button", { name: "Ir a pagar" }).click();
+  await expect(page).toHaveURL(/\/dev\/pago\//);
+  await expect(barra(page)).toHaveCount(0);
+  // Sin barra, la pantalla de pago necesita su propia salida (Luna, tanda 2).
+  await expect(page.getByRole("link", { name: "Volver" })).toBeVisible();
+  await page.getByRole("button", { name: "Simular pago aprobado" }).click();
+  await expect(page).toHaveURL(/\/pedido\//);
+  await expect(barra(page)).toHaveCount(0);
+
+  await seller.page.setViewportSize(MOVIL);
+  for (const ruta of ["/publicar", `/producto/${seller.listingId}/editar`]) {
+    await seller.page.goto(ruta);
+    await expect(seller.page.getByRole("main")).toBeVisible();
+    await expect(barra(seller.page), ruta).toHaveCount(0);
+  }
+
+  await seller.context.close();
+  await ctx.close();
 });

@@ -30,7 +30,8 @@ function volver(seccion: string, error?: string): never {
   // (`?listo=1`) y, sin esto, el navegador mostraba la versión de antes del segundo
   // (una palabra agregada después de borrar un lugar no aparecía).
   revalidatePath(PANEL);
-  redirect(error ? `${PANEL}?error=${error}#${seccion}` : `${PANEL}?listo=1#${seccion}`);
+  // Vuelve a la pestaña de la sección (D-130, decisión 7).
+  redirect(error ? `${PANEL}?seccion=${seccion}&error=${error}` : `${PANEL}?seccion=${seccion}&listo=1`);
 }
 
 function refrescarTodo() {

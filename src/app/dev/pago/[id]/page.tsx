@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Volver } from "@/components/Volver";
 import { isProduction } from "@/lib/env";
 import { getOrder } from "@/features/payments/orders";
 import { DevPagoControls } from "@/features/payments/DevPagoControls";
@@ -28,6 +29,11 @@ export default async function DevPago({
 
   return (
     <main className="mx-auto max-w-md px-5 py-10">
+      {/* Sin la barra de abajo (D-130), esta pantalla necesita su propia salida
+          (Luna, tanda 2). Sin recorrido, al pedido, que se puede cancelar. */}
+      <div className="mb-4">
+        <Volver href={`/pedido/${order.id}`} />
+      </div>
       <p className="rounded-xl bg-warn/10 px-4 py-3 text-sm text-warn">
         Proveedor de pagos de prueba. Ocupa el lugar del real mientras R-02 no
         tenga respuesta. No existe en producción.

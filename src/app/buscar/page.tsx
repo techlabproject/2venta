@@ -12,6 +12,7 @@ import { BarraDeUbicacion } from "@/features/ubicacion/BarraDeUbicacion";
 import { CamposDeFiltro } from "@/features/catalog/CamposDeFiltro";
 import { PanelDeFiltros } from "@/features/catalog/PanelDeFiltros";
 import { SinResultados } from "@/features/catalog/SinResultados";
+import { FiltrosPuestos } from "@/features/catalog/FiltrosPuestos";
 import { listCategories } from "@/features/catalog/queries";
 import {
   conCategoriasConocidas,
@@ -134,6 +135,15 @@ export default async function Buscar({
                 </PanelDeFiltros>
               </div>
             </div>
+
+            {/* Los filtros puestos, con su X (D-130, decisión 3). */}
+            <FiltrosPuestos
+              base="/buscar"
+              params={params}
+              filters={filters}
+              categories={categories}
+              conservar={["q"]}
+            />
 
             {listings.length === 0 ? (
               <SinResultados

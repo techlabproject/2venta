@@ -181,3 +181,25 @@ test("la API distingue una fecha imposible de un menor, y no deja cambiar la fec
   });
   expect((await cambio.json()).code).toBe("BIRTHDATE_READONLY");
 });
+
+// Revisión de diseño (D-130, decisión 6 de Nicolás): tocar la casilla abría un texto
+// largo y no quedaba claro cómo seguir ni si ya se había aceptado. El panel se queda,
+// pero dice qué hacer arriba, «Aceptar» se ve siempre sin bajar hasta el final, y al
+// volver el registro dice que ya se aceptó.
+test("el panel dice qué hacer, «Aceptar» se ve sin bajar y el registro confirma", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/registro");
+  const casilla = page.getByRole("checkbox", { name: /Leí y acepto/ });
+  await casilla.click();
+  await expect(panel(page)).toContainText("Lee los términos y toca «Aceptar» para seguir con tu registro.");
+  const aceptar = panel(page).getByRole("button", { name: "Aceptar", exact: true });
+  await expect(aceptar).toBeInViewport();
+  await aceptar.click();
+  await expect(casilla).toBeChecked();
+  await expect(page.getByRole("status").filter({ hasText: "Aceptaste los términos" })).toBeVisible();
+
+  // Desmarcarla quita la confirmación.
+  await casilla.click();
+  await expect(casilla).not.toBeChecked();
+  await expect(page.getByText("Aceptaste los términos")).toHaveCount(0);
+});

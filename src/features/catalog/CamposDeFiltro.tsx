@@ -122,6 +122,10 @@ export function CamposDeFiltro({
             </option>
           ))}
         </select>
+        {/* Se confundía con «¿Dónde estás?» (D-130, decisión 3). */}
+        <p className="text-xs text-muted">
+          Dónde está quien vende. Tu ubicación se elige arriba de los resultados.
+        </p>
       </div>
 
       <label className="flex items-center gap-2 text-sm">

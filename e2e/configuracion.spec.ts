@@ -8,6 +8,9 @@ import { makeAdmin, sellerWithListing, signUpVerified, withDb } from "./helpers"
 // La base la comparten las pruebas en paralelo: aquí no se toca lo que otras usan
 // («Ropa», la zona Cota, la talla M); se crean valores propios y se borran al final.
 
+/** Una pestaña de Configuración (D-130, decisión 7). */
+const seccion = (page: Page, id: string) => page.goto(`/admin/configuracion?seccion=${id}`);
+
 async function comoEquipo(page: Page) {
   const { email } = await signUpVerified(page, "equipo", "Diana Equipo");
   await makeAdmin(email);
@@ -35,6 +38,7 @@ test("una categoría cambia de nombre en la portada y queda en el historial", as
     await tarjeta.getByRole("button", { name: "Guardar" }).click();
     await expect(page.getByRole("status")).toContainText("Guardado");
     // En palabras, no en JSON (Luna, fila 52).
+    await seccion(page, "historial");
     await expect(page.getByTestId("historial")).toContainText(`Categoría: ${slug}`);
     await expect(page.getByTestId("historial")).toContainText("nombre: Objetos de prueba");
     await expect(page.getByTestId("historial")).not.toContainText("{");
@@ -71,6 +75,7 @@ test("un lugar nuevo se ofrece al comprar en persona", async ({ browser }) => {
   const page = await ctx.newPage();
   try {
     await comoEquipo(page);
+    await seccion(page, "lugares");
     await page.getByLabel("Zona", { exact: true }).selectOption("La Calera");
     await page.getByLabel("Nombre del lugar").fill(nombre);
     await page.getByLabel("Tipo", { exact: true }).selectOption("biblioteca");
@@ -105,6 +110,7 @@ test("una talla nueva aparece al editar y una desactivada deja de ofrecerse", as
   const seller = await sellerWithListing(browser, `Talla ${Date.now()}`, 60_000, "ropa");
   try {
     await comoEquipo(page);
+    await seccion(page, "atributos");
     await page.getByLabel("Lista").selectOption("talla");
     await page.getByLabel("Valor (como se verá)").fill(talla);
     await page.getByRole("button", { name: "Agregar", exact: true }).first().click();
@@ -113,7 +119,7 @@ test("una talla nueva aparece al editar y una desactivada deja de ofrecerse", as
     await seller.page.goto(`/producto/${seller.listingId}/editar`);
     await expect(seller.page.getByLabel("Talla").locator("option", { hasText: talla })).toHaveCount(1);
 
-    await page.goto("/admin/configuracion");
+    await seccion(page, "atributos");
     await page.getByRole("button", { name: `Desactivar ${talla}` }).click();
     await expect(page.getByRole("button", { name: `Activar ${talla}` })).toBeVisible();
     await seller.page.goto(`/producto/${seller.listingId}/editar`);
@@ -136,6 +142,7 @@ test("una palabra prohibida del equipo frena la publicación con su motivo", asy
   const seller = await sellerWithListing(browser, `Palabra ${Date.now()}`, 60_000, "ropa");
   try {
     await comoEquipo(page);
+    await seccion(page, "palabras");
     await page.getByLabel("Frase").fill(frase);
     await page.getByLabel("Motivo (lo ve quien publica)").fill(motivo);
     await page.locator("#palabras").getByRole("button", { name: "Agregar" }).click();
@@ -148,7 +155,7 @@ test("una palabra prohibida del equipo frena la publicación con su motivo", asy
     await expect(seller.page.getByRole("main").getByRole("alert")).toContainText(motivo);
 
     // Desactivada, ya no frena.
-    await page.goto("/admin/configuracion");
+    await seccion(page, "palabras");
     await page.getByTestId("palabras").getByRole("listitem").filter({ hasText: frase }).getByRole("button", { name: "Desactivar" }).click();
     await expect(page.getByRole("status")).toContainText("Guardado");
     await seller.page.goto(`/producto/${seller.listingId}/editar`);
@@ -235,6 +242,7 @@ test("el equipo crea una categoría, que aparece en la portada, y la borra mient
     await tarjeta.getByRole("button", { name: `Sí, borrar ${nombre}` }).click();
     await expect(page.getByRole("status")).toContainText("Guardado");
     await expect(tarjeta).toHaveCount(0);
+    await seccion(page, "historial");
     await expect(page.getByTestId("historial")).toContainText("Borrado");
   } finally {
     await withDb((c) => c.query(`delete from categories where label = $1`, [nombre]));
@@ -271,6 +279,7 @@ test("se borran una talla, un lugar y una palabra que nadie usa", async ({ page 
   const frase = `borrable${Date.now() % 100000}`;
   try {
     await comoEquipo(page);
+    await seccion(page, "atributos");
     await page.getByLabel("Lista").selectOption("talla");
     await page.getByLabel("Valor (como se verá)").fill(talla);
     await page.getByRole("button", { name: "Agregar", exact: true }).first().click();
@@ -279,6 +288,7 @@ test("se borran una talla, un lugar y una palabra que nadie usa", async ({ page 
     await page.getByRole("button", { name: `Sí, borrar ${talla}` }).click();
     await expect(page.getByTestId("atributos-talla")).not.toContainText(talla);
 
+    await seccion(page, "lugares");
     await page.getByLabel("Zona", { exact: true }).selectOption("La Calera");
     await page.getByLabel("Nombre del lugar").fill(lugar);
     await page.getByRole("button", { name: "Agregar lugar" }).click();
@@ -286,10 +296,11 @@ test("se borran una talla, un lugar y una palabra que nadie usa", async ({ page 
     await tarjetaLugar.getByText("Borrar", { exact: true }).click();
     await tarjetaLugar.getByRole("button", { name: `Sí, borrar ${lugar}` }).click();
     await expect(page.getByTestId("lugares")).not.toContainText(lugar);
-    await expect(page).toHaveURL(/listo=1#lugares/);
-    // La palabra se agrega justo después, a la misma dirección (`?listo=1`): antes la
-    // pantalla mostraba la versión vieja y la palabra no aparecía.
+    await expect(page).toHaveURL(/seccion=lugares&listo=1/);
+    // Antes, dos cambios seguidos volvían a la misma dirección y la pantalla mostraba
+    // la versión vieja (la palabra no aparecía). El panel se invalida en cada cambio.
 
+    await seccion(page, "palabras");
     await page.getByLabel("Frase").fill(frase);
     await page.getByLabel("Motivo (lo ve quien publica)").fill("Motivo de prueba para borrar.");
     await page.locator("#palabras").getByRole("button", { name: "Agregar" }).click();
@@ -322,6 +333,7 @@ test("el historial muestra 10 cambios y «Ver 10 más» trae los siguientes", as
   });
   try {
     await comoEquipo(page);
+    await seccion(page, "historial");
     const filas = page.getByTestId("historial").locator("tbody tr");
     await expect(filas).toHaveCount(10);
     await page.getByRole("link", { name: "Ver 10 más" }).click();
@@ -331,3 +343,30 @@ test("el historial muestra 10 cambios y «Ver 10 más» trae los siguientes", as
     await withDb((c) => c.query(`delete from cambios_config where clave like $1`, [`${marca}-%`]));
   }
 });
+
+// Revisión de diseño (D-130, decisión 7 de Nicolás): Configuración era una página
+// larguísima. Ahora va por pestañas, y Lugares tiene buscador y pone primero los que
+// están por confirmar.
+test("Configuración va por pestañas y Lugares se puede buscar", async ({ page }) => {
+  await comoEquipo(page);
+  const pestanas = page.getByRole("navigation", { name: "Secciones" });
+  await expect(pestanas.getByRole("link", { name: "Categorías" })).toHaveAttribute("aria-current", "page");
+  await expect(page.locator("#categorias")).toBeVisible();
+  await expect(page.locator("#lugares")).toHaveCount(0);
+
+  await pestanas.getByRole("link", { name: /Lugares de encuentro/ }).click();
+  await expect(page).toHaveURL(/seccion=lugares/);
+  await expect(page.locator("#categorias")).toHaveCount(0);
+  const lugares = page.getByTestId("lugares").getByRole("listitem");
+  // Los por confirmar van primero.
+  await expect(lugares.first()).toContainText("Por confirmar");
+
+  await page.getByLabel("Buscar un lugar por nombre o zona").fill("andino");
+  await page.getByRole("button", { name: "Buscar" }).click();
+  await expect(page).toHaveURL(/buscar=andino/);
+  await expect(lugares).toHaveCount(1);
+  await expect(lugares.first().getByRole("textbox")).toHaveValue("Centro Comercial Andino");
+  await page.getByRole("link", { name: "Ver todos" }).click();
+  await expect.poll(() => lugares.count()).toBeGreaterThan(1);
+});
+

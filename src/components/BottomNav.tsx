@@ -29,14 +29,29 @@ const DESTINOS_EQUIPO = [
   { href: "/cuenta", label: "Perfil", icono: Persona },
 ] as const;
 
+/**
+ * Las pantallas de una tarea, donde la barra estorba: dentro de una conversación
+ * (D-91) y, desde la revisión de diseño (D-130, decisión 2), al comprar, pagar,
+ * publicar, editar y ver un pedido. Ahí abajo el pulgar quiere el campo o el botón
+ * de la tarea, no navegar a otra parte; arriba queda «Volver». Al no estar en el
+ * árbol, el hueco que reserva `globals.css` con `body:has(...)` desaparece solo.
+ */
+function enUnaTarea(ruta: string): boolean {
+  return (
+    ruta.startsWith("/chat/") ||
+    ruta.startsWith("/comprar/") ||
+    ruta.startsWith("/dev/pago/") ||
+    ruta.startsWith("/pedido/") ||
+    ruta === "/publicar" ||
+    ruta.startsWith("/publicar/") ||
+    /^\/producto\/[^/]+\/editar$/.test(ruta)
+  );
+}
+
 export function BottomNav({ sinLeer = 0, equipo = false }: { sinLeer?: number; equipo?: boolean }) {
   const ruta = usePathname();
 
-  // Dentro de una conversación no hay barra (D-91). Es lo que hace cualquier app
-  // de chat: ahí abajo el pulgar quiere el campo de escribir, no navegar a otra
-  // parte. Y al no estar en el árbol, el hueco que reserva `globals.css` con
-  // `body:has(...)` desaparece solo y el compositor llega hasta el borde.
-  if (ruta.startsWith("/chat/")) return null;
+  if (enUnaTarea(ruta)) return null;
 
   const activo = (href: string) =>
     href === "/" ? ruta === "/" : ruta === href || ruta.startsWith(`${href}/`);

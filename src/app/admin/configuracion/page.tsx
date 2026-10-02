@@ -52,6 +52,14 @@ const TIPOS_DE_LUGAR: Record<string, string> = {
   museo: "Museo o centro cultural",
 };
 
+const SECCIONES = [
+  { id: "categorias", nombre: "Categorías" },
+  { id: "lugares", nombre: "Lugares de encuentro" },
+  { id: "atributos", nombre: "Tallas y edades" },
+  { id: "palabras", nombre: "Palabras prohibidas" },
+  { id: "historial", nombre: "Historial" },
+];
+
 const CAMPO =
   "rounded-xl border border-line bg-white px-3 py-2 text-sm outline-none transition duration-200 ease-salida hover:border-brand/30 focus:border-brand focus:ring-3 focus:ring-brand/15";
 const BOTON =
@@ -143,11 +151,14 @@ const fecha = new Intl.DateTimeFormat("es-CO", {
 export default async function Configuracion({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; listo?: string; historial?: string }>;
+  searchParams: Promise<{ error?: string; listo?: string; historial?: string; seccion?: string; buscar?: string }>;
 }) {
   const admin = await currentAdmin();
   if (!admin) notFound();
-  const { error, listo, historial } = await searchParams;
+  const { error, listo, historial, seccion: pedida, buscar } = await searchParams;
+  // Una pestaña por sección (D-130, decisión 7). Van en la dirección para que
+  // funcionen sin JavaScript y para que cada guardado vuelva a su pestaña.
+  const seccion = SECCIONES.some((x) => x.id === pedida) ? pedida! : "categorias";
   // El historial va de 10 en 10 (fila 59). Lo que llegue raro en la dirección vuelve a 10.
   const pedidos = Number(historial);
   const limite = Number.isInteger(pedidos) && pedidos >= 10 && pedidos <= 500 ? pedidos : 10;
@@ -160,6 +171,12 @@ export default async function Configuracion({
     ultimosCambios(limite),
   ]);
   const porConfirmar = lugares.filter((l) => l.activo && !l.confirmado).length;
+  // Lugares: los «por confirmar» primero, y un buscador por nombre o zona.
+  const sinTildes = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const busqueda = sinTildes((buscar ?? "").trim());
+  const lugaresVistos = lugares
+    .filter((l) => !busqueda || sinTildes(`${l.nombre} ${l.zona}`).includes(busqueda))
+    .sort((a, b) => Number(a.confirmado || !a.activo) - Number(b.confirmado || !b.activo));
 
   return (
     <>
@@ -168,8 +185,8 @@ export default async function Configuracion({
         <Volver href="/admin" />
         <h1 className="mt-4 font-title text-2xl font-semibold">Configuración</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted">
-          Lo que el equipo puede cambiar sin un desarrollador. Cada cambio queda en el
-          historial, al final, con quién lo hizo y qué había antes.
+          Lo que el equipo puede cambiar sin un desarrollador. Cada cambio queda en
+          Historial, con quién lo hizo y qué había antes.
         </p>
 
         {error && ERRORES[error] && (
@@ -183,15 +200,26 @@ export default async function Configuracion({
           </p>
         )}
 
-        <nav aria-label="Secciones" className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          <a href="#categorias" className="text-brand underline">Categorías</a>
-          <a href="#lugares" className="text-brand underline">Lugares de encuentro</a>
-          <a href="#atributos" className="text-brand underline">Tallas y edades</a>
-          <a href="#palabras" className="text-brand underline">Palabras prohibidas</a>
-          <a href="#historial" className="text-brand underline">Historial</a>
+        <nav aria-label="Secciones" className="mt-5 flex gap-1 overflow-x-auto border-b border-line text-sm">
+          {SECCIONES.map((x) => (
+            <a
+              key={x.id}
+              href={`?seccion=${x.id}`}
+              aria-current={x.id === seccion ? "page" : undefined}
+              className={`shrink-0 border-b-2 px-3 py-2.5 font-medium transition ${
+                x.id === seccion ? "border-brand text-brand" : "border-transparent text-ink2 hover:text-ink"
+              }`}
+            >
+              {x.nombre}
+              {x.id === "lugares" && porConfirmar > 0 && (
+                <span className="ml-1.5 rounded-full bg-warn/15 px-1.5 text-xs text-warn">{porConfirmar}</span>
+              )}
+            </a>
+          ))}
         </nav>
 
         {/* ---- Categorías ---- */}
+        {seccion === "categorias" && (
         <section id="categorias" className="mt-8 scroll-mt-4">
           <h2 className="font-title text-lg font-semibold">Categorías</h2>
           <p className="mt-1 text-sm text-muted">
@@ -254,8 +282,10 @@ export default async function Configuracion({
             ))}
           </ul>
         </section>
+        )}
 
         {/* ---- Lugares ---- */}
+        {seccion === "lugares" && (
         <section id="lugares" className="mt-10 scroll-mt-4">
           <h2 className="font-title text-lg font-semibold">Lugares de encuentro</h2>
           <p className="mt-1 text-sm text-muted">
@@ -304,8 +334,28 @@ export default async function Configuracion({
             </button>
           </form>
 
+          <form method="get" className="mt-3 flex flex-wrap items-end gap-2">
+            <input type="hidden" name="seccion" value="lugares" />
+            <div className="flex min-w-48 flex-1 flex-col gap-1">
+              <label htmlFor="buscar-lugar" className="text-xs text-muted">
+                Buscar un lugar por nombre o zona
+              </label>
+              <input id="buscar-lugar" name="buscar" type="search" defaultValue={buscar ?? ""} className={CAMPO} />
+            </div>
+            <button type="submit" className={BOTON}>
+              Buscar
+            </button>
+            {busqueda && (
+              <a href="?seccion=lugares" className="px-1 pb-2 text-sm text-ink2 underline">
+                Ver todos
+              </a>
+            )}
+          </form>
+          {busqueda && lugaresVistos.length === 0 && (
+            <p className="mt-3 text-sm text-muted">Ningún lugar con «{buscar}».</p>
+          )}
           <ul className="mt-3 grid gap-3 md:grid-cols-2" data-testid="lugares">
-            {lugares.map((l) => (
+            {lugaresVistos.map((l) => (
               <li key={l.id} className={TARJETA}>
                 <p className="text-xs text-muted">
                   {l.zona}
@@ -349,8 +399,10 @@ export default async function Configuracion({
             ))}
           </ul>
         </section>
+        )}
 
         {/* ---- Tallas y edades ---- */}
+        {seccion === "atributos" && (
         <section id="atributos" className="mt-10 scroll-mt-4">
           <h2 className="font-title text-lg font-semibold">Tallas y edades</h2>
           <p className="mt-1 text-sm text-muted">
@@ -415,8 +467,10 @@ export default async function Configuracion({
             ninguna publicación usa.
           </p>
         </section>
+        )}
 
         {/* ---- Palabras prohibidas ---- */}
+        {seccion === "palabras" && (
         <section id="palabras" className="mt-10 scroll-mt-4">
           <h2 className="font-title text-lg font-semibold">Palabras prohibidas</h2>
           <p className="mt-1 max-w-2xl text-sm text-muted">
@@ -474,8 +528,10 @@ export default async function Configuracion({
             </ul>
           </details>
         </section>
+        )}
 
         {/* ---- Historial ---- */}
+        {seccion === "historial" && (
         <section id="historial" className="mt-10 scroll-mt-4">
           <h2 className="font-title text-lg font-semibold">Historial</h2>
           {cambios.length === 0 ? (
@@ -506,7 +562,7 @@ export default async function Configuracion({
               </table>
               {cambios.length === limite && (
                 <a
-                  href={`?historial=${limite + 10}#historial`}
+                  href={`?seccion=historial&historial=${limite + 10}`}
                   className="mt-3 inline-block text-sm text-brand underline"
                 >
                   Ver 10 más
@@ -515,6 +571,7 @@ export default async function Configuracion({
             </div>
           )}
         </section>
+        )}
       </main>
     </>
   );

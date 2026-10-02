@@ -141,7 +141,7 @@ export function PanelDeFiltros({
         aria-labelledby="titulo-filtros"
         // Tocar fuera del panel lo cierra, como en cualquier hoja lateral.
         onClick={(e) => e.target === dialogo.current && dialogo.current.close()}
-        className="fixed inset-y-0 left-0 m-0 h-dvh max-h-dvh w-[min(24rem,88vw)] max-w-none rounded-r-2xl bg-white p-0 text-ink shadow-xl transition-[translate,overlay,display] duration-300 ease-salida transition-discrete not-open:-translate-x-full starting:open:-translate-x-full backdrop:bg-ink/40 motion-reduce:transition-none"
+        className="fixed inset-y-0 left-0 m-0 h-dvh max-h-dvh w-full max-w-none sm:w-[min(24rem,88vw)] sm:rounded-r-2xl bg-white p-0 text-ink shadow-xl transition-[translate,overlay,display] duration-300 ease-salida transition-discrete not-open:-translate-x-full starting:open:-translate-x-full backdrop:bg-ink/40 motion-reduce:transition-none"
       >
         <form
           ref={formulario}

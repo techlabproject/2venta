@@ -5,6 +5,7 @@ import { CONDITION_LABEL } from "./labels";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { Price } from "@/components/Price";
 import { textoDeDistancia } from "@/features/ubicacion/zonas";
+import { Portada } from "@/components/Portada";
 
 export function ListingCard({
   listing,
@@ -21,9 +22,8 @@ export function ListingCard({
       <div className="relative">
         {/* La portada sale del primer cuadro del video, así que siempre
               corresponde al artículo de verdad. */}
-        <img
+        <Portada
           src={mediaUrl(listing.poster_path)}
-          alt=""
           className="aspect-[4/3] w-full bg-ph object-cover transition-transform duration-500 ease-salida group-hover:scale-[1.04]"
         />
 

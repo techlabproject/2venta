@@ -134,6 +134,8 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
 - **Versión 3, pendiente para la nube:** correr `node demo.cjs --paginacion` como tarea
   de ECS después del despliegue (filas 33 y 34), y `exceljs` entra como dependencia
   nueva (fila 54).
+- **Segunda tanda:** `configuracion.spec.ts` «una talla nueva aparece al editar…» falló
+  una vez en la suite contra la imagen y pasó 3 de 3 sola (intermitente bajo carga).
 - **Versión 3, falta definir (fila 55):** guía de devolución del artículo cuando se
   devuelve el dinero, quién paga ese envío, devoluciones parciales.
 

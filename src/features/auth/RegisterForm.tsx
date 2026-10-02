@@ -188,6 +188,11 @@ export function RegisterForm() {
             Términos y la Política de datos
           </button>{" "}
           (versión {VERSION_TERMINOS}).
+          {aceptado && (
+            <span role="status" className="mt-1 block text-xs font-medium text-brand">
+              Aceptaste los términos.
+            </span>
+          )}
         </span>
       </label>
       <PanelLegal

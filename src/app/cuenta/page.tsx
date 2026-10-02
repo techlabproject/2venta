@@ -62,6 +62,10 @@ export default async function Cuenta() {
     [user.id],
   );
 
+  // La de quien mira, aparte; las demás, de la más reciente a la más vieja.
+  const actual = sessions.find((s) => s.id === session?.session.id);
+  const otras = sessions.filter((s) => s.id !== session?.session.id);
+
   const perfil = await query<{
     avatar_path: string | null;
     zone: string | null;
@@ -166,36 +170,65 @@ export default async function Cuenta() {
             <p className="mt-1 text-sm text-muted">
               Si ves una que no reconoces, ciérrala y cambia tu contraseña.
             </p>
-            <ul data-testid="sesiones" className="mt-3 flex flex-col gap-2">
-              {sessions.map((s) => {
-                const actual = s.id === session?.session.id;
-                return (
-                  <li
-                    key={s.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
-                  >
-                    <span>
-                      <span className="font-medium">
-                        {describeDevice(s.userAgent)}
-                      </span>
-                      <span className="block text-muted">
-                        Desde el {fecha.format(s.createdAt)}
-                        {actual && " · esta"}
-                      </span>
-                    </span>
-                    {!actual && <RevokeButton sessionId={s.id} />}
-                  </li>
-                );
-              })}
-            </ul>
-            {sessions.length > 1 && (
-              <div className="mt-3">
-                <RevokeOthersButton />
+            {/* Este dispositivo va aparte y de los otros se ven los 5 más recientes
+                (D-130, decisión 7): con muchas tarjetas iguales no se distinguía cuál
+                era la de quien mira. */}
+            {actual && (
+              <div
+                data-testid="sesion-actual"
+                className="mt-3 rounded-2xl bg-brand/10 p-4 text-sm"
+              >
+                <span className="font-medium text-brand">Este dispositivo</span>
+                <span className="block text-ink2">
+                  {describeDevice(actual.userAgent)} · desde el {fecha.format(actual.createdAt)}
+                </span>
               </div>
+            )}
+            {otras.length > 0 && (
+              <>
+                <h3 className="mt-5 text-sm font-medium">Otros dispositivos</h3>
+                <ListaDeSesiones testId="sesiones" sesiones={otras.slice(0, 5)} />
+                {otras.length > 5 && (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-sm text-brand underline">
+                      Ver las otras {otras.length - 5}
+                    </summary>
+                    <ListaDeSesiones testId="sesiones-viejas" sesiones={otras.slice(5)} />
+                  </details>
+                )}
+                <div className="mt-3">
+                  <RevokeOthersButton />
+                </div>
+              </>
             )}
           </section>
         </div>
       </main>
     </>
+  );
+}
+
+function ListaDeSesiones({
+  sesiones,
+  testId,
+}: {
+  sesiones: { id: string; userAgent: string | null; createdAt: Date }[];
+  testId: string;
+}) {
+  return (
+    <ul data-testid={testId} className="mt-2 flex flex-col gap-2">
+      {sesiones.map((s) => (
+        <li
+          key={s.id}
+          className="flex items-center justify-between gap-3 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
+        >
+          <span>
+            <span className="font-medium">{describeDevice(s.userAgent)}</span>
+            <span className="block text-muted">Desde el {fecha.format(s.createdAt)}</span>
+          </span>
+          <RevokeButton sessionId={s.id} />
+        </li>
+      ))}
+    </ul>
   );
 }

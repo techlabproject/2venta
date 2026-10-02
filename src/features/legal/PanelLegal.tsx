@@ -77,6 +77,12 @@ export function PanelLegal({
             </button>
           </div>
         </header>
+        {/* En el registro, qué hacer (D-130, decisión 6). */}
+        {alAceptar && (
+          <p className="border-b border-line bg-brand/10 px-5 py-2.5 text-center text-sm text-brand">
+            Lee los términos y toca «Aceptar» para seguir con tu registro.
+          </p>
+        )}
 
         <div
           ref={cuerpo}
@@ -95,25 +101,29 @@ export function PanelLegal({
           <div className="mx-auto max-w-3xl">
             <ContenidoLegal />
 
-            <div className="mt-8 border-t border-line pt-5 pb-4">
-              {alAceptar ? (
-                <>
-                  <Button type="button" onClick={alAceptar}>
-                    Aceptar
-                  </Button>
-                  <p className="mt-2 text-center text-xs text-muted">
-                    Aceptas la versión {VERSION_TERMINOS}. Guardamos cuándo lo
-                    hiciste.
-                  </p>
-                </>
-              ) : aceptadoEl ? (
+            {!alAceptar && aceptadoEl && (
+              <div className="mt-8 border-t border-line pt-5 pb-4">
                 <p className="text-sm text-ink2">
                   Aceptaste la versión {VERSION_TERMINOS} el {aceptadoEl}.
                 </p>
-              ) : null}
-            </div>
+              </div>
+            )}
           </div>
         </div>
+        {/* «Aceptar» fijo abajo, siempre a la vista (D-130, decisión 6): antes había
+            que bajar hasta el final de un texto largo para encontrarlo. */}
+        {alAceptar && (
+          <footer className="border-t border-line bg-white px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+            <div className="mx-auto max-w-3xl">
+              <Button type="button" onClick={alAceptar}>
+                Aceptar
+              </Button>
+              <p className="mt-1.5 text-center text-xs text-muted">
+                Aceptas la versión {VERSION_TERMINOS}. Guardamos cuándo lo hiciste.
+              </p>
+            </div>
+          </footer>
+        )}
       </div>
     </dialog>
   );

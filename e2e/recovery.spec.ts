@@ -217,11 +217,12 @@ test("se ven las sesiones abiertas y se pueden cerrar", async ({ browser }) => {
   await signUpVerified(page, "sesiones", "Laura Compradora");
 
   await page.goto("/cuenta");
-  const sesiones = page.getByTestId("sesiones").getByRole("listitem");
-  await expect(sesiones).toHaveCount(1);
-  // La sesión actual se marca y no se puede cerrar desde aquí.
-  await expect(sesiones.first()).toContainText("esta");
-  await expect(sesiones.first().getByRole("button", { name: "Cerrar" })).toHaveCount(0);
+  // La sesión actual va aparte, como «Este dispositivo» (D-130, decisión 7), y no se
+  // puede cerrar desde aquí.
+  const actual = page.getByTestId("sesion-actual");
+  await expect(actual).toContainText("Este dispositivo");
+  await expect(actual.getByRole("button", { name: "Cerrar" })).toHaveCount(0);
+  await expect(page.getByTestId("sesiones")).toHaveCount(0);
   // Con una sola sesión no hay «demás» que cerrar.
   await expect(page.getByRole("button", { name: "Cerrar todas las demás" })).toHaveCount(0);
 
@@ -251,10 +252,11 @@ test("«Cerrar todas las demás» deja fuera a los otros dispositivos y no a est
 
   await page.goto("/cuenta");
   const sesiones = page.getByTestId("sesiones").getByRole("listitem");
-  await expect(sesiones).toHaveCount(3);
+  await expect(sesiones).toHaveCount(2);
+  await expect(page.getByTestId("sesion-actual")).toContainText("Este dispositivo");
   await page.getByRole("button", { name: "Cerrar todas las demás" }).click();
-  await expect(sesiones).toHaveCount(1);
-  await expect(sesiones.first()).toContainText("esta");
+  await expect(sesiones).toHaveCount(0);
+  await expect(page.getByTestId("sesion-actual")).toContainText("Este dispositivo");
   await expect(page.getByRole("button", { name: "Cerrar todas las demás" })).toHaveCount(0);
 
   for (const { otro } of otros) {
@@ -307,3 +309,29 @@ test("en la recuperación se puede pedir otro código cada 30 segundos", async (
 
   await ctx.close();
 });
+
+// Revisión de diseño (D-130, decisión 7 de Nicolás): con muchas sesiones abiertas las
+// tarjetas eran iguales y no se distinguía la de este dispositivo. Ahora va aparte y
+// de las otras se ven las 5 más recientes; el resto queda en «Ver las demás».
+test("las sesiones separan este dispositivo y muestran 5 de las otras", async ({ browser }) => {
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  const { email } = await signUpVerified(page, "sesiones", "Persona Sesiones");
+  await withDb(async (c) => {
+    const { rows } = await c.query<{ id: string }>(`select id from "user" where email = $1`, [email]);
+    for (let i = 0; i < 7; i++) {
+      await c.query(
+        `insert into session (id, token, "userId", "expiresAt", "createdAt", "updatedAt", "userAgent")
+         values ($1, $2, $3, now() + interval '7 days', now() - ($4 || ' hours')::interval, now(), 'Mozilla/5.0 (Linux; Android 14) Chrome/130.0')`,
+        [`prueba-${email}-${i}`, `token-${email}-${i}`, rows[0].id, i + 1],
+      );
+    }
+  });
+  await page.goto("/cuenta");
+  await expect(page.getByTestId("sesion-actual")).toContainText("Este dispositivo");
+  await expect(page.getByTestId("sesiones").getByRole("listitem")).toHaveCount(5);
+  await page.getByText("Ver las otras 2").click();
+  await expect(page.getByTestId("sesiones-viejas").getByRole("listitem")).toHaveCount(2);
+  await ctx.close();
+});
+

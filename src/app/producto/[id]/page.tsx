@@ -29,6 +29,7 @@ import { etiquetaDeEdad, etiquetaDeTalla } from "@/features/catalog/atributos";
 import { Avatar } from "@/components/Avatar";
 import { getReputation } from "@/features/ratings/queries";
 import { Volver } from "@/components/Volver";
+import { VideoDelArticulo } from "@/features/catalog/VideoDelArticulo";
 import { ESTADOS_PARA_ESCRIBIR, findConversation } from "@/features/chat/queries";
 
 export const dynamic = "force-dynamic";
@@ -125,27 +126,7 @@ export default async function ListingPage({
             {/* D-14: el video es la prueba de que el artículo existe y está como
                 dice. Va primero, antes que cualquier otra cosa: las fotos son
                 presentación, el video es la garantía. */}
-            <div className="relative">
-              <video
-                data-testid="video-articulo"
-                className="aspect-[4/3] w-full rounded-2xl bg-ph object-cover"
-                controls
-                playsInline
-                preload="metadata"
-                poster={mediaUrl(listing.poster_path)}
-                src={mediaUrl(listing.video_path)}
-              />
-              <span className="pointer-events-none absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-ink/70 px-2.5 py-1 text-[11px] font-medium text-cream backdrop-blur-sm">
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="h-3 w-3 fill-current"
-                >
-                  <path d="M8 5.14v13.72a1 1 0 0 0 1.54.84l10.3-6.86a1 1 0 0 0 0-1.68L9.54 4.3A1 1 0 0 0 8 5.14Z" />
-                </svg>
-                Grabado por el vendedor
-              </span>
-            </div>
+            <VideoDelArticulo src={mediaUrl(listing.video_path)} poster={mediaUrl(listing.poster_path)} />
 
             {photos.length > 0 && (
               <ul
