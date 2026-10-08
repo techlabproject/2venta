@@ -27,6 +27,10 @@ async function publish(page: Page, title: string, photos: number) {
   await page.goto("/publicar");
   await page.getByRole("button", { name: "Abrir cámara" }).click();
   await page.getByRole("button", { name: /^Grabar/ }).click();
+  // Al menos un segundo grabado, como una persona: tocar «Terminar» al instante deja
+
+  // un video vacío (D-132: sin las transiciones, Playwright toca más rápido).
+  await expect(page.getByText(/Grabando · [1-9]/)).toBeVisible(); // grabar al menos 1 s: al instante queda vacío
   await page.getByRole("button", { name: "Terminar" }).click();
   await expect(page.getByRole("status")).toContainText("Video listo");
 
@@ -125,6 +129,10 @@ test("un archivo que no es imagen se rechaza", async ({ browser }) => {
   await page.goto("/publicar");
   await page.getByRole("button", { name: "Abrir cámara" }).click();
   await page.getByRole("button", { name: /^Grabar/ }).click();
+  // Al menos un segundo grabado, como una persona: tocar «Terminar» al instante deja
+
+  // un video vacío (D-132: sin las transiciones, Playwright toca más rápido).
+  await expect(page.getByText(/Grabando · [1-9]/)).toBeVisible(); // grabar al menos 1 s: al instante queda vacío
   await page.getByRole("button", { name: "Terminar" }).click();
   await expect(page.getByRole("status")).toContainText("Video listo");
 

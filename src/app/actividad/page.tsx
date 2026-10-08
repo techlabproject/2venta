@@ -75,7 +75,7 @@ export default async function Actividad() {
             title="Compras"
             testId="compras"
             vacio={
-              <Vacio
+              <Vacio icono="bolsa"
                 titulo="Aquí van tus compras"
                 accion={{ href: "/", label: "Ver qué hay" }}
               >
@@ -95,7 +95,7 @@ export default async function Actividad() {
             title="Ventas"
             testId="ventas"
             vacio={
-              <Vacio
+              <Vacio icono="bolsa"
                 titulo="Aquí van tus ventas"
                 accion={{ href: "/publicar", label: "Publicar un artículo" }}
               >

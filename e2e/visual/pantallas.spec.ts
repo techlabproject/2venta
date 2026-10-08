@@ -229,7 +229,7 @@ test.describe("compradora (Laura)", () => {
     await foto(page, "chats");
   });
   test("avisos", async () => {
-    await page.goto("/avisos");
+    await page.goto("/notificaciones");
     await foto(page, "avisos");
   });
   test("cuenta y editar perfil", async () => {

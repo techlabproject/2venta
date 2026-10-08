@@ -191,3 +191,20 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
   la nube no pudo leer el código SMS de CloudWatch («security token … invalid»).
   Nicolás tiene que renovar el perfil `2venta`; después, correr la prueba de humo y
   confirmar el chat en vivo a través de CloudFront.
+- Revisión 4 (2026-10-07): «un vendedor verificado graba, publica y el artículo aparece en
+  el feed» (`e2e/publish.spec.ts:29`) falló una vez en la suite completa (no encontró
+  `video-articulo` en 60 s) y pasó 3 de 3 sola. Mismo síntoma que la intermitente de
+  fotos «sin fotos» en CI: bajo carga el video puede caer al aviso «El video no cargó»
+  (D-130). Vigilar; si se repite, la prueba debe esperar la transcodificación.
+- `e2e/alerts.spec.ts:66` («una búsqueda guardada avisa…») falló una vez y pasó 3 de 3:
+  el worker del contenedor compite con `runWorkerOnce()` de la prueba.
+- Las pruebas que crean artículos **no pueden usar palabras de lo sembrado** (chaqueta,
+  jean, coche, iPhone): las de búsqueda cuentan tarjetas por título y fallan.
+- Fila 73: confirmar en la nube que los avisos en vivo pasan por CloudFront (el flujo
+  `/api/avisos/eventos` usa las mismas cabeceras que el chat en vivo).
+- D-132 (2026-10-07): **la app acepta un video casi vacío.** Tocar «Grabar» y enseguida
+  «Terminar» puede dejar un archivo de ~110 bytes que ningún navegador reproduce; la
+  publicación se crea igual y la ficha dice «El video no cargó». Lo destapó la suite al
+  correr sin animaciones. Las pruebas ahora graban al menos 1 s; falta decidir si la app
+  exige una duración mínima (propuesta: 2 s, con el botón «Terminar» deshabilitado
+  antes) y si el servidor rechaza videos de menos de unos KB.

@@ -35,6 +35,28 @@ export async function countUnread(userId: string): Promise<number> {
 }
 
 /**
+ * La notificación sin leer más reciente, si es de hace un par de minutos: es lo que
+ * se muestra en el aviso flotante cuando llega algo (D-131). Una vieja no se
+ * anuncia como si acabara de llegar.
+ */
+export async function ultimaSinLeer(
+  userId: string,
+): Promise<{ id: string; title: string; href: string; hace_ms: number } | null> {
+  // `hace_ms` lo calcula la base: el reloj de un celular puede estar corrido y no
+  // sirve para saber si algo llegó antes o después de abrir la pantalla.
+  const rows = await query<{ id: string; title: string; href: string; hace_ms: number }>(
+    `select id::text, title, href,
+            (extract(epoch from now() - created_at) * 1000)::int as hace_ms
+       from notifications
+      where user_id = $1 and read_at is null
+        and created_at > now() - interval '2 minutes'
+      order by created_at desc, id desc limit 1`,
+    [userId],
+  );
+  return rows[0] ?? null;
+}
+
+/**
  * Avisa a quien guardó una búsqueda que coincide con esta publicación.
  *
  * La ejecuta el worker cuando llega el mensaje `avisar` que encola la acción de

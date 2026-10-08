@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Poppins, Work_Sans } from "next/font/google";
 import "./globals.css";
 import { RastroDeNavegacion } from "@/components/RastroDeNavegacion";
+import { BarraDeProgreso } from "@/components/BarraDeProgreso";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -32,9 +33,11 @@ export default function RootLayout({
         {children}
         {/* No dibuja nada: solo anota el recorrido para «Volver» (D-99). El
             `Suspense` lo pide `useSearchParams` y no le quita HTML a la página
-            (D-87): lo único que queda dentro es este componente vacío. */}
+            (D-87): lo único que queda dentro es este componente vacío y la barra
+            de progreso de la navegación (D-132), que sin JavaScript no hace falta. */}
         <Suspense fallback={null}>
           <RastroDeNavegacion />
+          <BarraDeProgreso />
         </Suspense>
       </body>
     </html>

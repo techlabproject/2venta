@@ -41,7 +41,7 @@ export default async function Chats() {
 
         {conversations.length === 0 ? (
           <div className="mt-5">
-            <Vacio
+            <Vacio icono="chat"
               titulo="Todavía no has hablado con nadie"
               accion={{ href: "/", label: "Ver el catálogo" }}
             >

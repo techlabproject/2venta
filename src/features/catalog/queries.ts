@@ -30,6 +30,8 @@ export type Listing = {
   talla: string | null;
   edad: string | null;
   promoted: boolean;
+  /** D-132: el precio de antes si bajó en los últimos 14 días; si no, null. */
+  precio_antes_cop: number | null;
   status: string;
   /**
    * D-122: km entre el vendedor y quien mira, si se sabe dónde están los dos. Sale
@@ -69,6 +71,8 @@ export const LISTING_SELECT = `
          (l.imei is not null) as has_imei,
          l.talla, l.edad,
          (pr.id is not null) as promoted,
+         case when l.bajo_at > now() - interval '14 days' and l.precio_antes_cop > l.price_cop
+              then l.precio_antes_cop end as precio_antes_cop,
          /*distancia*/ null::double precision as distancia_km
   from listings l
   -- Las publicaciones de una cuenta suspendida no se ven (RF-41).

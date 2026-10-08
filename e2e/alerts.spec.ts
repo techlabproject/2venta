@@ -44,6 +44,10 @@ async function publish(
   await page.goto("/publicar");
   await page.getByRole("button", { name: "Abrir cámara" }).click();
   await page.getByRole("button", { name: /^Grabar/ }).click();
+  // Al menos un segundo grabado, como una persona: tocar «Terminar» al instante deja
+
+  // un video vacío (D-132: sin las transiciones, Playwright toca más rápido).
+  await expect(page.getByText(/Grabando · [1-9]/)).toBeVisible(); // grabar al menos 1 s: al instante queda vacío
   await page.getByRole("button", { name: "Terminar" }).click();
   await expect(page.getByRole("status")).toContainText("Video listo");
   await page.getByLabel("Título").fill(title);
@@ -76,7 +80,7 @@ test("una búsqueda guardada avisa cuando aparece algo que coincide", async ({
 
   // El aviso lo produce el worker, no la acción de publicar (D-51).
   await runWorkerOnce();
-  await buyer.page.goto("/avisos");
+  await buyer.page.goto("/notificaciones");
   await expect(buyer.page.getByTestId("avisos")).toContainText(
     `Camisa avisada ${marca}`,
   );
@@ -97,14 +101,14 @@ test("el aviso respeta los filtros de la búsqueda guardada", async ({
 
   const caro = await publish(browser, `Abrigo caro ${marca}`, 800_000);
   await runWorkerOnce();
-  await buyer.page.goto("/avisos");
+  await buyer.page.goto("/notificaciones");
   await expect(buyer.page.getByRole("main")).not.toContainText(
     `Abrigo caro ${marca}`,
   );
 
   const barato = await publish(browser, `Camisa barata ${marca}`, 60_000);
   await runWorkerOnce();
-  await buyer.page.goto("/avisos");
+  await buyer.page.goto("/notificaciones");
   await expect(buyer.page.getByTestId("avisos")).toContainText(
     `Camisa barata ${marca}`,
   );
@@ -130,6 +134,10 @@ test("no avisa de la publicación de uno mismo", async ({ browser }) => {
   await page.goto("/publicar");
   await page.getByRole("button", { name: "Abrir cámara" }).click();
   await page.getByRole("button", { name: /^Grabar/ }).click();
+  // Al menos un segundo grabado, como una persona: tocar «Terminar» al instante deja
+
+  // un video vacío (D-132: sin las transiciones, Playwright toca más rápido).
+  await expect(page.getByText(/Grabando · [1-9]/)).toBeVisible(); // grabar al menos 1 s: al instante queda vacío
   await page.getByRole("button", { name: "Terminar" }).click();
   await expect(page.getByRole("status")).toContainText("Video listo");
   await page.getByLabel("Título").fill(`Propia ${marca}`);
@@ -140,7 +148,7 @@ test("no avisa de la publicación de uno mismo", async ({ browser }) => {
   await page.getByRole("button", { name: "Publicar" }).click();
   await expect(page).toHaveURL(/\/producto\//);
 
-  await page.goto("/avisos");
+  await page.goto("/notificaciones");
   await expect(page.getByRole("main")).not.toContainText(`Propia ${marca}`);
 
   await ctx.close();
@@ -170,7 +178,7 @@ test("no se avisa dos veces de la misma publicación", async ({ browser }) => {
   );
   await runWorkerOnce();
 
-  await buyer.page.goto("/avisos");
+  await buyer.page.goto("/notificaciones");
   const avisos = buyer.page.getByTestId("avisos").getByRole("listitem");
   await expect(
     avisos.filter({ hasText: `Coche avisado ${marca}` }),
@@ -198,11 +206,11 @@ test("una búsqueda guardada ajena no se puede borrar", async ({ browser }) => {
   const otroCtx = await browser.newContext();
   const otro = await otroCtx.newPage();
   await signUpVerified(otro, "ajeno", "Persona Ajena");
-  await otro.goto("/avisos");
+  await otro.goto("/notificaciones");
   await otro.evaluate(async (searchId) => {
     const form = new FormData();
     form.set("id", searchId);
-    await fetch("/avisos", { method: "POST", body: form }).catch(() => {});
+    await fetch("/notificaciones", { method: "POST", body: form }).catch(() => {});
   }, id);
 
   const sigue = await withDb(async (c) => {
@@ -315,7 +323,7 @@ test("al vendedor le avisan de un mensaje, una oferta y una pregunta", async ({
   await ofertar(buyer, 250000);
   await expect(buyer.getByTestId("oferta")).toContainText("250.000");
 
-  await seller.page.goto("/avisos");
+  await seller.page.goto("/notificaciones");
   const avisos = seller.page.getByTestId("avisos");
   await expect(avisos).toContainText("Te preguntaron algo");
   await expect(avisos).toContainText("Mensaje nuevo");

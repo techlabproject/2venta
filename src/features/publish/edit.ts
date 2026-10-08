@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { activeUser } from "@/lib/session";
 import { query } from "@/lib/db";
 import { parseCop, MIN_PRICE_COP } from "@/features/payments/money";
+import { formatCop } from "@/lib/money";
 import { moderateListing } from "@/features/moderation/rules";
 import { CONDITION_LABEL } from "@/features/catalog/labels";
 import { CAMPO_DE_CATEGORIA } from "@/features/catalog/atributos";
@@ -30,8 +31,8 @@ export async function editListing(
   const user = await activeUser();
 
   const id = String(form.get("listingId") ?? "");
-  const owned = await query<{ status: string }>(
-    `select status from listings where id = $1 and seller_id = $2`,
+  const owned = await query<{ status: string; price_cop: number }>(
+    `select status, price_cop from listings where id = $1 and seller_id = $2`,
     [id, user.id]
   );
   if (owned.length === 0) return { error: "Esa publicación no es tuya." };
@@ -75,12 +76,33 @@ export async function editListing(
   const verdict = moderateListing({ title, description }, await frasesProhibidas());
   if (!verdict.allowed) return { error: verdict.reason };
 
+  // D-132: bajar el precio deja la marca «Bajó» con el de antes; subirlo la quita;
+  // dejarlo igual no la toca.
   await query(
     `update listings set title = $2, description = $3, price_cop = $4, condition = $5,
-            talla = coalesce($7, talla), edad = coalesce($8, edad)
+            talla = coalesce($7, talla), edad = coalesce($8, edad),
+            precio_antes_cop = case when $4 < price_cop then price_cop
+                                    when $4 > price_cop then null
+                                    else precio_antes_cop end,
+            bajo_at = case when $4 < price_cop then now()
+                           when $4 > price_cop then null
+                           else bajo_at end
       where id = $1 and seller_id = $6`,
     [id, title, description, price, condition, user.id, talla, edad]
   );
+
+  // D-131: a quien lo guardó le avisa que bajó (GoTrendier y Mercado Libre lo
+  // hacen). Solo al bajar y una vez por precio: volver a guardar lo mismo no repite.
+  if (price < owned[0].price_cop && owned[0].status === "activa") {
+    await query(
+      `insert into notifications (user_id, kind, title, href, subject_id)
+       select f.user_id, 'bajo_precio', $2, '/producto/' || $1::text, $1::text || ':' || $3
+         from favorites f
+        where f.listing_id = $1::uuid and f.user_id <> $4
+       on conflict (user_id, kind, subject_id) do nothing`,
+      [id, `Bajó de precio: ${title}, ahora ${formatCop(price)}`, String(price), user.id],
+    );
+  }
 
   revalidatePath(`/producto/${id}`);
   revalidatePath("/");

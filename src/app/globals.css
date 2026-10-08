@@ -138,6 +138,160 @@ p {
 }
 
 
+/* Movimiento pasivo (D-132). Nicolás pidió que la app se sienta más viva y fluida:
+   esto amplía la D-86, que solo dejaba moverse lo que respondía a un toque. Todo
+   lo de aquí cumple tres reglas: nunca retrasa lo que la persona vino a ver (lo que
+   ya está en pantalla al cargar se ve de una), solo mueve `transform` y `opacity`
+   (en un celular de gama media lo demás se traba), y se apaga entero con
+   `prefers-reduced-motion`. */
+/* Solo opacidad y sin quedarse pegada al final (`backwards`): un `transform` en
+   `main`, aunque sea el de una animación ya terminada, le roba el `position: fixed`
+   a lo que vive adentro (la barra de compra, los avisos). */
+@keyframes entrar-pantalla {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes revelar {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes brillo {
+  from {
+    background-position: 160% 0;
+  }
+  to {
+    background-position: -60% 0;
+  }
+}
+
+@keyframes flotar {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Cada pantalla llega con un fundido corto en vez de aparecer de golpe. Solo al
+     montarse: una pantalla que se pone al día sola (avisos en vivo) no parpadea. */
+  main {
+    animation: entrar-pantalla 0.32s var(--ease-salida) backwards;
+  }
+
+  /* Las tarjetas que están más abajo entran al llegar a ellas con el scroll. Lo que
+     ya se ve al cargar está pasado el tramo de entrada y se dibuja quieto. Sin
+     soporte del navegador, la tarjeta simplemente está. */
+  @supports (animation-timeline: view()) {
+    .revelar {
+      animation: revelar linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 45%;
+    }
+  }
+
+  /* El arco de la portada gira tan despacio que se nota sin distraer. */
+  .arco-lento {
+    animation: girar 120s linear infinite;
+    transform-origin: 50% 50%;
+  }
+
+  .flotar {
+    animation: flotar 3.2s var(--ease-entrada) infinite;
+  }
+
+  /* Los desplegables (filtros, ubicación, «Cambiar») abren con su altura en vez de
+     saltar. Donde el navegador no lo sabe hacer, abren como siempre. */
+  :root {
+    interpolate-size: allow-keywords;
+  }
+  details::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      block-size 0.28s var(--ease-salida),
+      content-visibility 0.28s allow-discrete;
+  }
+  details[open]::details-content {
+    block-size: auto;
+  }
+}
+
+/* La barra de progreso de la navegación (D-132): avanza rápido al principio y cada
+   vez más lento, sin llegar nunca al final por su cuenta; al llegar la pantalla se
+   completa y se desvanece. Informa, así que se ve también con movimiento reducido. */
+@keyframes progreso {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(0.9);
+  }
+}
+.progreso-activo {
+  animation: progreso 8s cubic-bezier(0.08, 0.8, 0.2, 1) forwards;
+}
+.progreso-fin {
+  transform: scaleX(1);
+  opacity: 0;
+  transition:
+    transform 0.2s var(--ease-salida),
+    opacity 0.35s ease 0.15s;
+}
+
+/* Mientras llega una foto se ve un brillo que corre, no un hueco gris quieto que
+   parece roto. */
+.foto-cargando {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-ph) 35%,
+    color-mix(in oklab, var(--color-ph), white 55%) 50%,
+    var(--color-ph) 65%
+  );
+  background-size: 220% 100%;
+  animation: brillo 1.3s linear infinite;
+}
+
+.foto-lista {
+  animation: aparecer 0.45s var(--ease-salida) both;
+}
+
+/* La barra de compra fija de la ficha (D-132) reemplaza a la barra de navegación:
+   las dos abajo no caben, y en la ficha lo que el pulgar busca es comprar. */
+@media (max-width: 767px) {
+  body:has([data-barra-compra]) nav[aria-label="Navegación principal"] {
+    display: none;
+  }
+  /* Más específico que la regla de la barra de navegación, que sigue en el árbol
+     aunque esté escondida. */
+  body:has([data-barra-compra]),
+  body:has([data-barra-compra]):has(nav[aria-label="Navegación principal"]) {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Las filas de atajos que se deslizan de lado no muestran la barra de scroll: el
+   corte del último atajo ya dice que hay más. */
+.sin-barra {
+  scrollbar-width: none;
+}
+.sin-barra::-webkit-scrollbar {
+  display: none;
+}
+
 /* IMPORTANT: quien pidió menos movimiento en su sistema operativo lo pidió en
    serio. Nada se mueve, y todo queda en su estado final —no en el inicial— para
    que ninguna animación de entrada deje contenido invisible. */

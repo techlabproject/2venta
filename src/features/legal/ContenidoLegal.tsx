@@ -220,7 +220,7 @@ export function ContenidoLegal() {
         <NotaAbogado>
           Artículo 50, literal d: tras el pago debe enviarse un acuse de recibo a más
           tardar el día siguiente, con plazo de entrega, precio exacto y forma de pago.
-          Hoy la confirmación se ve en el pedido y en «Avisos»; confirmar si hace falta
+          Hoy la confirmación se ve en el pedido y en «Notificaciones»; confirmar si hace falta
           por correo.
         </NotaAbogado>
       </Seccion>

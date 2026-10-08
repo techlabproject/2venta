@@ -1572,3 +1572,84 @@ decidió:
    («Este dispositivo» aparte, 5 más recientes y «Ver todas»).
 8. **Despliegue:** lo de la revisión 3 ahora; los puntos 2 a 7 y las frases en una
    segunda tanda.
+
+### D-131 — Revisión 4 de Catalina y mejoras sacadas de la competencia (2026-10-07)
+
+Catalina agregó las filas 73–79 (las anteriores solo cambiaron de ortografía). Desde
+esta ronda la verificación independiente y la investigación las hacen agentes Haiku
+(ya no Codex/Luna); las decisiones las toma el orquestador.
+
+Aplicado sin esperar decisión, porque el pedido era concreto:
+
+- **Fila 73 — mensajes sin recargar.** El chat abierto ya se ponía al día (corrección
+  20), pero nada más: el encabezado, la barra, la lista de chats y las notificaciones
+  esperaban a recargar. Ahora cada notificación nueva avisa por el canal `aviso`
+  (migración 0030) y cada cambio de conversación avisa a sus dos partes;
+  `/api/avisos/eventos` lo empuja al navegador, que vuelve a pedir la pantalla y
+  muestra un aviso flotante («Mensaje nuevo sobre…», «Ver»). Solo se anuncia lo que
+  llegó con la pantalla abierta y una sola vez. A quien reportó una conversación no
+  le llega nada (sigue el bloqueo silencioso de la corrección 22): el aviso sale de
+  la tabla de notificaciones, que ya lo respetaba.
+  En el escritorio «Chats» y «Notificaciones» pasan al encabezado con contador (antes
+  «Conversaciones» estaba escondido en el menú de la cuenta); en el celular la barra
+  ya tenía «Chats» y el menú lleva un punto cuando hay notificaciones sin leer.
+  **No incluido:** avisos con la app cerrada (notificación del teléfono o del
+  computador). Necesita Web Push con llaves VAPID (gratis, pero las llaves son un
+  secreto que pega Nicolás) y en iPhone solo funciona si la web se agrega a la
+  pantalla de inicio (iOS 16.4+). Queda como decisión.
+- **Fila 78 — «Avisos» pasa a «Notificaciones»** (`/notificaciones`; `/avisos`
+  redirige con 308). La sección de búsquedas guardadas explica qué son y cómo se
+  crean.
+- **Fila 79 — Guardados** sin la frase «Lo que marcaste con ♡…». La sección «Ya no
+  están» sigue: aparece solo cuando algo guardado se vende o se retira.
+
+Mejoras que decidió el orquestador tras comparar con Mercado Libre, GoTrendier,
+Wallapop y Vinted (informes en `qa/correcciones/v4/competencia/`, cifras verificadas
+por un segundo agente):
+
+- **Aviso de bajada de precio** a quien guardó el artículo (GoTrendier lo hace). Solo
+  al bajar, una vez por precio, nunca al vendedor.
+- **Compartir por WhatsApp** desde la ficha, también sin cuenta. En Colombia los
+  artículos se pasan por WhatsApp; el enlace lleva el título, el precio y la
+  dirección de la ficha, nada más.
+
+Quedan por decidir (filas 74–77, «confirmar con Hey»): paginación, precio mínimo,
+comisión y qué pasa al borrar una categoría. Ver `qa/correcciones/v4/decisiones.md`.
+
+### D-132 — Movimiento pasivo y la primera pantalla del celular (2026-10-07)
+
+Nicolás pidió que la app «se vea mucho mejor» y se sienta más fluida, con
+animaciones pasivas. Investigaron agentes Haiku (técnicas, competencia, auditoría de
+nuestras pantallas); decidió el orquestador mirando capturas antes y después.
+
+**Amplía la D-86.** Además de lo que responde a un toque, ahora se mueve lo que hace
+la espera más corta o la pantalla menos muerta, con tres reglas: nunca retrasa lo
+que la persona vino a ver (lo que está a la vista al cargar se dibuja quieto), solo
+anima `transform` y `opacity`, y todo se apaga con `prefers-reduced-motion`. Lo que
+entró: fundido corto de cada pantalla (solo opacidad y sin quedarse pegado: un
+`transform` en `main` le roba el `position: fixed` a lo de adentro), tarjetas que
+entran al llegar con el scroll (CSS `animation-timeline: view()`, sin JavaScript),
+brillo mientras carga una foto y fundido al llegar, barra de progreso de navegación,
+desplegables que abren con su altura, el arco de la portada girando muy despacio,
+íconos que flotan en los estados vacíos y los contadores que saltan al aparecer.
+**Lo que no entró:** transiciones de página con View Transitions. En Next 16.3 no
+están en la configuración estable y React las trae solo en su canal experimental (un
+agente dijo lo contrario; se comprobó en `node_modules`).
+
+**La primera pantalla del celular.** En la portada y la búsqueda, ningún artículo se
+veía sin bajar: el título grande, los atajos en dos renglones y la tarjeta «¿Dónde
+estás?» se comían la pantalla. Ahora el título es más compacto, los atajos son una
+fila que se desliza y la ubicación es una línea que se abre con «Elegir».
+
+**La ficha.** Barra fija de compra en el celular (precio + «Comprar»), como Mercado
+Libre y Vinted: está mientras el botón principal no se ve y se esconde cuando
+aparece; reemplaza la barra de navegación en esa pantalla. Guardar y Compartir van
+mitad y mitad. Lo que bajó de precio muestra el precio de antes
+tachado junto al nuevo, en la tarjeta y en la ficha (migración 0031; dura 14 días;
+subir el precio lo quita), sin etiqueta de texto: la primera versión decía «Bajó» y
+Nicolás pidió dejar solo la oferta.
+
+**Pruebas.** Playwright corre con `reducedMotion: "reduce"`: las pruebas comprueban
+lo que pasa, no cómo se mueve. Una prueba atrapó un error real: al elegir la zona, el
+desplegable de ubicación quedaba abierto porque React reutilizaba el mismo
+`<details>`; ahora cada estado lleva su llave.

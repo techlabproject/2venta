@@ -44,7 +44,7 @@ export function FavoriteButton({
         disabled={pending}
         data-testid="favorito"
         aria-pressed={isSaved}
-        className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-3 text-sm font-medium shadow-xs transition duration-200 ease-salida hover:border-brand/30 hover:bg-ph active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-3 text-sm font-medium shadow-xs transition duration-200 ease-salida hover:border-brand/30 hover:bg-ph active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
       >
         <span ref={corazon} className="inline-flex">
           <svg

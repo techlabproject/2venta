@@ -155,7 +155,7 @@ test.describe("Volver en todas las pantallas menos la portada", () => {
       "/chats",
       "/cuenta",
       "/favoritos",
-      "/avisos",
+      "/notificaciones",
       "/actividad",
       "/carrito",
       "/vender",

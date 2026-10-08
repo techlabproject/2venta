@@ -31,28 +31,24 @@ export default async function Favoritos() {
 
         {favorites.length === 0 ? (
           <div className="mt-4">
-            <Vacio
+            <Vacio icono="corazon"
               titulo="Todavía no has guardado nada"
               accion={{ href: "/", label: "Ver el catálogo" }}
             >
               {/* Corrección 41 (Catalina; texto elegido por Nicolás): qué es esto y
-                  en qué se diferencia de Avisos. */}
+                  en qué se diferencia de Notificaciones. */}
               Toca el ♡ en un artículo para tenerlo a mano aquí. ¿Buscas algo
               que todavía no está? Guarda la búsqueda y te avisamos en{" "}
-              <Link href="/avisos" className="text-brand underline">
-                Avisos
+              <Link href="/notificaciones" className="text-brand underline">
+                Notificaciones
               </Link>{" "}
               cuando aparezca.
             </Vacio>
           </div>
         ) : (
           <>
-            <p
-              data-testid="guardados-explicacion"
-              className="mt-1 text-sm text-muted"
-            >
-              Lo que marcaste con ♡. Si algo se vende o lo retiran, pasa a «Ya no están».
-            </p>
+            {/* Fila 79 (D-131): sin la frase de «Ya no están»; la sección se
+                explica sola cuando aparece. */}
             <ul data-testid="favoritos" className="mt-5 grid grid-cols-2 gap-3">
               {available.map((l) => (
                 <ListingCard key={l.id} listing={l} />

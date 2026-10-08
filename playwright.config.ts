@@ -25,6 +25,10 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   use: {
     baseURL,
+    // Las pruebas comprueban lo que pasa, no cómo se mueve (D-132): con el
+    // movimiento pasivo encendido, un desplegable a media apertura o una tarjeta
+    // entrando cambian las cajas que miden algunas pruebas.
+    reducedMotion: "reduce",
     // Cámara y micrófono simulados: es lo que permite probar de verdad el video
     // obligatorio de la D-14, que es el diferenciador del producto.
     permissions: ["camera", "microphone"],

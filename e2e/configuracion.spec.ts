@@ -121,7 +121,7 @@ test("una talla nueva aparece al editar y una desactivada deja de ofrecerse", as
 
     await seccion(page, "atributos");
     await page.getByRole("button", { name: `Desactivar ${talla}` }).click();
-    await expect(page.getByRole("button", { name: `Activar ${talla}` })).toBeVisible();
+    await expect(page.getByRole("button", { name: `Activar ${talla}`, exact: true })).toBeVisible();
     await seller.page.goto(`/producto/${seller.listingId}/editar`);
     await expect(seller.page.getByLabel("Talla").locator("option", { hasText: talla })).toHaveCount(0);
   } finally {

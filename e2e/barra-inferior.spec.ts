@@ -121,10 +121,19 @@ test("la barra se esconde en las tareas y sigue en las pantallas de explorar", a
   const page = await ctx.newPage();
   await signUpVerified(page, "comprador", "Comprador Atento");
 
-  for (const ruta of ["/", "/buscar", "/chats", "/cuenta", "/favoritos", `/producto/${seller.listingId}`]) {
+  for (const ruta of ["/", "/buscar", "/chats", "/cuenta", "/favoritos"]) {
     await page.goto(ruta);
     await expect(barra(page), ruta).toBeVisible();
   }
+  // D-132: en la ficha de algo que se puede comprar, la barra de compra ocupa su
+  // lugar; las dos abajo no caben.
+  await page.goto(`/producto/${seller.listingId}`);
+  await expect(page.getByTestId("barra-compra")).toBeVisible();
+  await expect(page.getByTestId("barra-compra").getByRole("link", { name: "Comprar" })).toHaveAttribute(
+    "href",
+    `/comprar/${seller.listingId}`,
+  );
+  await expect(barra(page)).toBeHidden();
   await page.goto(`/comprar/${seller.listingId}`);
   await expect(page.getByLabel("Quién recibe")).toBeVisible();
   await expect(barra(page)).toHaveCount(0);

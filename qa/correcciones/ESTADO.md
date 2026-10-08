@@ -1,6 +1,6 @@
 # Estado de las correcciones de Catalina — leer esto primero al retomar
 
-Última actualización: 2026-10-01. Registro fila por fila: `2026-09-22.md` (52 filas).
+Última actualización: 2026-10-07 (revisión 4: filas 73–79, D-131; desde aquí los verificadores son agentes Haiku, no Codex/Luna). Registro fila por fila: `2026-09-22.md` (52 filas).
 Lista de problemas y pendientes para el documento final: `pendientes.md`.
 
 ## Cómo se trabaja (acordado con Nicolás)

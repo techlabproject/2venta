@@ -126,6 +126,10 @@ test.describe("Persona 3 — el prevenido, vendedor, reacio a la comisión", () 
       await page.getByRole("button", { name: "Abrir cámara" }).click();
       await page.getByRole("button", { name: /^Grabar/ }).click();
       await expect(page.getByText(/Grabando/)).toBeVisible();
+      // Al menos un segundo grabado, como una persona: tocar «Terminar» al instante deja
+
+      // un video vacío (D-132: sin las transiciones, Playwright toca más rápido).
+      await expect(page.getByText(/Grabando · [1-9]/)).toBeVisible(); // grabar al menos 1 s: al instante queda vacío
       await page.getByRole("button", { name: "Terminar" }).click();
       await expect(page.getByRole("status")).toContainText("Video listo", { timeout: 15_000 });
 
@@ -235,6 +239,10 @@ test.describe("Persona 3 — el prevenido, vendedor, reacio a la comisión", () 
     await page.goto("/publicar");
     await page.getByRole("button", { name: "Abrir cámara" }).click();
     await page.getByRole("button", { name: /^Grabar/ }).click();
+    // Al menos un segundo grabado, como una persona: tocar «Terminar» al instante deja
+
+    // un video vacío (D-132: sin las transiciones, Playwright toca más rápido).
+    await expect(page.getByText(/Grabando · [1-9]/)).toBeVisible(); // grabar al menos 1 s: al instante queda vacío
     await page.getByRole("button", { name: "Terminar" }).click();
     await expect(page.getByRole("status")).toContainText("Video listo", { timeout: 15_000 });
 

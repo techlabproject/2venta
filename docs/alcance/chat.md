@@ -30,7 +30,7 @@ pago (lo que 2venta vende). Por eso el chat bloquea teléfonos, correos y enlace
    si la otra persona tiene el chat abierto, su pantalla se actualiza sola en un
    instante, sin perder lo que estaba escribiendo. El aviso no lleva el texto: la
    pantalla lo vuelve a pedir y ahí se comprueba otra vez quién puede verlo.
-5. **Se avisa por fuera del chat**: aparece en «Avisos» (agrupados por minuto, para
+5. **Se avisa por fuera del chat**: aparece en «Notificaciones» (antes «Avisos») (agrupados por minuto, para
    no llenar la lista) y en el contador de conversaciones sin leer.
 
 Lo que **no** hay hoy: aviso por correo, por WhatsApp ni notificación del teléfono.
@@ -83,7 +83,7 @@ que tiene costo por imagen; o limitarlo a fotos tomadas con la cámara en el mom
    menos puede permitirse el miedo a una represalia.
 3. **Bloqueo silencioso** (decisión de Nicolás): desde ese momento, a quien reportó
    no le llegan los mensajes ni las ofertas de la otra persona en esa conversación:
-   ni en el chat, ni en la bandeja, ni en «Avisos». La otra persona puede seguir
+   ni en el chat, ni en la bandeja, ni en «Notificaciones». La otra persona puede seguir
    escribiendo sin notar nada; lo que mande queda guardado para el equipo.
 4. **Llega a la cola** `/admin/conversaciones`, **ordenada por gravedad**: primero
    estafa, amenazas y contenido sexual (marcados «Urgente»), después pedir datos o

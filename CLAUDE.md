@@ -196,6 +196,10 @@ el número y se le manda el código antes de dejarlo comprar o escribir.
 - Las imágenes de MinIO son las de Chainguard (`cgr.dev/chainguard/minio`): MinIO dejó
   de publicar en Docker Hub y después en `quay.io` (401 desde 2026-09-24, CI caído).
   La del cliente (`minio-client`) no trae `sh`; por eso `minio-init` usa la del servidor.
+- Si `docker compose ... build` se queda en «load metadata for docker.io/library/node»,
+  es el ayudante de credenciales de Docker Desktop (`credsStore: desktop`) colgado, no
+  la red. Construir con un `DOCKER_CONFIG` aparte cuyo `config.json` sea solo
+  `{"currentContext":"desktop-linux"}` (más un enlace a `~/.docker/contexts`).
 - En S3 de verdad, `HeadObject` sobre una clave inexistente devuelve **403, no 404**,
   si el rol no tiene `s3:ListBucket` sobre el bucket. MinIO no lo hace. Los roles
   de web y worker lo tienen por eso; no quitarlo.

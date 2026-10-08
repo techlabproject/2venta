@@ -70,7 +70,7 @@ test("con cuenta, el aviso se guarda desde el mensaje vacío con el nombre suger
   await vacio(page).getByRole("button", { name: "Guardar" }).click();
   await expect(vacio(page).getByRole("status")).toContainText("Guardada");
 
-  await page.goto("/avisos");
+  await page.goto("/notificaciones");
   await expect(page.getByRole("main")).toContainText(palabra);
 });
 

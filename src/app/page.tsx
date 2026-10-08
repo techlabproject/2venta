@@ -82,10 +82,12 @@ export default async function Home({
           terminar: no hay luz, no hay profundidad y no hay nada de la marca
           salvo el tono. X          petróleo abajo— y el arco va al 14 % de opacidad: se nota que está, no
           se nota que lo pusieron. */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-brand to-brand-d pb-8 text-cream">
-        <Arco className="absolute -top-24 -right-20 h-72 w-72 text-accent-on-brand/15 sm:-top-28 sm:-right-24 sm:h-[26rem] sm:w-[26rem]" />
+      <div className="relative overflow-hidden bg-gradient-to-b from-brand to-brand-d pb-5 text-cream sm:pb-8">
+        <Arco className="arco-lento absolute -top-24 -right-20 h-72 w-72 text-accent-on-brand/15 sm:-top-28 sm:-right-24 sm:h-[26rem] sm:w-[26rem]" />
         <div className="relative mx-auto max-w-6xl px-5">
-          <h1 className="max-w-xl font-title text-3xl leading-tight font-semibold text-balance sm:text-4xl">
+          {/* D-132: en el celular el título era tan grande que, con la tarjeta de
+              ubicación, ningún artículo se veía sin bajar. */}
+          <h1 className="max-w-xl pt-1 font-title text-[1.7rem] leading-tight font-semibold text-balance sm:pt-0 sm:text-4xl">
             Compra usado sin miedo a que te tumben
           </h1>
           <p className="mt-2 max-w-lg text-sm text-cream/80">
@@ -97,7 +99,7 @@ export default async function Home({
           <form
             action="/buscar"
             method="get"
-            className="mt-6 flex max-w-2xl gap-2"
+            className="mt-5 flex max-w-2xl gap-2 sm:mt-6"
           >
             <input
               type="search"
@@ -117,7 +119,12 @@ export default async function Home({
           {/* Atajos del mockup. Son enlaces y no botones a propósito: cada uno es una
               dirección real que se puede compartir y que el buscador puede seguir.
               Se marcan y desmarcan, y se suman entre sí (decisión de Nicolás). */}
-          <nav aria-label="Atajos" className="mt-4 flex flex-wrap gap-2">
+          {/* En el celular, una sola fila que se desliza de lado (D-132): en dos
+              renglones empujaba los artículos fuera de la primera pantalla. */}
+          <nav
+            aria-label="Atajos"
+            className="sin-barra -mx-5 mt-4 flex gap-2 overflow-x-auto px-5 pb-1 [&>*]:shrink-0 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+          >
             {/* «Filtros» encabeza la fila de etiquetas: en 375 px no cabía junto
                 al buscador sin aplastarlo. */}
             <PanelDeFiltros

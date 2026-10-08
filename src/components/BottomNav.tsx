@@ -110,7 +110,7 @@ export function BottomNav({ sinLeer = 0, equipo = false }: { sinLeer?: number; e
                   {href === "/chats" && sinLeer > 0 && (
                     <span
                       aria-hidden
-                      className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-on-accent ring-2 ring-white"
+                      className="absolute -top-1 -right-2 flex h-4 min-w-4 animate-pop items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-on-accent ring-2 ring-white"
                     >
                       {sinLeer > 9 ? "9+" : sinLeer}
                     </span>

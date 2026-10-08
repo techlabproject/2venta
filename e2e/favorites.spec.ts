@@ -178,15 +178,16 @@ test("los favoritos de otro no se ven", async ({ browser }) => {
 });
 
 // Corrección 41 (Catalina; texto elegido por Nicolás): cada pantalla dice qué es y
-// manda a la otra: Guardados son artículos marcados con ♡; Avisos, lo nuevo.
-test("Guardados y Avisos explican la diferencia y se enlazan", async ({ page }) => {
+// manda a la otra: Guardados son artículos marcados con ♡; Notificaciones, lo nuevo
+// (antes «Avisos», fila 78).
+test("Guardados y Notificaciones explican la diferencia y se enlazan", async ({ page }) => {
   await signUpVerified(page, "guarda", "Gabriel Guarda");
 
   await page.goto("/favoritos");
   await expect(page.getByRole("main")).toContainText("Toca el ♡ en un artículo para tenerlo a mano aquí.");
   await expect(page.getByRole("main")).not.toContainText("El corazón de cada artículo");
-  await page.getByRole("main").getByRole("link", { name: "Avisos" }).click();
-  await expect(page).toHaveURL(/\/avisos$/);
+  await page.getByRole("main").getByRole("link", { name: "Notificaciones" }).click();
+  await expect(page).toHaveURL(/\/notificaciones$/);
 
   await expect(page.getByRole("main")).toContainText("Aquí te llegan los mensajes, las ofertas");
   await page.getByRole("main").getByRole("link", { name: "Guardados" }).click();

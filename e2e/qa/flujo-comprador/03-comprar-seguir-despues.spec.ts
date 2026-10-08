@@ -62,6 +62,10 @@ async function publishListing(page: Page, title: string, price: string) {
   await page.getByRole("button", { name: /^Grabar/ }).click();
   await expect(page.getByText(/Grabando/)).toBeVisible();
   await page.waitForTimeout(1200);
+  // Al menos un segundo grabado, como una persona: tocar «Terminar» al instante deja
+
+  // un video vacío (D-132: sin las transiciones, Playwright toca más rápido).
+  await expect(page.getByText(/Grabando · [1-9]/)).toBeVisible(); // grabar al menos 1 s: al instante queda vacío
   await page.getByRole("button", { name: "Terminar" }).click();
   await expect(page.getByRole("status")).toContainText("Video listo", { timeout: 20_000 });
 
@@ -272,7 +276,7 @@ test("circuito del comprador: evaluar, negociar, comprar en carrito, seguir, rec
       await buyer.getByRole("button", { name: "Guardar" }).click();
       await buyer.waitForTimeout(800);
     }
-    await buyer.goto("/avisos");
+    await buyer.goto("/notificaciones");
     console.log("AVISOS (búsquedas guardadas):\n", await buyer.locator("main").innerText());
     await buyer.screenshot({ path: `${EVID}/22-avisos-busqueda-guardada.png`, fullPage: true });
   });

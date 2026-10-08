@@ -8,6 +8,8 @@ import { mediaUrl } from "@/lib/media";
 import { SignOutButton } from "@/features/auth/SignOutButton";
 import { countUnreadConversations } from "@/features/chat/queries";
 import { esEmpresa } from "@/features/sellers/queries";
+import { countUnread } from "@/features/alerts/queries";
+import { AvisosEnVivo } from "@/features/alerts/AvisosEnVivo";
 
 // Cabecera de la app. La ubicación es fija por ahora: la versión 1 es solo
 // Bogotá (D-06) y la zona real del usuario llega cuando haya perfil editable.
@@ -22,13 +24,16 @@ const ENLACES = [
   { href: "/", label: "Explorar" },
   { href: "/carrito", label: "Carrito" },
   { href: "/favoritos", label: "Guardados" },
-  { href: "/avisos", label: "Avisos" },
+  // Fila 73 (D-131): los chats a la vista en el escritorio, no escondidos en el menú
+  // de la cuenta. Se llaman como en la barra del celular.
+  { href: "/chats", label: "Chats" },
+  // Fila 78 (D-131): antes «Avisos».
+  { href: "/notificaciones", label: "Notificaciones" },
 ];
 
 const DEL_MENU = [
   { href: "/cuenta", label: "Tu cuenta" },
   { href: "/vender/metricas", label: "Tus publicaciones" },
-  { href: "/chats", label: "Conversaciones" },
   { href: "/actividad", label: "Compras y ventas" },
   { href: "/cuenta/editar", label: "Editar tu perfil" },
 ];
@@ -42,7 +47,7 @@ const ITEM =
 export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
   const user = await currentUser();
 
-  const [rows, sinLeer, empresa] = user
+  const [rows, sinLeer, empresa, avisosSinLeer] = user
     ? await Promise.all([
         query<{ avatar_path: string | null }>(
           `select avatar_path from "user" where id = $1`,
@@ -50,8 +55,9 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
         ),
         countUnreadConversations(user.id),
         esEmpresa(user.id),
+        countUnread(user.id),
       ])
-    : [[], 0, false];
+    : [[], 0, false, 0];
   // Corrección 48 (D-127): la cuenta del equipo solo administra: ni vende ni compra.
   const equipo = user?.role === "admin";
   // Corrección 17: una cuenta de empresa no compra, así que no tiene carrito y su
@@ -66,6 +72,10 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
     : empresa
       ? DEL_MENU.map((e) => (e.href === "/actividad" ? { ...e, label: "Tus ventas" } : e))
       : DEL_MENU;
+  // El número que va al lado de cada enlace. Un cero dibujado es ruido con forma de
+  // alerta, así que sin nada pendiente no se dibuja.
+  const contador = (href: string) =>
+    href === "/chats" ? sinLeer : href === "/notificaciones" ? avisosSinLeer : 0;
   const avatar = rows[0]?.avatar_path ? mediaUrl(rows[0].avatar_path) : null;
   const alias = user?.alias ?? user?.name ?? "";
 
@@ -89,8 +99,13 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
                 className="ml-5 hidden items-center gap-1 md:flex"
               >
                 {enlaces.map((e) => (
-                  <Link key={e.href} href={e.href} className={PILL}>
+                  <Link key={e.href} href={e.href} className={`${PILL} inline-flex items-center`}>
                     {e.label}
+                    <Contador
+                      n={contador(e.href)}
+                      testId={e.href === "/chats" ? "mensajes-sin-leer" : "notificaciones-sin-leer"}
+                      de={e.href === "/chats" ? "conversación" : "notificación"}
+                    />
                   </Link>
                 ))}
               </nav>
@@ -117,7 +132,17 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
                     aria-label={`Menú de ${alias}`}
                     className="flex cursor-pointer list-none items-center gap-2 rounded-full py-1 pl-1 pr-2 transition hover:bg-cream/15 [&::-webkit-details-marker]:hidden"
                   >
-                    <Avatar src={avatar} name={alias} size="sm" />
+                    <span className="relative">
+                      <Avatar src={avatar} name={alias} size="sm" />
+                      {/* En el celular las notificaciones viven en este menú: el
+                          punto dice que adentro hay algo nuevo. */}
+                      {avisosSinLeer > 0 && (
+                        <span
+                          aria-hidden
+                          className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-accent ring-2 ring-brand md:hidden"
+                        />
+                      )}
+                    </span>
                     {/* El alias no cabe en 390 px junto al logo y a «Vender», así que
                       en pantalla angosta manda la foto; el nombre sigue anunciado
                       por el aria-label del propio botón. */}
@@ -134,8 +159,12 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
                     </p>
                     <div className="md:hidden">
                       {enlaces.map((e) => (
-                        <Link key={e.href} href={e.href} className={ITEM}>
+                        <Link key={e.href} href={e.href} className={`${ITEM} flex items-center`}>
                           {e.label}
+                          <Contador
+                            n={contador(e.href)}
+                            de={e.href === "/chats" ? "conversación" : "notificación"}
+                          />
                         </Link>
                       ))}
                       <hr className="my-2 border-line" />
@@ -169,6 +198,25 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
         </div>
       </header>
       {user && <BottomNav sinLeer={sinLeer} equipo={equipo} />}
+      {user && !equipo && <AvisosEnVivo />}
+    </>
+  );
+}
+
+function Contador({ n, de, testId }: { n: number; de: string; testId?: string }) {
+  if (n <= 0) return null;
+  return (
+    <>
+      <span
+        aria-hidden
+        data-testid={testId}
+        className="ml-1.5 inline-flex h-5 min-w-5 animate-pop items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-bold text-on-accent"
+      >
+        {n > 9 ? "9+" : n}
+      </span>
+      <span className="sr-only">
+        {n === 1 ? `, 1 ${de} sin leer` : `, ${n} ${de === "conversación" ? "conversaciones" : "notificaciones"} sin leer`}
+      </span>
     </>
   );
 }

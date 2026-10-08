@@ -16,6 +16,8 @@ const tarjeta = (page: Page, titulo: string) =>
 async function elegirZona(page: Page, zona: string) {
   const barra = page.getByTestId("barra-ubicacion");
   if (await barra.getByText("Cambiar").isVisible()) await barra.getByText("Cambiar").click();
+  // Sin ubicación la barra es una línea que se abre con «Elegir» (D-132).
+  if (await barra.getByText("Elegir").isVisible()) await barra.getByText("Elegir").click();
   await barra.getByLabel("O elige tu zona").selectOption(zona);
   await barra.getByRole("button", { name: "Listo" }).click();
   await expect(barra).toContainText(`Distancias desde ${zona}`);
@@ -122,6 +124,7 @@ test("«Usar mi ubicación» toma el punto del celular, redondeado", async ({ br
   });
   const page = await ctx.newPage();
   await page.goto(`/buscar?q=${encodeURIComponent("iPhone 13")}`);
+  await page.getByTestId("barra-ubicacion").getByText("Elegir").click();
   await page.getByRole("button", { name: "Usar mi ubicación" }).click();
   await expect(page.getByTestId("barra-ubicacion")).toContainText("Distancias desde tu ubicación");
   const [cookie] = (await ctx.cookies()).filter((c) => c.name === "ubicacion");
@@ -139,6 +142,7 @@ test("fuera de Bogotá y sus vecinos se dice y no se guarda nada", async ({ brow
   });
   const page = await ctx.newPage();
   await page.goto("/buscar");
+  await page.getByTestId("barra-ubicacion").getByText("Elegir").click();
   await page.getByRole("button", { name: "Usar mi ubicación" }).click();
   await expect(page.getByTestId("barra-ubicacion").getByRole("alert")).toContainText(
     "Por ahora 2venta funciona en Bogotá y sus municipios vecinos",

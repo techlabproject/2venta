@@ -4,6 +4,7 @@ import type { Listing } from "./queries";
 import { CONDITION_LABEL } from "./labels";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { Price } from "@/components/Price";
+import { formatCop } from "@/lib/money";
 import { textoDeDistancia } from "@/features/ubicacion/zonas";
 import { Portada } from "@/components/Portada";
 
@@ -52,7 +53,15 @@ export function ListingCard({
       </div>
 
       <div className="flex flex-1 flex-col p-3">
-        <Price cop={listing.price_cop} size="sm" />
+        <div className="flex flex-wrap items-baseline gap-x-2">
+          <Price cop={listing.price_cop} size="sm" />
+          {listing.precio_antes_cop !== null && (
+            <span data-testid="precio-antes" className="text-xs text-muted line-through">
+              <span className="sr-only">Antes </span>
+              {formatCop(listing.precio_antes_cop)}
+            </span>
+          )}
+        </div>
         <h3 className="mt-1.5 line-clamp-2 text-sm leading-snug font-medium">
           {listing.title}
         </h3>
@@ -77,7 +86,7 @@ export function ListingCard({
     </>
   );
   return (
-    <li>
+    <li className="revelar">
       {sinEnlace ? (
         <div className={clase}>{contenido}</div>
       ) : (

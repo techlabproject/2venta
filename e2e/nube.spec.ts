@@ -82,6 +82,10 @@ test("el circuito completo funciona contra la nube", async ({ browser }) => {
   await seller.getByRole("button", { name: "Abrir cámara" }).click();
   await seller.getByRole("button", { name: /^Grabar/ }).click();
   await expect(seller.getByText(/Grabando/)).toBeVisible();
+  // Al menos un segundo grabado, como una persona: tocar «Terminar» al instante deja
+
+  // un video vacío (D-132: sin las transiciones, Playwright toca más rápido).
+  await expect(seller.getByText(/Grabando · [1-9]/)).toBeVisible(); // grabar al menos 1 s: al instante queda vacío
   await seller.getByRole("button", { name: "Terminar" }).click();
   await expect(seller.getByRole("status")).toContainText("Video listo");
 

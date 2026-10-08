@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Vacio } from "@/components/Vacio";
 import { activeUser } from "@/lib/session";
 import { listCart } from "@/features/cart/queries";
 import { ClearCartButton, RemoveFromCartButton } from "@/features/cart/Forms";
@@ -57,13 +58,11 @@ export default async function Carrito() {
             )}
           </p>
         ) : items.length === 0 ? (
-          <p className="mt-4 rounded-2xl bg-white shadow-xs p-4 text-sm text-ink2 ring-1 ring-line">
-            Está vacío. Junta varias cosas del mismo vendedor y pagas un solo
-            envío.{" "}
-            <Link href="/" className="text-brand underline">
-              Ver el catálogo
-            </Link>
-          </p>
+          <div className="mt-4">
+            <Vacio titulo="Está vacío" icono="carrito" accion={{ href: "/", label: "Ver el catálogo" }}>
+              Junta varias cosas del mismo vendedor y pagas un solo envío.
+            </Vacio>
+          </div>
         ) : (
           <>
             <p className="mt-1 text-sm text-muted">

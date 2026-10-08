@@ -23,7 +23,7 @@ const ROUTES = [
   "/vender",
   "/publicar",
   "/tienda",
-  "/avisos",
+  "/notificaciones",
   "/favoritos",
   "/carrito",
   "/comprar/carrito",

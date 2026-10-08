@@ -1,0 +1,110 @@
+import Link from "next/link";
+import { Vacio } from "@/components/Vacio";
+import { redirect } from "next/navigation";
+import { currentUser } from "@/lib/session";
+import {
+  listNotifications,
+  listSavedSearches,
+} from "@/features/alerts/queries";
+import { markAllRead } from "@/features/alerts/actions";
+import { DeleteSearchButton } from "@/features/alerts/Forms";
+import { AppHeader } from "@/components/AppHeader";
+import { SubmitButton } from "@/components/SubmitButton";
+import { Volver } from "@/components/Volver";
+
+// S-15. Las alertas se generan y se guardan; no hay canal de salida conectado.
+// Una alerta que hay que entrar a ver no sirve para lo que existe, que es traer a
+// la persona de vuelta, pero conectar correo o push es escribir la función de
+// envío, igual que con los SMS.
+export const dynamic = "force-dynamic";
+
+// Fila 78 de la revisión 4 (D-131): antes se llamaba «Avisos». `/avisos` redirige
+// aquí para que los enlaces viejos sigan sirviendo.
+export default async function Notificaciones() {
+  const user = await currentUser();
+  if (!user) redirect("/ingresar");
+
+  const [notifications, searches] = await Promise.all([
+    listNotifications(user.id),
+    listSavedSearches(user.id),
+  ]);
+
+  return (
+    <>
+      <AppHeader />
+      <main className="mx-auto max-w-md px-5 py-6">
+        <div className="mb-4">
+          <Volver href="/" />
+        </div>
+        <h1 className="font-title text-2xl font-semibold">Notificaciones</h1>
+
+        {notifications.length === 0 ? (
+          <div className="mt-4">
+            {/* Corrección 41: qué llega aquí y qué va en Guardados. */}
+            <Vacio titulo="Nada nuevo por ahora" icono="campana">
+              Aquí te llegan los mensajes, las ofertas y lo que aparezca de tus
+              búsquedas guardadas. Los artículos que marcas con ♡ están en{" "}
+              <Link href="/favoritos" className="text-brand underline">
+                Guardados
+              </Link>
+              .
+            </Vacio>
+          </div>
+        ) : (
+          <>
+            <ul data-testid="avisos" className="mt-4 flex flex-col gap-2">
+              {notifications.map((n) => (
+                <li key={n.id}>
+                  <Link
+                    href={n.href}
+                    className={`block rounded-2xl p-4 text-sm ${
+                      n.read_at
+                        ? "bg-white text-ink2"
+                        : "bg-brand/10 font-medium text-brand"
+                    }`}
+                  >
+                    {n.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <form action={markAllRead} className="mt-3">
+              <SubmitButton variant="ghost" pendingLabel="Marcando…">
+                Marcar todo como visto
+              </SubmitButton>
+            </form>
+          </>
+        )}
+
+        <h2 className="mt-8 font-title text-lg font-semibold">
+          Búsquedas guardadas
+        </h2>
+        {/* Fila 78: «¿qué son las búsquedas guardadas?». */}
+        <p className="mt-1 text-sm text-muted">
+          Si buscas algo que todavía no está, toca «Avísame cuando aparezca» en los
+          resultados. Cuando alguien publique algo así, te llega aquí.
+        </p>
+        {searches.length === 0 ? (
+          <p className="mt-3 text-sm text-ink2">Todavía no tienes ninguna.</p>
+        ) : (
+          <ul data-testid="busquedas" className="mt-3 flex flex-col gap-2">
+            {searches.map((s) => (
+              <li
+                key={s.id}
+                className="flex items-center justify-between gap-3 rounded-2xl bg-white shadow-xs p-4 text-sm ring-1 ring-line"
+              >
+                <Link
+                  href={`/buscar?${s.params}`}
+                  className="font-medium underline"
+                >
+                  {s.label}
+                </Link>
+                <DeleteSearchButton id={s.id} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
+    </>
+  );
+}

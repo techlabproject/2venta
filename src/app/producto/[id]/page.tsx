@@ -8,7 +8,8 @@ import { commissionCop, reglaDeComision, sellerPayoutCop } from "@/features/paym
 import { AppHeader } from "@/components/AppHeader";
 import { Price } from "@/components/Price";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
-import { BuyButton } from "@/features/payments/BuyButton";
+import { BuyButton, hrefDeCompra } from "@/features/payments/BuyButton";
+import { BarraDeCompra } from "@/features/payments/BarraDeCompra";
 import { findOwnPendingOrder } from "@/features/payments/abandon";
 import { AskForm, AnswerForm, ChatButton } from "@/features/chat/QuestionForms";
 import { listQuestions } from "@/features/chat/queries";
@@ -18,6 +19,7 @@ import { StatusButton } from "@/features/publish/EditForms";
 import { getActivePromotion } from "@/features/promotions/queries";
 import { recordView } from "@/features/metrics/queries";
 import { FavoriteButton } from "@/features/favorites/FavoriteButton";
+import { CompartirWhatsApp } from "@/features/catalog/CompartirWhatsApp";
 import { isFavorite } from "@/features/favorites/queries";
 import { AddToCartButton } from "@/features/cart/Forms";
 import { isInCart } from "@/features/cart/queries";
@@ -147,7 +149,16 @@ export default async function ListingPage({
           </div>
 
           <div className="mt-6 lg:mt-0">
-            <Price cop={listing.price_cop} size="lg" />
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <Price cop={listing.price_cop} size="lg" />
+              {/* D-132: la rebaja, con el precio de antes. */}
+              {listing.precio_antes_cop !== null && (
+                <span data-testid="precio-antes" className="text-base text-muted line-through">
+                  <span className="sr-only">Antes </span>
+                  {formatCop(listing.precio_antes_cop)}
+                </span>
+              )}
+            </div>
             <h1 className="mt-1 text-lg font-medium">{listing.title}</h1>
 
             {/* Los atributos eran una lista de etiqueta y valor que se leía como
@@ -323,11 +334,20 @@ export default async function ListingPage({
                   <AddToCartButton listingId={listing.id} inCart={inCart} />
                 )}
                 {puedeEscribir && <ChatButton listingId={listing.id} />}
-                {user && !isSeller && sinCompras !== "equipo" && (
-                  <div className="mt-3">
+                {/* D-132: Guardar y Compartir, mitad y mitad. Antes eran dos botones
+                    de anchos distintos debajo de tres de ancho completo. */}
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {user && !isSeller && sinCompras !== "equipo" && (
                     <FavoriteButton listingId={listing.id} saved={favorited} />
-                  </div>
-                )}
+                  )}
+                  {listing.status === "activa" && (
+                    <CompartirWhatsApp
+                      id={listing.id}
+                      title={listing.title}
+                      priceCop={listing.price_cop}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -448,6 +468,13 @@ export default async function ListingPage({
             </section>
           )}
       </main>
+      {listing.status === "activa" && !isSeller && !empresa && (
+        <BarraDeCompra
+          href={hrefDeCompra(listing.id, Boolean(user))}
+          priceCop={listing.price_cop}
+          title={listing.title}
+        />
+      )}
     </>
   );
 }
