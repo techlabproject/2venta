@@ -15,9 +15,7 @@ export function PieDePagina() {
     <footer data-pie className="mt-auto pt-12">
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 text-sm text-ink2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-muted">
-            2venta · Usado con pago protegido en Bogotá
-          </p>
+          <p className="text-muted">2venta</p>
           <nav
             aria-label="Sobre 2venta"
             className="flex flex-wrap gap-x-5 gap-y-2"

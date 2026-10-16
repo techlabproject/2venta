@@ -12,6 +12,8 @@ test("el pie de página lleva a Quiénes somos y a Ayuda, también sin cuenta", 
   await page.goto("/");
   const pie = page.getByRole("contentinfo");
   await expect(pie).toBeVisible();
+  // Solo la marca, sin frase (Nicolás, 2026-10-16).
+  await expect(pie.getByRole("paragraph")).toHaveText("2venta");
 
   await pie.getByRole("link", { name: "Quiénes somos" }).click();
   await expect(page).toHaveURL(/\/quienes-somos$/);

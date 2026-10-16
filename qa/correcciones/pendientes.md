@@ -211,3 +211,9 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
 - Fila 81 (D-133): **2venta no tiene teléfono propio.** El que propuso Catalina es de
   Consmoelec. Cuando haya uno, va en `src/lib/contacto.ts` y aparece en Ayuda y el pie.
   El texto legal también lo pide (sección 1, «teléfono [POR COMPLETAR]»).
+- CI (2026-10-15): la verificación de 76cc920 se cortó a los 30 min (la suite ya tarda
+  ~23–29 contra `next dev`): se subió a 45 (24b5bd6). En esa corrida
+  `catalog.spec.ts:23` («la ficha muestra el detalle…») falló dos veces: el clic en la
+  tarjeta del iPhone no terminó de navegar en 15 s; en local pasa siempre (imagen y
+  dev) y al relanzar el CI pasó. Vigilar; si se repite, pasar el CI a la imagen de
+  producción en vez de `next dev`, como dice CLAUDE.md para el veredicto.
