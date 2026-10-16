@@ -36,6 +36,9 @@ const DEL_MENU = [
   { href: "/vender/metricas", label: "Tus publicaciones" },
   { href: "/actividad", label: "Compras y ventas" },
   { href: "/cuenta/editar", label: "Editar tu perfil" },
+  // Filas 80 y 81 (D-133): también están en el pie de página.
+  { href: "/quienes-somos", label: "Quiénes somos" },
+  { href: "/ayuda", label: "Ayuda" },
 ];
 
 const PILL =
@@ -184,6 +187,12 @@ export async function AppHeader({ zone = "Bogotá" }: { zone?: string }) {
             </>
           ) : (
             <div className="ml-auto flex items-center gap-4">
+              <Link
+                href="/quienes-somos"
+                className="hidden text-sm text-cream/85 transition hover:text-cream hover:underline sm:inline"
+              >
+                Quiénes somos
+              </Link>
               <span className="hidden text-sm text-cream/80 sm:inline">
                 {zone}
               </span>

@@ -24,6 +24,8 @@ const ROUTES = [
   "/publicar",
   "/tienda",
   "/notificaciones",
+  "/quienes-somos",
+  "/ayuda",
   "/favoritos",
   "/carrito",
   "/comprar/carrito",

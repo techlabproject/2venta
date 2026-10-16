@@ -103,7 +103,7 @@ export default async function Chat({
 
           La barra inferior no se dibuja aquí (lo decide `BottomNav` por la ruta),
           así que el fondo de la pantalla queda libre para el compositor. */}
-      <main className="mx-auto flex h-[calc(100dvh-4rem)] max-w-md flex-col px-5">
+      <main data-pantalla-completa className="mx-auto flex h-[calc(100dvh-4rem)] max-w-md flex-col px-5">
         <div className="mt-4 shrink-0">
           <Volver href="/chats" />
         </div>

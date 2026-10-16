@@ -4,6 +4,7 @@ import { Poppins, Work_Sans } from "next/font/google";
 import "./globals.css";
 import { RastroDeNavegacion } from "@/components/RastroDeNavegacion";
 import { BarraDeProgreso } from "@/components/BarraDeProgreso";
+import { PieDePagina } from "@/components/PieDePagina";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -29,8 +30,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es-CO" className={`${poppins.variable} ${workSans.variable}`}>
-      <body className="min-h-dvh">
+      <body className="flex min-h-dvh flex-col">
         {children}
+        <PieDePagina />
         {/* No dibuja nada: solo anota el recorrido para «Volver» (D-99). El
             `Suspense` lo pide `useSearchParams` y no le quita HTML a la página
             (D-87): lo único que queda dentro es este componente vacío y la barra

@@ -81,10 +81,12 @@ export function FiltrosLaterales({
     // columna— no se quedaba en ningún sitio y «Aplicar» quedaba bajo el pliegue
     // (Luna, corrección 3). Las acciones van arriba, junto al título: abajo quedaban
     // fuera de la pantalla al cargar, porque la columna empieza a media página.
+    // El alto deja sitio al pie de página (D-133): con la pantalla casi entera, al
+    // llegar al final de los resultados la columna subía y se perdía «Aplicar».
     <aside
       id="filtros"
       aria-labelledby="titulo-filtros-lateral"
-      className="filtros-lateral hidden rounded-2xl bg-white shadow-xs ring-1 ring-line lg:sticky lg:top-4 lg:block lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto"
+      className="filtros-lateral hidden rounded-2xl bg-white shadow-xs ring-1 ring-line lg:sticky lg:top-4 lg:block lg:max-h-[calc(100dvh-10rem)] lg:overflow-y-auto"
     >
       <form action="/buscar" method="get" className="flex flex-col">
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 rounded-t-2xl border-b border-line bg-white px-5 py-3">

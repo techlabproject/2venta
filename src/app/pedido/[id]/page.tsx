@@ -27,6 +27,7 @@ import { OrderTimeline } from "@/features/payments/OrderTimeline";
 import { ButtonLink } from "@/components/ui";
 import { Volver } from "@/components/Volver";
 import { Pruebas } from "@/components/Pruebas";
+import { AyudaEnLinea } from "@/components/AyudaEnLinea";
 
 // Pantalla 1j del mockup: seguimiento y liberación del pago.
 export const dynamic = "force-dynamic";
@@ -434,6 +435,7 @@ export default async function Pedido({
             siguiente comprador saber con quién está tratando.
           </p>
         )}
+        <AyudaEnLinea />
       </main>
     </>
   );

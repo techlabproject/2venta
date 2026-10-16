@@ -10,6 +10,7 @@ import { getConversation, getOffer } from "@/features/chat/queries";
 import { listCart } from "@/features/cart/queries";
 import { Volver } from "@/components/Volver";
 import { noCompra } from "@/features/sellers/queries";
+import { AyudaEnLinea } from "@/components/AyudaEnLinea";
 
 // Paso previo al pago: a dónde llega y cuánto cuesta llevarlo. El comprador ve el
 // total completo antes de que le cobren nada.
@@ -91,6 +92,7 @@ export default async function Comprar({
           zones={zoneNames}
           lugares={lugares}
         />
+        <AyudaEnLinea />
       </main>
     </>
   );

@@ -83,7 +83,9 @@ test.describe("en escritorio", () => {
     await page.goto("/buscar");
     const aplicar = columna(page).getByRole("button", { name: "Aplicar" });
     await expect(aplicar).toBeInViewport();
-    await page.mouse.wheel(0, 1500);
+    // Hasta el fondo, pie de página incluido (D-133): la columna tiene que seguir
+    // entera a la vista.
+    await page.mouse.wheel(0, 5000);
     await expect(columna(page).getByRole("heading", { name: "Filtros" })).toBeInViewport();
     await expect(aplicar).toBeInViewport();
   });

@@ -283,6 +283,12 @@ p {
   }
 }
 
+/* El chat ocupa la pantalla entera (alto fijo con el campo de escribir abajo): el
+   pie de página quedaría debajo y obligaría a bajar para nada (D-133). */
+body:has([data-pantalla-completa]) footer[data-pie] {
+  display: none;
+}
+
 /* Las filas de atajos que se deslizan de lado no muestran la barra de scroll: el
    corte del último atajo ya dice que hay más. */
 .sin-barra {

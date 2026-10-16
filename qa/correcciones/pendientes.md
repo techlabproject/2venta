@@ -208,3 +208,6 @@ de las 52 filas se convierte en el documento de cierre para Nicolás y Catalina
   correr sin animaciones. Las pruebas ahora graban al menos 1 s; falta decidir si la app
   exige una duración mínima (propuesta: 2 s, con el botón «Terminar» deshabilitado
   antes) y si el servidor rechaza videos de menos de unos KB.
+- Fila 81 (D-133): **2venta no tiene teléfono propio.** El que propuso Catalina es de
+  Consmoelec. Cuando haya uno, va en `src/lib/contacto.ts` y aparece en Ayuda y el pie.
+  El texto legal también lo pide (sección 1, «teléfono [POR COMPLETAR]»).

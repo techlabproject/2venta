@@ -1653,3 +1653,25 @@ Nicolás pidió dejar solo la oferta.
 lo que pasa, no cómo se mueve. Una prueba atrapó un error real: al elegir la zona, el
 desplegable de ubicación quedaba abierto porque React reutilizaba el mismo
 `<details>`; ahora cada estado lleva su llave.
+
+### D-133 — Quiénes somos, Ayuda y pie de página (revisión 5 de Catalina, 2026-10-15)
+
+Catalina agregó dos filas al Word (`Correciones_2venta.docx`); las anteriores no
+cambiaron.
+
+- **Fila 80 — Quiénes somos.** Página `/quienes-somos`, enlazada en el encabezado (sin
+  sesión en escritorio; con sesión, en el menú de la cuenta) y en un pie de página
+  nuevo. El texto lo eligió Nicolás: habla como tienda en línea («2venta es una tienda
+  en línea de artículos usados en Bogotá…»), no como «un grupo de jóvenes», y termina
+  con el correo techlab.project.dev@gmail.com.
+- **Fila 81 — Ayuda.** Página `/ayuda` con el correo y qué hacer si es por una compra,
+  y un «¿Necesitas ayuda?» discreto al pagar y en el pedido, que es donde la gente se
+  angustia. **Sin teléfono:** el 6015192387 que se propuso es el fijo de Consmoelec;
+  ponerlo como servicio al cliente de 2venta mandaría a la gente a otra empresa. Se
+  agrega cuando 2venta tenga uno propio (`src/lib/contacto.ts`).
+- **Pie de página** en todas las pantallas (`PieDePagina`, HTML del servidor), menos en
+  el chat, que ocupa la pantalla entera. La columna de filtros del escritorio se acortó
+  para dejarle sitio: con el alto casi completo, al llegar al final de los resultados
+  «Aplicar» se salía de la vista.
+
+Las filas 74–77 siguen esperando a Hey (Nicolás, 2026-10-15).

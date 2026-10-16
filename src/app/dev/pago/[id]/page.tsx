@@ -5,6 +5,7 @@ import { getOrder } from "@/features/payments/orders";
 import { DevPagoControls } from "@/features/payments/DevPagoControls";
 import { formatCop } from "@/lib/money";
 import { breakdown } from "@/features/payments/money";
+import { AyudaEnLinea } from "@/components/AyudaEnLinea";
 
 // Pantalla del proveedor de pagos de prueba. Ocupa el lugar donde el proveedor
 // real mostraría su propio formulario de tarjeta o PSE. No existe en producción.
@@ -67,6 +68,7 @@ export default async function DevPago({
         reference={order.provider_ref ?? ""}
         orderId={order.id}
       />
+      <AyudaEnLinea />
     </main>
   );
 }
