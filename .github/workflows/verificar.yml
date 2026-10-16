@@ -11,7 +11,9 @@ on:
 jobs:
   verificar:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # 494 pruebas contra `next dev` con 2 workers ya tardan ~29 min (2026-10-15: la
+    # corrida de 76cc920 se cortó a los 30 sin fallar). Margen para que crezca.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
